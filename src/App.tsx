@@ -13,6 +13,7 @@ import { NotificationsModal } from './components/NotificationsModal';
 import { HomeScreen } from './pages/HomeScreen';
 import { MapScreen } from './pages/MapScreen';
 import { ReportScreen } from './pages/ReportScreen';
+import { TrackScreen } from './pages/TrackScreen';
 import { LearnScreen } from './pages/LearnScreen';
 import { ProfileScreen } from './pages/ProfileScreen';
 import { AdminScreen } from './pages/AdminScreen';
@@ -21,13 +22,14 @@ const MainContent: React.FC = () => {
   const { activeTab } = useClimate();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-[#075333] text-slate-100">
       <Header />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-4 sm:py-6">
         {activeTab === 'home' && <HomeScreen />}
         {activeTab === 'map' && <MapScreen />}
         {activeTab === 'report' && <ReportScreen />}
+        {activeTab === 'track' && <TrackScreen />}
         {activeTab === 'learn' && <LearnScreen />}
         {activeTab === 'profile' && <ProfileScreen />}
         {activeTab === 'admin' && <AdminScreen />}
