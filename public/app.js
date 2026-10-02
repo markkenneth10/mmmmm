@@ -1341,6 +1341,20 @@ function applyConfigUI(c) {
  if (el) el.textContent = c.contactPartners;
  }
 
+ // Official Municipal Footer Strip (Bottom Attribution & Tagline)
+ const footerBottomTextEl = document.getElementById('cms-display-footer-bottom-text');
+ if (footerBottomTextEl) {
+   footerBottomTextEl.textContent = (c.footerText !== undefined && c.footerText !== '')
+     ? c.footerText 
+     : '© 2026 Climate Action Reporting & Information System • City Government of Metro Verde.';
+ }
+ const footerBottomTaglineEl = document.getElementById('cms-display-footer-bottom-tagline');
+ if (footerBottomTaglineEl) {
+   footerBottomTaglineEl.textContent = (c.footerTagline !== undefined && c.footerTagline !== '')
+     ? c.footerTagline 
+     : 'Official Municipal Environmental Portal';
+ }
+
   // Emergency Hotlines (Dynamic municipal list with real-time sync)
   renderCitizenEmergencyHotlines(c);
 

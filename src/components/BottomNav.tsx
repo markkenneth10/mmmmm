@@ -1,88 +1,81 @@
 import React from 'react';
-import { Home, AlertTriangle, Map, BookOpen, User, Camera } from 'lucide-react';
+import { Home, MapPin, Plus, ClipboardList, User } from 'lucide-react';
 import { useClimate } from '../context/ClimateContext';
 
 export const BottomNav: React.FC = () => {
-  const { activeTab, setActiveTab, currentUser, openAuthModal, setShowKycModal } = useClimate();
-
-  const handleQuickReport = () => {
-    if (!currentUser) {
-      openAuthModal('login');
-      return;
-    }
-    if (!currentUser.isVerified || currentUser.kycStatus !== 'verified') {
-      setActiveTab('Report');
-      setShowKycModal(true);
-      return;
-    }
-    setActiveTab('Report');
-  };
+  const { activeTab, setActiveTab } = useClimate();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg">
-      <div className="flex items-center justify-around h-16 relative px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-3 py-1.5">
+      <div className="max-w-md mx-auto flex items-center justify-between">
+        
+        {/* 1. Home */}
         <button
-          onClick={() => setActiveTab('Home')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            activeTab === 'Home' ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+          onClick={() => setActiveTab('home')}
+          className={`flex-1 flex flex-col items-center justify-center py-1 transition-colors ${
+            activeTab === 'home' ? 'text-[#059669]' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Home className="w-5 h-5" />
-          <span className="text-[10px] mt-1">Home</span>
+          <Home className={`w-5 h-5 ${activeTab === 'home' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+          <span className={`text-[11px] mt-0.5 ${activeTab === 'home' ? 'font-bold' : 'font-medium'}`}>
+            Home
+          </span>
         </button>
 
+        {/* 2. Map */}
         <button
-          onClick={() => setActiveTab('Report')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            activeTab === 'Report' ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+          onClick={() => setActiveTab('map')}
+          className={`flex-1 flex flex-col items-center justify-center py-1 transition-colors ${
+            activeTab === 'map' ? 'text-[#059669]' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <AlertTriangle className="w-5 h-5" />
-          <span className="text-[10px] mt-1">Report</span>
+          <MapPin className={`w-5 h-5 ${activeTab === 'map' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+          <span className={`text-[11px] mt-0.5 ${activeTab === 'map' ? 'font-bold' : 'font-medium'}`}>
+            Map
+          </span>
         </button>
 
-        {/* Center Floating Quick Action Action Button */}
-        <div className="relative -top-5 flex flex-col items-center">
+        {/* 3. Elevated Report Button */}
+        <div className="flex-1 flex flex-col items-center justify-center relative -top-4">
           <button
-            onClick={handleQuickReport}
-            className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-700 to-green-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all border-2 border-white"
-            aria-label="Quick Report Environmental Incident"
-            title="Quick Report"
+            onClick={() => setActiveTab('report')}
+            className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#10b981] hover:bg-[#059669] text-white flex items-center justify-center shadow-lg shadow-emerald-500/40 border-4 border-white active:scale-95 transition-all"
+            title="Report Environmental Incident"
           >
-            <Camera className="w-5 h-5" />
+            <Plus className="w-7 h-7 stroke-[3]" />
           </button>
+          <span className="text-[11px] font-bold text-[#059669] mt-0.5">
+            Report
+          </span>
         </div>
 
+        {/* 4. Track */}
         <button
-          onClick={() => setActiveTab('Map')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            activeTab === 'Map' ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+          onClick={() => setActiveTab('track')}
+          className={`flex-1 flex flex-col items-center justify-center py-1 transition-colors ${
+            activeTab === 'track' ? 'text-[#059669]' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Map className="w-5 h-5" />
-          <span className="text-[10px] mt-1">GIS Map</span>
+          <ClipboardList className={`w-5 h-5 ${activeTab === 'track' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+          <span className={`text-[11px] mt-0.5 ${activeTab === 'track' ? 'font-bold' : 'font-medium'}`}>
+            Track
+          </span>
         </button>
 
+        {/* 5. Profile */}
         <button
-          onClick={() => setActiveTab('Learn')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            activeTab === 'Learn' ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+          onClick={() => setActiveTab('profile')}
+          className={`flex-1 flex flex-col items-center justify-center py-1 transition-colors ${
+            activeTab === 'profile' ? 'text-[#059669]' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <BookOpen className="w-5 h-5" />
-          <span className="text-[10px] mt-1">Learn</span>
+          <User className={`w-5 h-5 ${activeTab === 'profile' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+          <span className={`text-[11px] mt-0.5 ${activeTab === 'profile' ? 'font-bold' : 'font-medium'}`}>
+            Profile
+          </span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('Profile')}
-          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            activeTab === 'Profile' ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <User className="w-5 h-5" />
-          <span className="text-[10px] mt-1">Profile</span>
-        </button>
       </div>
-    </div>
+    </nav>
   );
 };
