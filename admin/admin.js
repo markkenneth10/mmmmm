@@ -338,6 +338,10 @@ function switchAdminTab(tabName) {
  }
  if (tabName === 'weather') loadWeatherData();
  if (tabName === 'announcements') loadAnnouncements();
+ if (tabName === 'activities') {
+ loadAdminActivities();
+ loadAdminParticipations();
+ }
  if (tabName === 'users') loadUsersData();
  if (tabName === 'guides') loadUserGuides();
  if (tabName === 'subadmins' && currentAdmin && currentAdmin.role === 'super_admin') loadSubAdminsData();
@@ -1470,134 +1474,171 @@ function clearAnnouncementImage() {
 }
 
 async function loadAnnouncements() {
- try {
- const res = await fetch('/api/announcements');
- const data = await res.json();
- const list = data.announcements || [];
+  try {
+    const res = await adminFetch('/api/announcements?all=1');
+    const data = await res.json();
+    const list = data.announcements || [];
 
- const container = document.getElementById('admin-announcements-list');
- if (list.length === 0) {
- container.innerHTML = `<div style="color:#94a3b8; font-size:0.85rem;">No announcements published yet.</div>`;
- return;
- }
+    const container = document.getElementById('admin-announcements-list');
+    if (list.length === 0) {
+      container.innerHTML = `<div style="color:#94a3b8; font-size:0.85rem;">No announcements published yet.</div>`;
+      return;
+    }
 
- container.innerHTML = list.map(a => `
- <div style="background:#09160d; border:1px solid #1c4228; border-radius:10px; padding:1rem; display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap;">
- <div style="flex:1; min-width:250px;">
- <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem; flex-wrap:wrap;">
- <span class="badge-${a.priority.toLowerCase()}">${a.priority}</span>
- <span style="font-weight:700; color:#fff; font-size:0.95rem;">${a.title}</span>
- <span style="font-size:0.75rem; color:#94a3b8;">(${a.category})</span>
- </div>
- <p style="font-size:0.85rem; color:#cbd5e1; line-height:1.5;">${a.content}</p>
- ${a.imageUrl ? `
- <div style="margin-top:0.6rem;">
- <img src="${a.imageUrl}" alt="${a.title}" style="max-height:120px; max-width:240px; border-radius:6px; object-fit:cover; border:1px solid #1c4228;">
- </div>
- ` : ''}
- <div style="font-size:0.75rem; color:#64748b; margin-top:0.4rem;">
- By ${a.author} • ${new Date(a.timestamp).toLocaleString()}
- </div>
- </div>
- <button onclick="deleteAnnouncement('${a.id}')" class="btn-admin-danger" style="font-size:0.75rem; padding:0.35rem 0.7rem;">
- Delete
- </button>
- </div>
- `).join('');
- } catch (e) {
- console.error('Failed to load announcements:', e);
- }
+    container.innerHTML = list.map(a => `
+      <div style="background:#09160d; border:1px solid #1c4228; border-radius:10px; padding:1rem; display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; opacity: ${a.hidden ? '0.6' : '1'};">
+        <div style="flex:1; min-width:250px;">
+          <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem; flex-wrap:wrap;">
+            <span class="badge-${(a.priority || 'normal').toLowerCase()}">${a.priority || 'Normal'}</span>
+            <span style="font-weight:700; color:#fff; font-size:0.95rem;">${escapeHtml(a.title)}</span>
+            <span style="font-size:0.75rem; color:#94a3b8;">(${escapeHtml(a.category || 'General')})</span>
+            ${a.hidden ? `<span style="font-size:0.7rem; padding:0.1rem 0.4rem; border-radius:4px; background:#7f1d1d; color:#fca5a5; font-weight:700;">Hidden</span>` : `<span style="font-size:0.7rem; padding:0.1rem 0.4rem; border-radius:4px; background:#065f46; color:#a7f3d0; font-weight:700;">Public</span>`}
+          </div>
+          <p style="font-size:0.85rem; color:#cbd5e1; line-height:1.5;">${escapeHtml(a.content || a.body || '')}</p>
+          ${(a.image_url || a.imageUrl) ? `
+            <div style="margin-top:0.6rem;">
+              <img src="${a.image_url || a.imageUrl}" alt="${escapeHtml(a.title)}" style="max-height:120px; max-width:240px; border-radius:6px; object-fit:cover; border:1px solid #1c4228;">
+            </div>
+          ` : ''}
+          <div style="font-size:0.75rem; color:#64748b; margin-top:0.4rem;">
+            By ${escapeHtml(a.created_by || a.author || 'Super Admin')} • ${new Date(a.created_at || a.timestamp || Date.now()).toLocaleString()}
+          </div>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button onclick="toggleHideAnnouncement('${a.id}', ${!!a.hidden})" class="btn-admin-outline" style="font-size:0.75rem; padding:0.35rem 0.7rem;">
+            ${a.hidden ? 'Unhide' : 'Hide'}
+          </button>
+          <button onclick="deleteAnnouncement('${a.id}')" class="btn-admin-danger" style="font-size:0.75rem; padding:0.35rem 0.7rem;">
+            Delete
+          </button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('Failed to load announcements:', e);
+  }
+}
+
+async function toggleHideAnnouncement(id, isCurrentlyHidden) {
+  try {
+    const res = await adminFetch(`/api/announcements/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toggleHide: !isCurrentlyHidden })
+    });
+    if (res.ok) {
+      loadAnnouncements();
+    }
+  } catch (e) {
+    alert('Network error toggling announcement visibility.');
+  }
 }
 
 async function handleCreateAnnouncement(e) {
- e.preventDefault();
+  e.preventDefault();
 
- const newAnn = {
- title: document.getElementById('ann-title').value.trim(),
- category: document.getElementById('ann-category').value,
- priority: document.getElementById('ann-priority').value,
- content: document.getElementById('ann-content').value.trim(),
- imageUrl: document.getElementById('ann-image-url').value.trim(),
- author: currentAdmin ? currentAdmin.name : 'Administration',
- pinned: true
- };
+  const newAnn = {
+    title: document.getElementById('ann-title').value.trim(),
+    category: document.getElementById('ann-category').value,
+    priority: document.getElementById('ann-priority').value,
+    content: document.getElementById('ann-content').value.trim(),
+    imageUrl: document.getElementById('ann-image-url').value.trim(),
+    author: currentAdmin ? currentAdmin.name : 'Administration',
+    pinned: true
+  };
 
- try {
- const res = await adminFetch('/api/announcements', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify(newAnn)
- });
+  try {
+    const res = await adminFetch('/api/announcements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newAnn)
+    });
 
- if (res.ok) {
- document.getElementById('admin-announcement-form').reset();
- clearAnnouncementImage();
- await loadAnnouncements();
- alert(' Announcement published with media! All online and visiting citizens will receive this update.');
- } else {
- alert('Failed to publish announcement.');
- }
- } catch (err) {
- alert('Network error publishing announcement.');
- }
+    if (res.ok) {
+      document.getElementById('admin-announcement-form').reset();
+      clearAnnouncementImage();
+      await loadAnnouncements();
+      alert('Announcement published successfully! All online and visiting citizens will receive this update.');
+    } else {
+      alert('Failed to publish announcement.');
+    }
+  } catch (err) {
+    alert('Network error publishing announcement.');
+  }
 }
 
 async function deleteAnnouncement(id) {
- if (!confirm('Are you sure you want to delete this announcement?')) return;
- try {
- const res = await adminFetch(`/api/announcements/${id}`, { method: 'DELETE' });
- if (res.ok) {
- loadAnnouncements();
- }
- } catch (e) {
- alert('Network error deleting announcement.');
- }
+  if (!confirm('Are you sure you want to delete this announcement?')) return;
+  try {
+    const res = await adminFetch(`/api/announcements/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      loadAnnouncements();
+    }
+  } catch (e) {
+    alert('Network error deleting announcement.');
+  }
 }
 
 // 6. User Information & Guides
 async function loadUsersData() {
- try {
- const res = await adminFetch('/api/admin/users');
- const data = await res.json();
- allUsers = data.users || [];
+  try {
+    const res = await adminFetch('/api/admin/users');
+    const data = await res.json();
+    allUsers = data.users || [];
 
- document.getElementById('admin-user-count-badge').textContent = `Total Registered Users: ${data.totalUsers} • Active Today: ${data.activeToday}`;
+    document.getElementById('admin-user-count-badge').textContent = `Total Registered Users: ${data.totalUsers} • Active Today: ${data.activeToday}`;
 
- const tbody = document.getElementById('admin-users-table-body');
- if (allUsers.length === 0) {
- tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:1.5rem; color:#94a3b8;">No registered citizens yet.</td></tr>`;
- return;
- }
+    const tbody = document.getElementById('admin-users-table-body');
+    if (allUsers.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:1.5rem; color:#94a3b8;">No registered citizens yet.</td></tr>`;
+      return;
+    }
 
- tbody.innerHTML = allUsers.map(u => `
- <tr>
- <td style="font-weight:700; color:#38bdf8;">${u.id}</td>
- <td style="font-weight:700; color:#fff;">${u.name}</td>
- <td>${u.email}</td>
- <td>${u.phone || 'N/A'}</td>
- <td>${u.barangay || 'Metro Verde'}</td>
- <td>
- <span style="padding:0.2rem 0.5rem; border-radius:4px; font-size:0.72rem; font-weight:700; background:${u.kycStatus === 'verified' ? '#065f46' : (u.kycStatus === 'pending' ? '#b45309' : '#334155')}; color:#fff;">
- ${u.kycStatus || 'unverified'}
- </span>
- </td>
- <td><span style="color:#10b981; font-weight:800;">${u.ecoPoints || 0} pts</span></td>
- <td>${u.reportsCount || 0}</td>
- <td>
- <span style="padding:0.2rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:700; background:${u.status === 'Active' ? '#065f46' : '#7f1d1d'}; color:#fff;">
- ${u.status}
- </span>
- </td>
- <td>
- <button onclick="toggleUserStatus('${u.id}', '${u.status}')" class="btn-admin-outline" style="padding:0.3rem 0.65rem; font-size:0.75rem;">
- ${u.status === 'Active' ? 'Suspend' : 'Activate'}
- </button>
- </td>
- </tr>
- `).join('');
- } catch (e) {
- console.error('Failed to load users data:', e);
- }
+    tbody.innerHTML = allUsers.map(u => {
+      const userPhoto = u.avatar || u.avatar_url || u.avatarUrl || '';
+      const initials = (u.fullName || u.name || 'C').split(' ').map(n=>n[0]).join('').substring(0, 2).toUpperCase();
+
+      return `
+        <tr>
+          <td style="font-weight:700; color:#38bdf8;">${escapeHtml(u.id)}</td>
+          <td style="font-weight:700; color:#fff;">
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              ${userPhoto ? `
+                <img src="${userPhoto}" alt="${escapeHtml(u.name)}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; border:1px solid #10b981;">
+              ` : `
+                <div style="width:32px; height:32px; border-radius:50%; background:#1e293b; color:#10b981; font-weight:800; font-size:0.75rem; display:flex; align-items:center; justify-content:center; border:1px solid #334155;">
+                  ${initials}
+                </div>
+              `}
+              <span>${escapeHtml(u.fullName || u.name)}</span>
+            </div>
+          </td>
+          <td>${escapeHtml(u.email)}</td>
+          <td>${escapeHtml(u.phone || 'N/A')}</td>
+          <td>${escapeHtml(u.barangay || 'Metro Verde')}</td>
+          <td>
+            <span style="padding:0.2rem 0.5rem; border-radius:4px; font-size:0.72rem; font-weight:700; background:${u.kycStatus === 'verified' ? '#065f46' : (u.kycStatus === 'pending' ? '#b45309' : '#334155')}; color:#fff;">
+              ${escapeHtml(u.kycStatus || 'unverified')}
+            </span>
+          </td>
+          <td><span style="color:#10b981; font-weight:800;">${u.ecoPoints || u.eco_points || 0} pts</span></td>
+          <td>${u.reportsCount || 0}</td>
+          <td>
+            <span style="padding:0.2rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:700; background:${u.status === 'Active' ? '#065f46' : '#7f1d1d'}; color:#fff;">
+              ${escapeHtml(u.status)}
+            </span>
+          </td>
+          <td>
+            <button onclick="toggleUserStatus('${u.id}', '${u.status}')" class="btn-admin-outline" style="padding:0.3rem 0.65rem; font-size:0.75rem;">
+              ${u.status === 'Active' ? 'Suspend' : 'Activate'}
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (e) {
+    console.error('Failed to load users data:', e);
+  }
 }
 
 async function toggleUserStatus(userId, currentStatus) {
@@ -2600,6 +2641,397 @@ async function triggerDatabaseSync() {
       msg.style.color = '#991B1B';
       msg.textContent = 'Sync error: ' + err.message;
     }
+  }
+}
+
+// =========================================================================
+// COMMUNITY ACTIVITIES & PARTICIPATION PROOFS MANAGEMENT
+// =========================================================================
+let adminActivitiesList = [];
+let adminParticipationsList = [];
+let currentProofFilter = 'all';
+
+function switchActivitySubTab(subTab) {
+  const btnManage = document.getElementById('btn-act-tab-manage');
+  const btnProofs = document.getElementById('btn-act-tab-proofs');
+  const subManage = document.getElementById('subtab-activities-manage');
+  const subProofs = document.getElementById('subtab-activities-proofs');
+
+  if (subTab === 'manage') {
+    if (btnManage) btnManage.classList.add('active');
+    if (btnProofs) btnProofs.classList.remove('active');
+    if (subManage) subManage.style.display = 'block';
+    if (subProofs) subProofs.style.display = 'none';
+  } else {
+    if (btnProofs) btnProofs.classList.add('active');
+    if (btnManage) btnManage.classList.remove('active');
+    if (subProofs) subProofs.style.display = 'block';
+    if (subManage) subManage.style.display = 'none';
+  }
+}
+
+async function loadAdminActivities() {
+  try {
+    const res = await adminFetch('/api/activities?all=1');
+    const data = await res.json();
+    adminActivitiesList = data.activities || [];
+
+    const container = document.getElementById('admin-activities-list');
+    if (!container) return;
+
+    if (adminActivitiesList.length === 0) {
+      container.innerHTML = `<div style="color:#94a3b8; font-size:0.85rem; padding:1.5rem; text-align:center; background:#061009; border-radius:8px;">No community activities created yet. Fill out the form above to add a movement drive.</div>`;
+      return;
+    }
+
+    container.innerHTML = adminActivitiesList.map(act => {
+      const actImg = act.image_url || act.imageUrl || '';
+      return `
+        <div style="background:#09160d; border:1px solid #1c4228; border-radius:10px; padding:1rem; display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; opacity:${act.hidden ? '0.65' : '1'};">
+          <div style="flex:1; min-width:260px;">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem; flex-wrap:wrap;">
+              <span class="badge-normal" style="background:#065f46; color:#a7f3d0; border-color:#059669; font-weight:800; font-size:0.75rem;">+${act.points || 50} Eco-Pts</span>
+              <span style="font-weight:700; color:#fff; font-size:1rem;">${escapeHtml(act.title)}</span>
+              <span style="font-size:0.75rem; color:#94a3b8;">(${escapeHtml(act.category || 'Drive')})</span>
+              ${act.hidden ? `<span style="font-size:0.7rem; padding:0.1rem 0.4rem; border-radius:4px; background:#7f1d1d; color:#fca5a5; font-weight:700;">Hidden</span>` : `<span style="font-size:0.7rem; padding:0.1rem 0.4rem; border-radius:4px; background:#065f46; color:#a7f3d0; font-weight:700;">Visible</span>`}
+            </div>
+            <div style="font-size:0.82rem; color:#cbd5e1; margin:0.4rem 0; line-height:1.5;">
+              <div><strong>Date & Time:</strong> ${escapeHtml(act.event_date || act.date || 'TBA')}</div>
+              <div><strong>Location:</strong> ${escapeHtml(act.location || 'Metro Verde')}</div>
+              <div><strong>Organizer:</strong> ${escapeHtml(act.organizer || 'LGU CENRO')}</div>
+              <div><strong>Max Participants:</strong> ${act.max_participants || act.max || 100}</div>
+            </div>
+            <p style="font-size:0.84rem; color:#94a3b8; line-height:1.5; margin-top:0.35rem;">${escapeHtml(act.description || '')}</p>
+            ${actImg ? `
+              <div style="margin-top:0.6rem;">
+                <img src="${actImg}" alt="${escapeHtml(act.title)}" style="max-height:100px; max-width:200px; border-radius:6px; object-fit:cover; border:1px solid #1c4228;">
+              </div>
+            ` : ''}
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button onclick="editAdminActivity('${act.id}')" class="btn-admin-outline" style="font-size:0.75rem; padding:0.35rem 0.7rem;">
+              Edit
+            </button>
+            <button onclick="toggleHideAdminActivity('${act.id}', ${!!act.hidden})" class="btn-admin-outline" style="font-size:0.75rem; padding:0.35rem 0.7rem;">
+              ${act.hidden ? 'Unhide' : 'Hide'}
+            </button>
+            <button onclick="deleteAdminActivity('${act.id}')" class="btn-admin-danger" style="font-size:0.75rem; padding:0.35rem 0.7rem;">
+              Delete
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    console.error('Failed to load admin activities:', e);
+  }
+}
+
+async function handleSaveAdminActivity(e) {
+  e.preventDefault();
+
+  const editId = document.getElementById('act-edit-id').value;
+  const title = document.getElementById('act-title').value.trim();
+  const category = document.getElementById('act-category').value;
+  const eventDate = document.getElementById('act-event-date').value.trim();
+  const location = document.getElementById('act-location').value.trim();
+  const organizer = document.getElementById('act-organizer').value.trim();
+  const points = Number(document.getElementById('act-points').value) || 100;
+  const maxParticipants = Number(document.getElementById('act-max-participants').value) || 100;
+  const isHidden = document.getElementById('act-hidden').checked;
+  const description = document.getElementById('act-description').value.trim();
+  const imageUrl = document.getElementById('act-image-url').value.trim();
+
+  const activityData = {
+    title,
+    category,
+    event_date: eventDate,
+    location,
+    organizer,
+    points,
+    max_participants: maxParticipants,
+    hidden: isHidden ? 1 : 0,
+    description,
+    image_url: imageUrl
+  };
+
+  const btnSave = document.getElementById('btn-save-activity');
+  const origBtnText = btnSave ? btnSave.textContent : '';
+  if (btnSave) btnSave.textContent = 'Saving Activity...';
+
+  try {
+    const url = editId ? `/api/activities/${editId}` : '/api/activities';
+    const method = editId ? 'PUT' : 'POST';
+
+    const res = await adminFetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(activityData)
+    });
+
+    if (res.ok) {
+      resetActivityForm();
+      await loadAdminActivities();
+      alert(editId ? 'Community activity updated successfully!' : 'New community activity published to public portal!');
+    } else {
+      alert('Failed to save activity.');
+    }
+  } catch (err) {
+    alert('Network error saving community activity.');
+  } finally {
+    if (btnSave) btnSave.textContent = origBtnText;
+  }
+}
+
+function editAdminActivity(id) {
+  const act = adminActivitiesList.find(a => a.id === id);
+  if (!act) return;
+
+  document.getElementById('act-edit-id').value = act.id;
+  document.getElementById('act-title').value = act.title || '';
+  document.getElementById('act-category').value = act.category || 'Environmental Drive';
+  document.getElementById('act-event-date').value = act.event_date || act.date || '';
+  document.getElementById('act-location').value = act.location || '';
+  document.getElementById('act-organizer').value = act.organizer || '';
+  document.getElementById('act-points').value = act.points || 100;
+  document.getElementById('act-max-participants').value = act.max_participants || act.max || 100;
+  document.getElementById('act-hidden').checked = !!act.hidden;
+  document.getElementById('act-description').value = act.description || '';
+
+  const actImg = act.image_url || act.imageUrl || '';
+  document.getElementById('act-image-url').value = actImg;
+
+  if (actImg) {
+    const thumb = document.getElementById('act-image-preview-thumb');
+    const filenameBox = document.getElementById('act-image-filename');
+    const previewBox = document.getElementById('act-image-preview-box');
+    if (thumb) thumb.src = actImg;
+    if (filenameBox) filenameBox.textContent = 'Attached Activity Poster';
+    if (previewBox) previewBox.style.display = 'flex';
+  } else {
+    clearActivityImage();
+  }
+
+  document.getElementById('admin-act-form-title').textContent = 'Edit Community Activity / Movement';
+  document.getElementById('btn-save-activity').textContent = 'Update Community Activity';
+  document.getElementById('btn-cancel-edit-activity').style.display = 'inline-block';
+
+  window.scrollTo({ top: document.getElementById('admin-activity-form').offsetTop - 80, behavior: 'smooth' });
+}
+
+function resetActivityForm() {
+  document.getElementById('act-edit-id').value = '';
+  document.getElementById('admin-activity-form').reset();
+  clearActivityImage();
+  document.getElementById('admin-act-form-title').textContent = 'Add New Community Activity / Movement';
+  document.getElementById('btn-save-activity').textContent = 'Publish Community Activity';
+  document.getElementById('btn-cancel-edit-activity').style.display = 'none';
+}
+
+async function toggleHideAdminActivity(id, isCurrentlyHidden) {
+  try {
+    const res = await adminFetch(`/api/activities/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toggleHide: !isCurrentlyHidden })
+    });
+    if (res.ok) {
+      loadAdminActivities();
+    }
+  } catch (e) {
+    alert('Network error toggling activity visibility.');
+  }
+}
+
+async function deleteAdminActivity(id) {
+  if (!confirm('Are you sure you want to delete this community activity? Associated participations will also be cleared.')) return;
+  try {
+    const res = await adminFetch(`/api/activities/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      loadAdminActivities();
+      loadAdminParticipations();
+    }
+  } catch (e) {
+    alert('Network error deleting activity.');
+  }
+}
+
+async function handleActivityImageSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const result = await uploadImageFile(file, 'activity');
+    if (result && result.url) {
+      document.getElementById('act-image-url').value = result.url;
+      const thumb = document.getElementById('act-image-preview-thumb');
+      const filenameBox = document.getElementById('act-image-filename');
+      const previewBox = document.getElementById('act-image-preview-box');
+      if (thumb) thumb.src = result.url;
+      if (filenameBox) filenameBox.textContent = file.name;
+      if (previewBox) previewBox.style.display = 'flex';
+    }
+  } catch (err) {
+    alert('Error uploading activity image: ' + err.message);
+  }
+}
+
+function clearActivityImage() {
+  document.getElementById('act-image-url').value = '';
+  const fileInput = document.getElementById('act-image-file');
+  if (fileInput) fileInput.value = '';
+  const previewBox = document.getElementById('act-image-preview-box');
+  if (previewBox) previewBox.style.display = 'none';
+}
+
+async function loadAdminParticipations() {
+  try {
+    const res = await adminFetch('/api/admin/activities/participations');
+    const data = await res.json();
+    adminParticipationsList = data.participations || [];
+
+    const pendingList = adminParticipationsList.filter(p => p.status === 'Pending');
+    const approvedList = adminParticipationsList.filter(p => p.status === 'Approved');
+    const rejectedList = adminParticipationsList.filter(p => p.status === 'Rejected');
+
+    const pendingCountEl = document.getElementById('admin-proofs-pending-count');
+    const approvedCountEl = document.getElementById('admin-proofs-approved-count');
+    const rejectedCountEl = document.getElementById('admin-proofs-rejected-count');
+    const pointsTotalEl = document.getElementById('admin-proofs-points-total');
+    const pendingPill = document.getElementById('admin-proofs-pending-pill');
+    const actPendingBadge = document.getElementById('admin-act-pending-badge');
+
+    const totalPointsAwarded = approvedList.reduce((sum, p) => sum + Number(p.points_awarded || 50), 0);
+
+    if (pendingCountEl) pendingCountEl.textContent = pendingList.length;
+    if (approvedCountEl) approvedCountEl.textContent = approvedList.length;
+    if (rejectedCountEl) rejectedCountEl.textContent = rejectedList.length;
+    if (pointsTotalEl) pointsTotalEl.textContent = `${totalPointsAwarded} pts`;
+
+    if (pendingPill) {
+      pendingPill.textContent = pendingList.length;
+      pendingPill.style.display = pendingList.length > 0 ? 'inline-block' : 'none';
+    }
+    if (actPendingBadge) {
+      actPendingBadge.textContent = pendingList.length;
+    }
+
+    renderAdminProofsContainer();
+  } catch (e) {
+    console.error('Failed to load admin participations:', e);
+  }
+}
+
+function filterAdminProofs(filter) {
+  currentProofFilter = filter;
+  ['all', 'pending', 'approved', 'rejected'].forEach(f => {
+    const btn = document.getElementById(`btn-filter-proof-${f}`);
+    if (btn) {
+      if (f === filter) btn.classList.add('active');
+      else btn.classList.remove('active');
+    }
+  });
+  renderAdminProofsContainer();
+}
+
+function renderAdminProofsContainer() {
+  const container = document.getElementById('admin-proofs-container');
+  if (!container) return;
+
+  let filtered = adminParticipationsList;
+  if (currentProofFilter === 'pending') filtered = adminParticipationsList.filter(p => p.status === 'Pending');
+  if (currentProofFilter === 'approved') filtered = adminParticipationsList.filter(p => p.status === 'Approved');
+  if (currentProofFilter === 'rejected') filtered = adminParticipationsList.filter(p => p.status === 'Rejected');
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="color:#94a3b8; font-size:0.85rem; padding:1.5rem; text-align:center; background:#061009; border-radius:8px;">No participation proof submissions in this queue.</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(p => {
+    let statusBg = '#334155';
+    let statusText = p.status || 'Pending';
+    if (p.status === 'Approved') statusBg = '#065f46';
+    if (p.status === 'Rejected') statusBg = '#7f1d1d';
+    if (p.status === 'Pending') statusBg = '#b45309';
+
+    return `
+      <div style="background:#09160d; border:1px solid #1c4228; border-radius:10px; padding:1rem; display:flex; flex-wrap:wrap; gap:1.25rem; align-items:flex-start; justify-content:space-between;">
+        <div style="flex:1; min-width:280px;">
+          <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem; flex-wrap:wrap;">
+            <span style="padding:0.2rem 0.55rem; border-radius:4px; font-size:0.72rem; font-weight:700; background:${statusBg}; color:#fff;">
+              ${statusText}
+            </span>
+            <span style="font-weight:800; color:#10b981; font-size:0.95rem;">+${p.points_awarded || 50} Eco-Pts</span>
+            <span style="font-weight:700; color:#fff; font-size:1rem;">${escapeHtml(p.activity_title)}</span>
+          </div>
+
+          <div style="background:#061009; border:1px solid #1c4228; padding:0.6rem 0.85rem; border-radius:8px; margin:0.5rem 0;">
+            <div style="font-size:0.85rem; color:#fff; font-weight:700;">${escapeHtml(p.user_name)}</div>
+            <div style="font-size:0.75rem; color:#94a3b8;">${escapeHtml(p.user_email)} • ID: ${escapeHtml(p.user_id)}</div>
+          </div>
+
+          ${p.proof_description ? `<p style="font-size:0.85rem; color:#cbd5e1; line-height:1.5; margin:0.4rem 0;">${escapeHtml(p.proof_description)}</p>` : ''}
+
+          <div style="font-size:0.75rem; color:#64748b; margin-top:0.4rem;">
+            Submitted on ${new Date(p.submitted_at).toLocaleString()}
+          </div>
+
+          ${p.review_notes ? `
+            <div style="margin-top:0.5rem; font-size:0.8rem; color:#a7f3d0; background:#065f46; padding:0.35rem 0.65rem; border-radius:6px; display:inline-block;">
+              <strong>Admin Note:</strong> ${escapeHtml(p.review_notes)}
+            </div>
+          ` : ''}
+
+          ${p.status === 'Pending' ? `
+            <div style="margin-top:0.85rem; background:#061009; border:1px solid #1c4228; padding:0.75rem; border-radius:8px;">
+              <label style="display:block; font-size:0.75rem; font-weight:700; color:#94a3b8; margin-bottom:0.35rem;">Review Note / Feedback (Optional):</label>
+              <input type="text" id="proof-note-${p.id}" class="admin-input" style="font-size:0.8rem; padding:0.4rem; margin-bottom:0.65rem;" placeholder="e.g. Verified attendance at tree planting drive. Excellent work!">
+              
+              <div style="display:flex; gap:0.5rem;">
+                <button onclick="reviewAdminProof('${p.id}', 'Approved')" class="btn-admin-primary" style="font-size:0.78rem; padding:0.45rem 0.85rem; background:#10b981; border-color:#059669;">
+                  Approve & Grant +${p.points_awarded || 50} Points
+                </button>
+                <button onclick="reviewAdminProof('${p.id}', 'Rejected')" class="btn-admin-danger" style="font-size:0.78rem; padding:0.45rem 0.85rem;">
+                  Reject Proof
+                </button>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        ${p.proof_image_url ? `
+          <div style="text-align:center;">
+            <img src="${p.proof_image_url}" alt="Submitted Proof Photo" style="max-height:160px; max-width:220px; object-fit:cover; border-radius:8px; border:2px solid #1c4228; cursor:pointer;" onclick="window.open('${p.proof_image_url}', '_blank')">
+            <div style="font-size:0.72rem; color:#94a3b8; margin-top:0.25rem;">Click photo to expand</div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+async function reviewAdminProof(submissionId, status) {
+  const noteInput = document.getElementById(`proof-note-${submissionId}`);
+  const notes = noteInput ? noteInput.value.trim() : '';
+
+  try {
+    const res = await adminFetch('/api/admin/activities/review-participation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ submissionId, status, notes })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      alert(data.message || `Proof submission marked as ${status}.`);
+      await loadAdminParticipations();
+      await loadUsersData();
+    } else {
+      alert(data.error || 'Failed to review proof submission.');
+    }
+  } catch (err) {
+    alert('Network error reviewing proof submission.');
   }
 }
 

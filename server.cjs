@@ -1431,11 +1431,36 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    
     // ------------------------------------------
-    // 5. Announcements
+    // User Profile Photo & Account Avatar API
+    // ------------------------------------------
+    if (pathname === '/api/user/avatar' && req.method === 'POST') {
+      const data = await parseBody(req);
+      if (!data.email || !data.avatarUrl) {
+        return sendJson(400, { error: 'User email and avatarUrl are required' });
+      }
+      const user = database.Users.getByEmail(data.email);
+      if (!user) {
+        return sendJson(404, { error: 'User account not found' });
+      }
+      const updatedUser = database.Users.updateAvatar(user.id, data.avatarUrl);
+      loadUsersFromDisk();
+      return sendJson(200, {
+        success: true,
+        message: 'Profile photo updated successfully',
+        user: updatedUser
+      });
+    }
+
+    // ------------------------------------------
+    // 5. Announcements (Full Add, Edit, Hide, Delete Management)
     // ------------------------------------------
     if ((pathname === '/api/announcements' || pathname === '/api/admin/announcements') && req.method === 'GET') {
-      return sendJson(200, { announcements: announcementsStore });
+      const session = getAdminSession(req);
+      const includeHidden = !!session || (req.url.includes('all=1'));
+      const list = database.Announcements.getAll(includeHidden);
+      return sendJson(200, { announcements: list });
     }
 
     if ((pathname === '/api/announcements' || pathname === '/api/admin/announcements') && req.method === 'POST') {
@@ -1448,23 +1473,56 @@ const server = http.createServer(async (req, res) => {
         return sendJson(400, { error: 'Announcement title and content are required' });
       }
       const newAnn = {
-        id: `ann-${Date.now().toString().slice(-4)}`,
+        id: data.id || ('ann-' + Date.now().toString().slice(-6)),
         title: data.title,
         category: data.category || 'Advisory',
         priority: data.priority || 'Normal',
-        pinned: !!data.pinned,
         content: data.content,
-        imageUrl: data.imageUrl || '',
-        author: data.author || session.name || 'City Administration',
-        timestamp: Date.now()
+        image_url: data.image_url || data.imageUrl || '',
+        hidden: !!data.hidden,
+        created_by: session.name || 'Super Admin',
+        created_at: Date.now()
       };
-      announcementsStore.unshift(newAnn);
-      saveAnnouncementsToDisk();
+      const saved = database.Announcements.upsert(newAnn);
+      loadAnnouncementsFromDisk();
       return sendJson(201, {
         success: true,
-        message: 'Announcement published successfully',
-        announcement: newAnn
+        message: 'Announcement saved successfully',
+        announcement: saved
       });
+    }
+
+    if ((pathname.startsWith('/api/announcements/') || pathname.startsWith('/api/admin/announcements/')) && req.method === 'PUT') {
+      const session = getAdminSession(req);
+      if (!session || !isAdminRole(session.role)) {
+        return sendJson(401, { error: 'Unauthorized: Active administrative session required' });
+      }
+      const parts = pathname.split('/');
+      const annId = parts[parts.length - 1];
+      const data = await parseBody(req);
+      
+      const existing = database.Announcements.getById(annId);
+      if (!existing) {
+        return sendJson(404, { error: 'Announcement not found' });
+      }
+
+      if (data.toggleHide !== undefined) {
+        const updated = database.Announcements.setHidden(annId, data.toggleHide);
+        loadAnnouncementsFromDisk();
+        return sendJson(200, { success: true, announcement: updated });
+      }
+
+      const updated = database.Announcements.upsert({
+        ...existing,
+        title: data.title || existing.title,
+        category: data.category || existing.category,
+        priority: data.priority || existing.priority,
+        content: data.content || existing.content,
+        image_url: data.image_url !== undefined ? data.image_url : existing.image_url,
+        hidden: data.hidden !== undefined ? (data.hidden ? 1 : 0) : existing.hidden
+      });
+      loadAnnouncementsFromDisk();
+      return sendJson(200, { success: true, announcement: updated });
     }
 
     if ((pathname.startsWith('/api/announcements/') || pathname.startsWith('/api/admin/announcements/')) && req.method === 'DELETE') {
@@ -1474,84 +1532,179 @@ const server = http.createServer(async (req, res) => {
       }
       const parts = pathname.split('/');
       const annId = parts[parts.length - 1];
-      announcementsStore = announcementsStore.filter(a => a.id !== annId);
-      saveAnnouncementsToDisk();
+      database.Announcements.delete(annId);
+      loadAnnouncementsFromDisk();
       return sendJson(200, { success: true, message: 'Announcement deleted' });
     }
 
     // ------------------------------------------
-    // 6. User Guides Management
-    // ------------------------------------------
-    if (pathname === '/api/user-guides' && req.method === 'GET') {
-      return sendJson(200, { guides: userGuidesStore });
-    }
-
-    if (pathname === '/api/user-guides' && req.method === 'POST') {
-      const session = getAdminSession(req);
-      if (!session || !isAdminRole(session.role)) {
-        return sendJson(401, { error: 'Unauthorized: Active administrative session required' });
-      }
-      const data = await parseBody(req);
-      if (!data.title || !data.content) {
-        return sendJson(400, { error: 'Title and content required for user guide' });
-      }
-      const newGuide = {
-        id: `guide-${Date.now().toString().slice(-4)}`,
-        title: data.title,
-        icon: data.icon || 'guide',
-        category: data.category || 'General',
-        summary: data.summary || '',
-        content: data.content,
-        imageUrl: data.imageUrl || '',
-        updatedAt: Date.now()
-      };
-      userGuidesStore.push(newGuide);
-      saveUserGuidesToDisk();
-      return sendJson(201, { success: true, guide: newGuide });
-    }
-
-    if (pathname.startsWith('/api/user-guides/') && req.method === 'DELETE') {
-      const session = getAdminSession(req);
-      if (!session || !isAdminRole(session.role)) {
-        return sendJson(401, { error: 'Unauthorized: Active administrative session required' });
-      }
-      const guideId = pathname.split('/')[3];
-      userGuidesStore = userGuidesStore.filter(g => g.id !== guideId);
-      saveUserGuidesToDisk();
-      return sendJson(200, { success: true, message: 'User guide deleted' });
-    }
-
-    // ------------------------------------------
-    // 6.5. Community Activities & App Sync API
+    // 6. Community Activities & Participation Proof API
     // ------------------------------------------
     if (pathname === '/api/activities' && req.method === 'GET') {
-      loadActivitiesFromDisk();
-      return sendJson(200, { activities: activitiesStore });
+      const session = getAdminSession(req);
+      const includeHidden = !!session || req.url.includes('all=1');
+      const list = database.Activities.getAll(includeHidden);
+      return sendJson(200, { activities: list });
     }
 
-    if (pathname === '/api/articles' && req.method === 'GET') {
-      return sendJson(200, { articles: [] }); // Initially empty for fresh publish
-    }
-
-    if (pathname === '/api/activities' && req.method === 'POST') {
+    if ((pathname === '/api/activities' || pathname === '/api/admin/activities') && req.method === 'POST') {
       const session = getAdminSession(req);
       if (!session || !isAdminRole(session.role)) {
         return sendJson(401, { error: 'Unauthorized: Active administrative session required' });
       }
       const data = await parseBody(req);
+      if (!data.title) {
+        return sendJson(400, { error: 'Activity title is required' });
+      }
       const newAct = {
-        id: data.id || `act-${Date.now().toString().slice(-4)}`,
-        title: data.title || 'Community Eco Activity',
-        date: data.date || 'TBA',
-        location: data.location || 'Metro Verde',
-        category: data.category || 'Environmental',
-        target: data.target || 'Community Action',
-        registered: 0,
-        max: data.max || 100
+        id: data.id || ('act-' + Date.now().toString().slice(-6)),
+        title: data.title,
+        category: data.category || 'Environmental Drive',
+        event_date: data.event_date || data.eventDate || 'TBA',
+        location: data.location || 'Metro Verde Municipal Sector',
+        description: data.description || 'Community ecological action drive.',
+        organizer: data.organizer || 'LGU CENRO & Environmental Taskforce',
+        points: Number(data.points) || 50,
+        max_participants: Number(data.max_participants || data.maxParticipants) || 100,
+        participants: data.participants || [],
+        hidden: !!data.hidden,
+        image_url: data.image_url || data.imageUrl || '',
+        created_at: Date.now()
       };
-      activitiesStore.push(newAct);
-      saveActivitiesToDisk();
-      return sendJson(201, { success: true, activity: newAct });
+      const saved = database.Activities.upsert(newAct);
+      loadActivitiesFromDisk();
+      return sendJson(201, { success: true, activity: saved });
+    }
+
+    if ((pathname.startsWith('/api/activities/') || pathname.startsWith('/api/admin/activities/')) && req.method === 'PUT') {
+      const session = getAdminSession(req);
+      if (!session || !isAdminRole(session.role)) {
+        return sendJson(401, { error: 'Unauthorized: Active administrative session required' });
+      }
+      const parts = pathname.split('/');
+      const actId = parts[parts.length - 1];
+      const data = await parseBody(req);
+
+      const existing = database.Activities.getById(actId);
+      if (!existing) {
+        return sendJson(404, { error: 'Activity not found' });
+      }
+
+      if (data.toggleHide !== undefined) {
+        const updated = database.Activities.setHidden(actId, data.toggleHide);
+        loadActivitiesFromDisk();
+        return sendJson(200, { success: true, activity: updated });
+      }
+
+      const updated = database.Activities.upsert({
+        ...existing,
+        title: data.title || existing.title,
+        category: data.category || existing.category,
+        event_date: data.event_date || existing.event_date,
+        location: data.location || existing.location,
+        description: data.description || existing.description,
+        organizer: data.organizer || existing.organizer,
+        points: data.points !== undefined ? Number(data.points) : existing.points,
+        max_participants: data.max_participants !== undefined ? Number(data.max_participants) : existing.max_participants,
+        hidden: data.hidden !== undefined ? (data.hidden ? 1 : 0) : existing.hidden,
+        image_url: data.image_url !== undefined ? data.image_url : existing.image_url
+      });
+      loadActivitiesFromDisk();
+      return sendJson(200, { success: true, activity: updated });
+    }
+
+    if ((pathname.startsWith('/api/activities/') || pathname.startsWith('/api/admin/activities/')) && req.method === 'DELETE') {
+      const session = getAdminSession(req);
+      if (!session || !isAdminRole(session.role)) {
+        return sendJson(401, { error: 'Unauthorized: Active administrative session required' });
+      }
+      const parts = pathname.split('/');
+      const actId = parts[parts.length - 1];
+      database.Activities.delete(actId);
+      loadActivitiesFromDisk();
+      return sendJson(200, { success: true, message: 'Activity deleted' });
+    }
+
+    // ------------------------------------------
+    // Activity Participation Proof Submissions & Verification
+    // ------------------------------------------
+    if (pathname === '/api/activities/join-proof' && req.method === 'POST') {
+      const data = await parseBody(req);
+      if (!data.activityId || !data.userId || !data.proofImageUrl) {
+        return sendJson(400, { error: 'Activity ID, User ID, and Proof Photo are required' });
+      }
+      const act = database.Activities.getById(data.activityId);
+      const user = database.Users.getById(data.userId) || database.Users.getByEmail(data.userEmail || '');
+
+      const submission = database.Participations.submitProof({
+        activity_id: data.activityId,
+        activity_title: act ? act.title : (data.activityTitle || 'Community Drive'),
+        user_id: user ? user.id : data.userId,
+        user_name: user ? user.full_name : (data.userName || 'Citizen Participant'),
+        user_email: user ? user.email : (data.userEmail || ''),
+        proof_image_url: data.proofImageUrl,
+        proof_description: data.proofDescription || '',
+        points_awarded: act ? Number(act.points || 50) : Number(data.points || 50)
+      });
+
+      return sendJson(201, {
+        success: true,
+        message: 'Participation proof submitted successfully for admin verification!',
+        submission
+      });
+    }
+
+    if (pathname === '/api/activities/my-participations' && req.method === 'GET') {
+      const parsedUrl = url.parse(req.url, true);
+      const userId = parsedUrl.query.userId;
+      const email = parsedUrl.query.email;
+      let user = null;
+      if (userId) user = database.Users.getById(userId);
+      else if (email) user = database.Users.getByEmail(email);
+
+      if (!user && !userId) {
+        return sendJson(400, { error: 'userId or email parameter is required' });
+      }
+
+      const list = database.Participations.getByUser(user ? user.id : userId);
+      return sendJson(200, { participations: list });
+    }
+
+    if (pathname === '/api/admin/activities/participations' && req.method === 'GET') {
+      const session = getAdminSession(req);
+      if (!session || !isAdminRole(session.role)) {
+        return sendJson(401, { error: 'Unauthorized: Active administrative session required' });
+      }
+      const list = database.Participations.getAll();
+      return sendJson(200, { participations: list });
+    }
+
+    if (pathname === '/api/admin/activities/review-participation' && req.method === 'POST') {
+      const session = getAdminSession(req);
+      if (!session || !isAdminRole(session.role)) {
+        return sendJson(401, { error: 'Unauthorized: Active administrative session required' });
+      }
+      const data = await parseBody(req);
+      if (!data.submissionId || !data.status) {
+        return sendJson(400, { error: 'submissionId and status (Approved/Rejected) are required' });
+      }
+
+      const updated = database.Participations.reviewProof(data.submissionId, data.status, data.notes || '');
+      if (!updated) {
+        return sendJson(404, { error: 'Participation submission not found' });
+      }
+
+      loadUsersFromDisk();
+      const updatedUser = database.Users.getById(updated.user_id);
+
+      return sendJson(200, {
+        success: true,
+        message: data.status === 'Approved' 
+          ? `Submission approved! Granted ${updated.points_awarded || 50} Eco-Points to user.`
+          : 'Submission rejected.',
+        submission: updated,
+        user: updatedUser
+      });
     }
 
     // Consolidated App Data Sync (Keeps downloaded/installed app 100% updated with website & admin)
@@ -1635,12 +1788,21 @@ const server = http.createServer(async (req, res) => {
     // User Information & Analytics (Admin Area)
     if (pathname === '/api/admin/users' && req.method === 'GET') {
       loadUsersFromDisk();
-      const safeUsers = userStore.map(({ password, ...u }) => u);
+      const safeUsers = userStore.map(({ password, ...u }) => {
+        const photo = u.avatar || u.avatar_url || u.avatarUrl || '';
+        return {
+          ...u,
+          avatar: photo,
+          avatar_url: photo,
+          avatarUrl: photo,
+          ecoPoints: u.ecoPoints || u.eco_points || 0
+        };
+      });
       return sendJson(200, {
         users: safeUsers,
         totalUsers: userStore.length,
         activeToday: userStore.length > 0 ? Math.floor(userStore.length * 0.75) : 0,
-        totalEcoPointsAwarded: userStore.reduce((sum, u) => sum + (u.ecoPoints || 0), 0)
+        totalEcoPointsAwarded: safeUsers.reduce((sum, u) => sum + (u.ecoPoints || 0), 0)
       });
     }
 

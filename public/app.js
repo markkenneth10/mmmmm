@@ -492,13 +492,14 @@ function renderProfileUI() {
  if (bgyEl) bgyEl.textContent = u.barangay || 'Metro Verde City';
  if (emailPill) emailPill.textContent = u.email || 'Registered Citizen';
  if (contEl) contEl.textContent = u.phone || 'No phone set';
- if (pointsEl) pointsEl.innerHTML = `${u.ecoPoints || 50} <span style="font-size: 0.9rem;">pts</span>`;
+ if (pointsEl) pointsEl.innerHTML = `${u.ecoPoints || u.eco_points || 0} <span style="font-size: 0.9rem;">pts</span>`;
  if (levelEl) levelEl.textContent = u.level || 'Eco Citizen';
  if (rankEl) rankEl.innerHTML = `Rank: <strong>#${u.rank || 1} in LGU</strong> • Status: <strong>${u.status || 'Active'}</strong>`;
 
+ const userPhoto = u.avatar || u.avatar_url || u.avatarUrl || '';
  if (avatarImg && initialsSpan) {
- if (u.avatar) {
- avatarImg.src = u.avatar;
+ if (userPhoto) {
+ avatarImg.src = userPhoto;
  avatarImg.style.display = 'block';
  initialsSpan.style.display = 'none';
  } else {
@@ -507,6 +508,8 @@ function renderProfileUI() {
  initialsSpan.textContent = getInitials(u.fullName || u.name);
  }
  }
+
+ loadMyParticipations();
 
  // KYC Badge & Card
  const kycStatus = u.kycStatus || 'unverified';
@@ -2387,64 +2390,286 @@ function resetQuiz() {
  renderQuiz();
 }
 
+// My Activity Participations State
+let myParticipationsList = [];
+let activityProofPhotoBase64 = '';
+
+async function loadMyParticipations() {
+  const container = document.getElementById('my-participations-container');
+  if (!container) return;
+
+  if (!state.currentUser) {
+    container.innerHTML = `
+      <div style="text-align: center; color: var(--text-muted); padding: 1.5rem; font-size: 0.88rem;">
+        Please sign in to view your joined community movements and proof submission status.
+      </div>
+    `;
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/activities/my-participations?userId=${encodeURIComponent(state.currentUser.id || '')}&email=${encodeURIComponent(state.currentUser.email || '')}`);
+    const data = await res.json();
+    myParticipationsList = data.participations || [];
+
+    if (myParticipationsList.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; color: var(--text-muted); padding: 1.5rem; font-size: 0.88rem;">
+          You have not submitted participation proofs for any community activities yet. Browse upcoming drives above to participate and earn Eco-Points!
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+        ${myParticipationsList.map(p => {
+          let statusBadge = `<span class="badge-portal-pill" style="background: var(--amber-dark); font-size: 0.72rem;">Pending Admin Review</span>`;
+          let statusBorder = 'var(--amber)';
+          if (p.status === 'Approved') {
+            statusBadge = `<span class="badge-portal-pill" style="background: var(--primary-light); font-size: 0.72rem;">Approved (+${p.points_awarded || 50} Eco-Pts)</span>`;
+            statusBorder = 'var(--primary-light)';
+          } else if (p.status === 'Rejected') {
+            statusBadge = `<span class="badge-portal-pill" style="background: var(--red); font-size: 0.72rem;">Rejected</span>`;
+            statusBorder = 'var(--red)';
+          }
+
+          return `
+            <div style="background: #FFFFFF; border: 1px solid var(--border); border-left: 5px solid ${statusBorder}; border-radius: var(--radius-md); padding: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; justify-content: space-between;">
+              <div style="flex: 1; min-width: 240px;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
+                  ${statusBadge}
+                  <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin: 0;">${escapeHtml(p.activity_title)}</h4>
+                </div>
+                ${p.proof_description ? `<p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.35rem 0; line-height: 1.5;">${escapeHtml(p.proof_description)}</p>` : ''}
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem;">
+                  Submitted on ${new Date(p.submitted_at).toLocaleDateString()} at ${new Date(p.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                ${p.review_notes ? `
+                  <div style="margin-top: 0.5rem; padding: 0.5rem 0.75rem; background: #F8FAFC; border-radius: 6px; border: 1px solid #E2E8F0; font-size: 0.8rem; color: var(--text-main);">
+                    <strong>CENRO Admin Remarks:</strong> ${escapeHtml(p.review_notes)}
+                  </div>
+                ` : ''}
+              </div>
+              ${p.proof_image_url ? `
+                <div style="text-align: center;">
+                  <img src="${p.proof_image_url}" alt="Participation Proof" style="width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); cursor: pointer;" onclick="window.open('${p.proof_image_url}', '_blank')">
+                  <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem;">Click to view full</div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  } catch (err) {
+    console.warn('Failed to load my participations:', err);
+    container.innerHTML = `
+      <div style="text-align: center; color: var(--red); padding: 1rem; font-size: 0.85rem;">
+        Could not load participation history.
+      </div>
+    `;
+  }
+}
+
 function renderActivities() {
- const grid = document.getElementById('activities-grid');
- if (!grid) return;
+  const grid = document.getElementById('activities-grid');
+  if (!grid) return;
 
- if (state.activities.length === 0) {
- grid.innerHTML = `
- <div class="card" style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">
- No community activities scheduled at this time.
- </div>
- `;
- return;
- }
+  if (state.activities.length === 0) {
+    grid.innerHTML = `
+      <div class="card" style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">
+        No community activities scheduled at this time.
+      </div>
+    `;
+    return;
+  }
 
- grid.innerHTML = state.activities.map(act => `
- <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
- <div>
- <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
- <span class="badge-portal-pill" style="font-size: 0.68rem;">${act.category}</span>
- <span class="status-badge resolved" style="font-size: 0.7rem;">${act.registered}/${act.max} Joined</span>
- </div>
- <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main);">${act.title}</h4>
- <div style="font-size: 0.82rem; color: var(--text-muted); margin: 0.5rem 0; line-height: 1.6;">
- <div><strong>Date:</strong> ${act.date}</div>
- <div><strong>Location:</strong> ${act.location}</div>
- <div><strong>Target:</strong> ${act.target}</div>
- </div>
- </div>
+  grid.innerHTML = state.activities.map(act => {
+    const actImg = act.image_url || act.imageUrl || '';
+    const pointsVal = act.points || 50;
+    const isJoined = state.joinedActivities.has(act.id);
+    const hasSubmittedProof = myParticipationsList.some(p => p.activity_id === act.id);
 
- <button class="btn-primary" onclick="toggleJoinActivity('${act.id}')" style="width: 100%; margin-top: 1rem; font-size: 0.85rem; padding: 0.65rem;">
- ${state.joinedActivities.has(act.id) ? 'Registered Volunteer' : 'Join Volunteer Drive'}
- </button>
- </div>
- `).join('');
+    return `
+      <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          ${actImg ? `
+            <div style="margin: -1.25rem -1.25rem 1rem -1.25rem; overflow: hidden; border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg);">
+              <img src="${actImg}" alt="${escapeHtml(act.title)}" style="width: 100%; height: 160px; object-fit: cover;">
+            </div>
+          ` : ''}
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.35rem;">
+            <span class="badge-portal-pill" style="font-size: 0.68rem;">${escapeHtml(act.category || 'Environmental Drive')}</span>
+            <span class="status-badge resolved" style="font-size: 0.72rem; background: #ECFDF5; color: #065F46; font-weight: 800; border: 1px solid #A7F3D0;">+${pointsVal} Eco-Points</span>
+          </div>
+          <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">${escapeHtml(act.title)}</h4>
+          <div style="font-size: 0.82rem; color: var(--text-muted); margin: 0.5rem 0; line-height: 1.6;">
+            <div><strong>Date & Time:</strong> ${escapeHtml(act.event_date || act.date || 'TBA')}</div>
+            <div><strong>Location:</strong> ${escapeHtml(act.location || 'Metro Verde')}</div>
+            <div><strong>Organizer:</strong> ${escapeHtml(act.organizer || 'LGU CENRO')}</div>
+          </div>
+          ${act.description ? `<p style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.5; margin-top: 0.5rem;">${escapeHtml(act.description)}</p>` : ''}
+        </div>
+
+        <div style="margin-top: 1.25rem; pt: 0.75rem; border-top: 1px solid var(--border);">
+          <button class="btn-primary" onclick="openActivityProofModal('${act.id}')" style="width: 100%; font-size: 0.88rem; padding: 0.7rem; justify-content: center;">
+            ${hasSubmittedProof ? 'Submit Additional Proof' : 'Participate & Submit Proof'}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openActivityProofModal(actId) {
+  if (!state.currentUser) {
+    openAuthModal('login');
+    showToast('Please sign in to participate in community activities and submit proof.');
+    return;
+  }
+
+  const act = state.activities.find(a => a.id === actId);
+  if (!act) return;
+
+  document.getElementById('proof-activity-id').value = act.id;
+  document.getElementById('proof-activity-title').value = act.title;
+  document.getElementById('proof-activity-points').value = act.points || 50;
+
+  document.getElementById('proof-modal-act-title').textContent = act.title;
+  document.getElementById('proof-modal-act-name').textContent = act.title;
+  document.getElementById('proof-modal-act-points').textContent = `+${act.points || 50} Eco-Points`;
+
+  document.getElementById('proof-description').value = '';
+  document.getElementById('proof-submit-error').style.display = 'none';
+
+  clearProofPhoto();
+
+  const modal = document.getElementById('activity-proof-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeActivityProofModal() {
+  const modal = document.getElementById('activity-proof-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function handleProofPhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    activityProofPhotoBase64 = e.target.result;
+    document.getElementById('proof-photo-placeholder').style.display = 'none';
+    const previewBox = document.getElementById('proof-photo-preview-box');
+    const previewImg = document.getElementById('proof-photo-preview-img');
+    if (previewImg) previewImg.src = activityProofPhotoBase64;
+    if (previewBox) previewBox.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearProofPhoto(event) {
+  if (event) event.stopPropagation();
+  activityProofPhotoBase64 = '';
+  const fileInput = document.getElementById('proof-photo-file-input');
+  if (fileInput) fileInput.value = '';
+  const placeholder = document.getElementById('proof-photo-placeholder');
+  const previewBox = document.getElementById('proof-photo-preview-box');
+  if (placeholder) placeholder.style.display = 'block';
+  if (previewBox) previewBox.style.display = 'none';
+}
+
+async function handleActivityProofSubmit(event) {
+  event.preventDefault();
+  if (!state.currentUser) return;
+
+  const actId = document.getElementById('proof-activity-id').value;
+  const actTitle = document.getElementById('proof-activity-title').value;
+  const points = Number(document.getElementById('proof-activity-points').value) || 50;
+  const desc = document.getElementById('proof-description').value.trim();
+  const errBox = document.getElementById('proof-submit-error');
+  const submitBtn = document.getElementById('btn-submit-proof');
+
+  if (errBox) errBox.style.display = 'none';
+
+  if (!activityProofPhotoBase64) {
+    if (errBox) {
+      errBox.textContent = 'Please attach a photo as proof of your activity participation.';
+      errBox.style.display = 'block';
+    }
+    return;
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting Proof...';
+  }
+
+  try {
+    // 1. Upload media photo file
+    const mediaRes = await fetch('/api/user/upload-media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image: activityProofPhotoBase64,
+        filename: `proof_${actId}_${Date.now()}.png`,
+        category: 'proof'
+      })
+    });
+
+    let uploadedPhotoUrl = activityProofPhotoBase64;
+    if (mediaRes.ok) {
+      const mediaData = await mediaRes.json();
+      if (mediaData.url) uploadedPhotoUrl = mediaData.url;
+    }
+
+    // 2. Submit participation proof
+    const res = await fetch('/api/activities/join-proof', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        activityId: actId,
+        activityTitle: actTitle,
+        userId: state.currentUser.id,
+        userName: state.currentUser.fullName || state.currentUser.name || 'Citizen',
+        userEmail: state.currentUser.email,
+        proofImageUrl: uploadedPhotoUrl,
+        proofDescription: desc,
+        points: points
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      if (errBox) {
+        errBox.textContent = data.error || 'Failed to submit participation proof.';
+        errBox.style.display = 'block';
+      }
+      return;
+    }
+
+    closeActivityProofModal();
+    showToast(' Participation proof submitted! Pending CENRO admin verification.');
+    await loadMyParticipations();
+    renderActivities();
+
+  } catch (err) {
+    if (errBox) {
+      errBox.textContent = 'Network communication error submitting proof.';
+      errBox.style.display = 'block';
+    }
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Proof for Approval';
+    }
+  }
 }
 
 function toggleJoinActivity(actId) {
- if (!state.currentUser) {
- openAuthModal('login');
- showToast('Please sign in to register for community restoration drives.');
- return;
- }
- const act = state.activities.find(a => a.id === actId);
- if (!act) return;
-
- if (state.joinedActivities.has(actId)) {
- state.joinedActivities.delete(actId);
- act.registered = Math.max(0, act.registered - 1);
- showToast(`Cancelled RSVP for ${act.title}.`);
- } else {
- state.joinedActivities.add(actId);
- act.registered++;
- state.currentUser.ecoPoints = (state.currentUser.ecoPoints || 750) + 30;
- localStorage.setItem(CITIZEN_STORAGE_KEY, JSON.stringify(state.currentUser));
- updateAuthUI();
- showToast(`RSVP Confirmed for ${act.title}.`);
- }
- renderDashboardData();
- renderActivities();
+  openActivityProofModal(actId);
 }
 
 // 10. Navigation Coordination across Header, Drawer & Bottom Nav

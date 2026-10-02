@@ -113,6 +113,7 @@
  <button class="admin-nav-item" onclick="switchAdminTab('cms')">Website CMS & Info</button>
  <button class="admin-nav-item" onclick="switchAdminTab('weather')">Weather & Advisories</button>
  <button class="admin-nav-item" onclick="switchAdminTab('announcements')">Announcements</button>
+ <button class="admin-nav-item" id="nav-activities" onclick="switchAdminTab('activities')">Community Activities & Proofs <span id="admin-proofs-pending-pill" class="admin-badge-pill" style="display:none; background: #EF4444; color: #fff; margin-left: auto; font-size: 0.68rem; padding: 0.15rem 0.45rem;">0</span></button>
  <button class="admin-nav-item" onclick="switchAdminTab('guides')">User Guides Manager</button>
 
  <div class="admin-nav-category">Governance & Users</div>
@@ -629,6 +630,176 @@
  <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Published Announcements</h3>
  <div id="admin-announcements-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
  <!-- Rendered by JS -->
+ </div>
+ </div>
+ </section>
+
+ <!-- TAB: COMMUNITY ACTIVITIES & PARTICIPATION PROOFS -->
+ <section id="tab-activities" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+ <div>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">
+ Community Movements, Activities & Participation Proofs
+ </h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">
+ Create community drives, manage activity details, toggle visibility/hidden status, and review citizen participation proofs to award eco-points.
+ </p>
+ </div>
+ <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+ <button class="btn-admin-outline active" id="btn-act-tab-manage" onclick="switchActivitySubTab('manage')">
+ Manage Activities
+ </button>
+ <button class="btn-admin-outline" id="btn-act-tab-proofs" onclick="switchActivitySubTab('proofs')">
+ Review Proofs <span id="admin-act-pending-badge" style="background:#EF4444; color:#fff; font-size:0.7rem; padding:0.15rem 0.45rem; border-radius:999px; font-weight:800; margin-left:0.25rem;">0</span>
+ </button>
+ </div>
+ </div>
+
+ <!-- SUB-TAB 1: MANAGE ACTIVITIES -->
+ <div id="subtab-activities-manage">
+ <!-- Create / Edit Activity Card -->
+ <div class="admin-card">
+ <h3 id="admin-act-form-title" style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">
+ Add New Community Activity / Movement
+ </h3>
+ <form id="admin-activity-form" onsubmit="handleSaveAdminActivity(event)">
+ <input type="hidden" id="act-edit-id" value="">
+ 
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Activity Title *</label>
+ <input type="text" id="act-title" class="admin-input" placeholder="e.g. Mangrove Reforestation & River Cleanup Drive" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Category</label>
+ <select id="act-category" class="admin-select">
+ <option value="Environmental Drive">Environmental Drive</option>
+ <option value="Tree Planting">Tree Planting</option>
+ <option value="River Cleanup">River Cleanup</option>
+ <option value="Zero Waste Workshop">Zero Waste Workshop</option>
+ <option value="Coastal Restoration">Coastal Restoration</option>
+ <option value="Climate Education">Climate Education</option>
+ </select>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Event Date & Time *</label>
+ <input type="text" id="act-event-date" class="admin-input" placeholder="e.g. Saturday, Oct 24 • 7:00 AM - 11:00 AM" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Location / Barangay *</label>
+ <input type="text" id="act-location" class="admin-input" placeholder="e.g. Riverside Park, Barangay Makilas" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Organizer / Lead Unit</label>
+ <input type="text" id="act-organizer" class="admin-input" placeholder="e.g. LGU CENRO & Youth Volunteers">
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Equivalent Eco-Points Awarded *</label>
+ <input type="number" id="act-points" class="admin-input" min="10" max="1000" value="100" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Max Participants Capacity</label>
+ <input type="number" id="act-max-participants" class="admin-input" min="5" max="10000" value="100">
+ </div>
+ <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
+ <input type="checkbox" id="act-hidden" value="1" style="width: 18px; height: 18px; cursor: pointer;">
+ <label for="act-hidden" style="font-size: 0.85rem; font-weight: 700; color: #fff; cursor: pointer;">Hide Activity from Public View</label>
+ </div>
+ </div>
+
+ <div style="margin-bottom: 1rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Description & Objectives</label>
+ <textarea id="act-description" class="admin-textarea" rows="3" placeholder="Provide event instructions, meeting location, gear needed, and environmental goals..." required></textarea>
+ </div>
+
+ <!-- Attach Image -->
+ <div style="margin-bottom: 1.25rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem; color: #fff;">
+ Activity Photo / Drive Poster (Optional)
+ </label>
+ <input type="hidden" id="act-image-url" value="">
+ <input type="file" id="act-image-file" accept="image/*" style="display:none;" onchange="handleActivityImageSelect(event)">
+ 
+ <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+ <button type="button" class="btn-admin-outline" onclick="document.getElementById('act-image-file').click()" style="font-size:0.8rem; padding:0.4rem 0.85rem;">
+ Choose Image File
+ </button>
+ <span style="font-size:0.75rem; color:#94a3b8;">Upload flyer, site photo, or community banner</span>
+ </div>
+
+ <div id="act-image-preview-box" style="display:none; margin-top:0.75rem; align-items:center; gap:1rem; background:#061009; padding:0.6rem; border-radius:8px; border:1px solid #1c4228;">
+ <img id="act-image-preview-thumb" src="" alt="Activity Preview" style="max-height:80px; max-width:140px; border-radius:6px; object-fit:cover; border:1px solid #10b981;">
+ <div>
+ <div id="act-image-filename" style="font-size:0.8rem; color:#fff; font-weight:600;"></div>
+ <button type="button" onclick="clearActivityImage()" class="btn-admin-danger" style="font-size:0.7rem; padding:0.25rem 0.55rem; margin-top:0.35rem;">Remove Image</button>
+ </div>
+ </div>
+ </div>
+
+ <div style="display: flex; gap: 0.75rem;">
+ <button type="submit" class="btn-admin-primary" id="btn-save-activity">
+ Publish Community Activity
+ </button>
+ <button type="button" class="btn-admin-outline" id="btn-cancel-edit-activity" onclick="resetActivityForm()" style="display: none;">
+ Cancel Edit
+ </button>
+ </div>
+ </form>
+ </div>
+
+ <!-- Existing Activities List -->
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">
+ Published Community Activities & Movements
+ </h3>
+ <div id="admin-activities-list" style="display: flex; flex-direction: column; gap: 0.85rem;">
+ <!-- Rendered by JS -->
+ </div>
+ </div>
+ </div>
+
+ <!-- SUB-TAB 2: REVIEW PARTICIPATION PROOFS QUEUE -->
+ <div id="subtab-activities-proofs" style="display: none;">
+ <!-- Stats Summary Row -->
+ <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.5rem;">
+ <div class="admin-stat-card" style="border-left: 4px solid #F59E0B;">
+ <div class="admin-stat-label">Pending Proof Reviews</div>
+ <div class="admin-stat-val" id="admin-proofs-pending-count" style="color: #FBBF24;">0</div>
+ <div class="admin-stat-sub">Requires verification</div>
+ </div>
+ <div class="admin-stat-card" style="border-left: 4px solid #10B981;">
+ <div class="admin-stat-label">Approved Participations</div>
+ <div class="admin-stat-val" id="admin-proofs-approved-count" style="color: #34D399;">0</div>
+ <div class="admin-stat-sub">Eco-points granted</div>
+ </div>
+ <div class="admin-stat-card" style="border-left: 4px solid #EF4444;">
+ <div class="admin-stat-label">Rejected Submissions</div>
+ <div class="admin-stat-val" id="admin-proofs-rejected-count" style="color: #F87171;">0</div>
+ <div class="admin-stat-sub">Invalid or missing proof</div>
+ </div>
+ <div class="admin-stat-card" style="border-left: 4px solid #3B82F6;">
+ <div class="admin-stat-label">Total Eco-Points Awarded</div>
+ <div class="admin-stat-val" id="admin-proofs-points-total" style="color: #60A5FA;">0 pts</div>
+ <div class="admin-stat-sub">Earned by citizens</div>
+ </div>
+ </div>
+
+ <!-- Proof Filter Controls -->
+ <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+ <button class="btn-admin-outline active" id="btn-filter-proof-all" onclick="filterAdminProofs('all')">All Submissions</button>
+ <button class="btn-admin-outline" id="btn-filter-proof-pending" onclick="filterAdminProofs('pending')">Pending Review</button>
+ <button class="btn-admin-outline" id="btn-filter-proof-approved" onclick="filterAdminProofs('approved')">Approved</button>
+ <button class="btn-admin-outline" id="btn-filter-proof-rejected" onclick="filterAdminProofs('rejected')">Rejected</button>
+ </div>
+
+ <!-- Proof Submissions List -->
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">
+ Citizen Activity Participation Proofs Queue
+ </h3>
+ <div id="admin-proofs-container" style="display: flex; flex-direction: column; gap: 1rem;">
+ <!-- Rendered by JS -->
+ </div>
  </div>
  </div>
  </section>

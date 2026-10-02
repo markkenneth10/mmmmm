@@ -1263,6 +1263,28 @@
  </div>
  </div>
 
+ <!-- My Joined Movements & Activity Participations Section -->
+ <div class="card" style="margin-bottom: 1.5rem; border-left: 6px solid #10B981;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+ <div>
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin: 0;">
+ My Joined Movements & Participation Proofs
+ </h3>
+ <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+ Track your submitted activity proofs, admin verification status, and earned eco-points.
+ </p>
+ </div>
+ <button class="btn-secondary" onclick="loadMyParticipations()" style="padding: 0.45rem 0.85rem; font-size: 0.8rem;">
+ Refresh History
+ </button>
+ </div>
+ <div id="my-participations-container">
+ <div style="text-align: center; color: var(--text-muted); padding: 1.5rem; font-size: 0.88rem;">
+ Loading your activity participation history...
+ </div>
+ </div>
+ </div>
+
  <!-- Quick Action Buttons -->
  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
  <button class="btn-primary" onclick="switchTab('report')" style="padding: 1rem; font-size: 0.95rem; justify-content: center;">
@@ -1282,6 +1304,76 @@
  <!-- =========================================================================
  MODALS
  ========================================================================= -->
+
+ <!-- 0. Activity Participation Proof Modal -->
+ <div class="modal-overlay" id="activity-proof-modal" style="display: none;">
+ <div class="modal-content" style="max-width: 520px;">
+ <button class="modal-close" onclick="closeActivityProofModal()">&times;</button>
+ 
+ <div style="margin-bottom: 1.25rem;">
+ <span class="badge-portal-pill" style="font-size: 0.72rem; background: var(--primary-light); color: #fff;">Community Movement</span>
+ <h3 id="proof-modal-act-title" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-top: 0.35rem;">
+ Submit Activity Participation Proof
+ </h3>
+ <p id="proof-modal-act-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.5;">
+ Upload a clear photo showing your participation in this activity to claim your Eco-Points.
+ </p>
+ </div>
+
+ <form id="activity-proof-form" onsubmit="handleActivityProofSubmit(event)">
+ <input type="hidden" id="proof-activity-id" value="">
+ <input type="hidden" id="proof-activity-title" value="">
+ <input type="hidden" id="proof-activity-points" value="50">
+
+ <!-- Activity Info Banner -->
+ <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+ <span style="font-size: 0.85rem; font-weight: 700; color: #065F46;" id="proof-modal-act-name">Selected Activity</span>
+ <span class="status-badge resolved" style="font-size: 0.75rem;" id="proof-modal-act-points">+50 Eco-Points</span>
+ </div>
+
+ <!-- Photo Upload Box -->
+ <div class="form-group">
+ <label class="form-label">Attach Proof Photo / Activity Picture *</label>
+ <div style="background: #F8FAFC; border: 2px dashed #CBD5E1; border-radius: 10px; padding: 1.25rem; text-align: center; cursor: pointer; position: relative;" onclick="document.getElementById('proof-photo-file-input').click()">
+ <input type="file" id="proof-photo-file-input" accept="image/*" style="display: none;" onchange="handleProofPhotoSelect(event)">
+ 
+ <div id="proof-photo-placeholder">
+ <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.75" style="color: var(--primary-light); margin-bottom: 0.5rem; display: block; margin-left: auto; margin-right: auto;">
+ <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+ <circle cx="12" cy="13" r="4"></circle>
+ </svg>
+ <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">Click to Select / Capture Photo</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Attach photo of your participation at the venue/site</div>
+ </div>
+
+ <div id="proof-photo-preview-box" style="display: none;">
+ <img id="proof-photo-preview-img" src="" alt="Proof Preview" style="max-height: 180px; width: auto; border-radius: 8px; object-fit: cover; margin: 0 auto; border: 2px solid var(--primary-light);">
+ <button type="button" onclick="clearProofPhoto(event)" class="btn-secondary" style="margin-top: 0.5rem; padding: 0.3rem 0.65rem; font-size: 0.75rem; color: var(--red); border-color: #FECACA;">
+ Change Photo
+ </button>
+ </div>
+ </div>
+ </div>
+
+ <!-- Participation Description -->
+ <div class="form-group">
+ <label class="form-label" for="proof-description">Participation Details / Remarks</label>
+ <textarea id="proof-description" class="form-control" rows="2" placeholder="Describe your activity participation or role..."></textarea>
+ </div>
+
+ <div id="proof-submit-error" style="display: none; padding: 0.6rem 0.85rem; border-radius: 6px; font-size: 0.82rem; background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; margin-bottom: 1rem;"></div>
+
+ <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem;">
+ <button type="button" class="btn-secondary" onclick="closeActivityProofModal()" style="padding: 0.65rem 1.1rem; font-size: 0.88rem;">
+ Cancel
+ </button>
+ <button type="submit" class="btn-primary" id="btn-submit-proof" style="padding: 0.65rem 1.25rem; font-size: 0.88rem;">
+ Submit Proof for Approval
+ </button>
+ </div>
+ </form>
+ </div>
+ </div>
 
  <!-- 1. Incident Status Timeline & Detail Modal -->
  <div class="modal-overlay" id="incident-modal" style="display: none;">

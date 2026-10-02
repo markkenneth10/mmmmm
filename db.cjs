@@ -97,6 +97,7 @@ async function initDatabase() {
       phone TEXT,
       address TEXT,
       barangay TEXT,
+      avatar_url TEXT,
       kyc_status TEXT DEFAULT 'Unverified',
       kyc_document TEXT,
       kyc_doc_type TEXT,
@@ -174,6 +175,7 @@ async function initDatabase() {
       priority TEXT NOT NULL,
       content TEXT NOT NULL,
       image_url TEXT,
+      hidden INTEGER DEFAULT 0,
       created_by TEXT,
       created_at INTEGER NOT NULL
     );
@@ -198,12 +200,32 @@ async function initDatabase() {
       location TEXT NOT NULL,
       description TEXT NOT NULL,
       organizer TEXT,
+      points INTEGER DEFAULT 50,
       max_participants INTEGER DEFAULT 50,
       participants TEXT, -- JSON array
+      hidden INTEGER DEFAULT 0,
+      image_url TEXT,
       created_at INTEGER NOT NULL
     );
 
-    -- 10. Admin Sessions Table
+    -- 10. Activity Participations / Proof Submissions Table
+    CREATE TABLE IF NOT EXISTS activity_participations (
+      id TEXT PRIMARY KEY,
+      activity_id TEXT NOT NULL,
+      activity_title TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      user_name TEXT NOT NULL,
+      user_email TEXT NOT NULL,
+      proof_image_url TEXT NOT NULL,
+      proof_description TEXT,
+      status TEXT DEFAULT 'Pending',
+      points_awarded INTEGER DEFAULT 0,
+      submitted_at INTEGER NOT NULL,
+      reviewed_at INTEGER,
+      review_notes TEXT
+    );
+
+    -- 11. Admin Sessions Table
     CREATE TABLE IF NOT EXISTS admin_sessions (
       token TEXT PRIMARY KEY,
       admin_id TEXT NOT NULL,
@@ -214,7 +236,7 @@ async function initDatabase() {
       created_at INTEGER NOT NULL
     );
 
-    -- 11. Media Uploads & Assets Table
+    -- 12. Media Uploads & Assets Table
     CREATE TABLE IF NOT EXISTS media_uploads (
       filename TEXT PRIMARY KEY,
       url TEXT NOT NULL,
@@ -231,7 +253,16 @@ async function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_reports_barangay ON reports(barangay);
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_users_kyc ON users(kyc_status);
+    CREATE INDEX IF NOT EXISTS idx_part_user ON activity_participations(user_id);
+    CREATE INDEX IF NOT EXISTS idx_part_activity ON activity_participations(activity_id);
   `);
+
+  // Column Alter Migrations for existing DBs
+  try { db.run("ALTER TABLE users ADD COLUMN avatar_url TEXT;"); } catch (_) {}
+  try { db.run("ALTER TABLE announcements ADD COLUMN hidden INTEGER DEFAULT 0;"); } catch (_) {}
+  try { db.run("ALTER TABLE activities ADD COLUMN points INTEGER DEFAULT 50;"); } catch (_) {}
+  try { db.run("ALTER TABLE activities ADD COLUMN hidden INTEGER DEFAULT 0;"); } catch (_) {}
+  try { db.run("ALTER TABLE activities ADD COLUMN image_url TEXT;"); } catch (_) {}
 
   isInitialized = true;
   persistToDisk();
@@ -269,7 +300,7 @@ function queryOne(sql, params = []) {
 }
 
 // -------------------------------------------------------------
-// DOMAIN DATA REPOSITORIES (Full CRUD for all application entities)
+// DOMAIN DATA REPOSITORIES
 // -------------------------------------------------------------
 
 // --- 1. Admins Repository ---
@@ -337,8 +368,8 @@ const Users = {
   },
   upsert(u) {
     run(`
-      INSERT INTO users (id, email, password, full_name, phone, address, barangay, kyc_status, kyc_document, kyc_doc_type, kyc_submitted_at, kyc_notes, eco_points, status, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, email, password, full_name, phone, address, barangay, avatar_url, kyc_status, kyc_document, kyc_doc_type, kyc_submitted_at, kyc_notes, eco_points, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         email=excluded.email,
         password=excluded.password,
@@ -346,6 +377,7 @@ const Users = {
         phone=excluded.phone,
         address=excluded.address,
         barangay=excluded.barangay,
+        avatar_url=excluded.avatar_url,
         kyc_status=excluded.kyc_status,
         kyc_document=excluded.kyc_document,
         kyc_doc_type=excluded.kyc_doc_type,
@@ -361,6 +393,7 @@ const Users = {
       u.phone || '',
       u.address || '',
       u.barangay || '',
+      u.avatar_url || u.avatarUrl || '',
       u.kyc_status || 'Unverified',
       u.kyc_document || '',
       u.kyc_doc_type || '',
@@ -374,6 +407,14 @@ const Users = {
   },
   updateKYC(id, status, notes = '') {
     run('UPDATE users SET kyc_status = ?, kyc_notes = ? WHERE id = ?', [status, notes, id]);
+    return this.getById(id);
+  },
+  updateAvatar(id, avatarUrl) {
+    run('UPDATE users SET avatar_url = ? WHERE id = ?', [avatarUrl, id]);
+    return this.getById(id);
+  },
+  addEcoPoints(id, points) {
+    run('UPDATE users SET eco_points = eco_points + ? WHERE id = ?', [points, id]);
     return this.getById(id);
   },
   delete(id) {
@@ -531,24 +572,28 @@ const Weather = {
   }
 };
 
-// --- 7. Announcements Repository ---
+// --- 7. Announcements Repository (Support Add, Edit, Hide, Delete) ---
 const Announcements = {
-  getAll() {
-    return query('SELECT * FROM announcements ORDER BY created_at DESC');
+  getAll(includeHidden = false) {
+    if (includeHidden) {
+      return query('SELECT * FROM announcements ORDER BY created_at DESC');
+    }
+    return query('SELECT * FROM announcements WHERE hidden = 0 OR hidden IS NULL ORDER BY created_at DESC');
   },
   getById(id) {
     return queryOne('SELECT * FROM announcements WHERE id = ?', [id]);
   },
   upsert(a) {
     run(`
-      INSERT INTO announcements (id, title, category, priority, content, image_url, created_by, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO announcements (id, title, category, priority, content, image_url, hidden, created_by, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         title=excluded.title,
         category=excluded.category,
         priority=excluded.priority,
         content=excluded.content,
         image_url=excluded.image_url,
+        hidden=excluded.hidden,
         created_by=excluded.created_by;
     `, [
       a.id,
@@ -557,10 +602,15 @@ const Announcements = {
       a.priority || 'Normal',
       a.content || '',
       a.image_url || a.imageUrl || '',
+      a.hidden ? 1 : 0,
       a.created_by || a.createdBy || 'Super Admin',
       a.created_at || a.createdAt || Date.now()
     ]);
     return this.getById(a.id);
+  },
+  setHidden(id, hidden) {
+    run('UPDATE announcements SET hidden = ? WHERE id = ?', [hidden ? 1 : 0, id]);
+    return this.getById(id);
   },
   delete(id) {
     run('DELETE FROM announcements WHERE id = ?', [id]);
@@ -601,10 +651,13 @@ const UserGuides = {
   }
 };
 
-// --- 9. Activities Repository ---
+// --- 9. Community Activities Repository (Support Add, Edit, Hide, Delete, Points) ---
 const Activities = {
-  getAll() {
-    const rows = query('SELECT * FROM activities ORDER BY created_at DESC');
+  getAll(includeHidden = false) {
+    const sql = includeHidden 
+      ? 'SELECT * FROM activities ORDER BY created_at DESC'
+      : 'SELECT * FROM activities WHERE hidden = 0 OR hidden IS NULL ORDER BY created_at DESC';
+    const rows = query(sql);
     return rows.map(r => ({
       ...r,
       participants: r.participants ? JSON.parse(r.participants) : []
@@ -618,8 +671,8 @@ const Activities = {
   upsert(a) {
     const parts = Array.isArray(a.participants) ? JSON.stringify(a.participants) : '[]';
     run(`
-      INSERT INTO activities (id, title, category, event_date, location, description, organizer, max_participants, participants, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO activities (id, title, category, event_date, location, description, organizer, points, max_participants, participants, hidden, image_url, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         title=excluded.title,
         category=excluded.category,
@@ -627,8 +680,11 @@ const Activities = {
         location=excluded.location,
         description=excluded.description,
         organizer=excluded.organizer,
+        points=excluded.points,
         max_participants=excluded.max_participants,
-        participants=excluded.participants;
+        participants=excluded.participants,
+        hidden=excluded.hidden,
+        image_url=excluded.image_url;
     `, [
       a.id,
       a.title || '',
@@ -637,18 +693,79 @@ const Activities = {
       a.location || '',
       a.description || '',
       a.organizer || '',
+      Number(a.points) || 50,
       a.max_participants || a.maxParticipants || 50,
       parts,
+      a.hidden ? 1 : 0,
+      a.image_url || a.imageUrl || '',
       a.created_at || a.createdAt || Date.now()
     ]);
     return this.getById(a.id);
   },
+  setHidden(id, hidden) {
+    run('UPDATE activities SET hidden = ? WHERE id = ?', [hidden ? 1 : 0, id]);
+    return this.getById(id);
+  },
   delete(id) {
     run('DELETE FROM activities WHERE id = ?', [id]);
+    run('DELETE FROM activity_participations WHERE activity_id = ?', [id]);
   }
 };
 
-// --- 10. Sessions Repository ---
+// --- 10. Activity Participations / Proof Submissions Repository ---
+const Participations = {
+  getAll() {
+    return query('SELECT * FROM activity_participations ORDER BY submitted_at DESC');
+  },
+  getByUser(userId) {
+    return query('SELECT * FROM activity_participations WHERE user_id = ? ORDER BY submitted_at DESC', [userId]);
+  },
+  getById(id) {
+    return queryOne('SELECT * FROM activity_participations WHERE id = ?', [id]);
+  },
+  submitProof(p) {
+    run(`
+      INSERT INTO activity_participations (id, activity_id, activity_title, user_id, user_name, user_email, proof_image_url, proof_description, status, points_awarded, submitted_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      p.id || ('part_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7)),
+      p.activity_id || p.activityId,
+      p.activity_title || p.activityTitle || 'Community Activity',
+      p.user_id || p.userId,
+      p.user_name || p.userName || 'Citizen Participant',
+      p.user_email || p.userEmail || '',
+      p.proof_image_url || p.proofImageUrl || '',
+      p.proof_description || p.proofDescription || '',
+      'Pending',
+      Number(p.points_awarded || p.points) || 50,
+      Date.now()
+    ]);
+    return this.getById(p.id);
+  },
+  reviewProof(id, status, notes = '') {
+    const part = this.getById(id);
+    if (!part) return null;
+    const previousStatus = part.status;
+    const now = Date.now();
+
+    run('UPDATE activity_participations SET status = ?, reviewed_at = ?, review_notes = ? WHERE id = ?', [status, now, notes, id]);
+
+    // If newly approved, award points to user
+    if (status === 'Approved' && previousStatus !== 'Approved') {
+      const user = Users.getById(part.user_id) || Users.getByEmail(part.user_email);
+      if (user) {
+        Users.addEcoPoints(user.id, Number(part.points_awarded || 50));
+      }
+    }
+
+    return this.getById(id);
+  },
+  delete(id) {
+    run('DELETE FROM activity_participations WHERE id = ?', [id]);
+  }
+};
+
+// --- 11. Sessions Repository ---
 const Sessions = {
   getAll() {
     return query('SELECT * FROM admin_sessions WHERE expires_at > ?', [Date.now()]);
@@ -685,7 +802,7 @@ const Sessions = {
   }
 };
 
-// --- 11. Media Uploads Repository ---
+// --- 12. Media Uploads Repository ---
 const Media = {
   getAll() {
     return query('SELECT filename, url, category, content_type, size, timestamp FROM media_uploads ORDER BY timestamp DESC');
@@ -802,6 +919,7 @@ module.exports = {
   Announcements,
   UserGuides,
   Activities,
+  Participations,
   Sessions,
   Media,
   migrateFromJsonFiles,
