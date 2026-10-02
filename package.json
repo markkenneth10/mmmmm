@@ -8,8 +8,8 @@
   "type": "module",
   "scripts": {
     "dev": "node server.cjs",
-    "build": "tsc && vite build",
-    "preview": "vite preview --port 3000",
+    "build": "node -c server.cjs",
+    "preview": "node server.cjs",
     "start": "node server.cjs"
   },
   "dependencies": {
