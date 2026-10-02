@@ -417,7 +417,8 @@ body.admin-drawer-open {
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--bg-page);
-  max-width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
   box-sizing: border-box;
 }
 
