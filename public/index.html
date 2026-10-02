@@ -249,9 +249,13 @@
  </ul>
 
  <div class="drawer-footer">
- <div style="font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">24/7 Disaster Hotlines</div>
+ <div style="font-weight: 700; margin-bottom: 0.45rem; color: var(--text-main); display: flex; align-items: center; gap: 0.35rem;">
+ <span>🚨</span> 24/7 Municipal Hotlines
+ </div>
+ <div id="cms-display-drawer-hotlines-list" style="display: flex; flex-direction: column; gap: 0.35rem;">
  <div>Rescue: <strong id="cms-display-drawer-rescue-hotline">(02) 8888-ECO</strong></div>
  <div>DENR Protection: <strong id="cms-display-drawer-denr-hotline">#911-DENR</strong></div>
+ </div>
  </div>
  </div>
  </div>
@@ -620,7 +624,7 @@
  </div>
  </div>
  </div>
- <div class="protocol-hotlines-row">
+ <div class="protocol-hotlines-row" id="cms-display-protocol-hotlines-list">
  <div class="protocol-hotline-item">
  <div class="protocol-hotline-label">Disaster Rescue</div>
  <div class="protocol-hotline-number">(02) 8888-ECO</div>
@@ -1547,12 +1551,14 @@
  <!-- Col 3: Emergency Hotlines -->
  <div>
  <div class="footer-column-heading">Municipal Emergency Hotlines</div>
+ <div id="cms-display-footer-hotlines-list">
  <p style="line-height: 1.7;">
  Municipal Disaster Rescue: <strong id="cms-display-emergency-hotline">(02) 8888-ECO</strong><br>
  DENR Environmental Protection: <strong id="cms-display-denr-hotline">#911-DENR</strong><br>
  City Health & Heat Helpline: <strong id="cms-display-health-hotline">(02) 8999-CLIMATE</strong><br>
  CENRO Inquiries: <strong>cenro@metroverde.gov.ph</strong>
  </p>
+ </div>
  </div>
 
  <!-- Col 4: Governance & Verification Badges -->

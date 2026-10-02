@@ -408,6 +408,11 @@ let websiteConfig = {
   emergencyHotline: "(02) 8888-ECO",
   denrHotline: "#911-DENR",
   healthHotline: "(02) 8999-CLIMATE",
+  emergencyHotlines: [
+    { id: "hotline-rescue", name: "Municipal Disaster Rescue", number: "(02) 8888-ECO", note: "24/7 Rapid Response", icon: "🚨", category: "rescue" },
+    { id: "hotline-denr", name: "DENR Environmental Hotline", number: "#911-DENR", note: "Enforcement & Violations", icon: "🌿", category: "denr" },
+    { id: "hotline-health", name: "City Health & Heat Helpline", number: "(02) 8999-CLIMATE", note: "Medical & Climate Health", icon: "🏥", category: "health" }
+  ],
 
   // Website Information CMS
   aboutWebsite: "Mobile and Web Climate Action Reporting and Information System is an integrated municipal digital infrastructure empowering citizens to document, verify, and resolve real-world environmental violations across Metro Verde. It bridges community observers with CENRO and DENR enforcement units through geospatial transparency.",
@@ -478,6 +483,15 @@ function loadConfigFromDisk() {
   if (!websiteConfig.logoImageUrl) {
     websiteConfig.logoImageUrl = '/assets/ic_climate_app_icon.jpg';
     websiteConfig.logoType = 'image';
+  }
+
+  // Ensure emergencyHotlines is valid
+  if (!Array.isArray(websiteConfig.emergencyHotlines) || websiteConfig.emergencyHotlines.length === 0) {
+    websiteConfig.emergencyHotlines = [
+      { id: "hotline-rescue", name: "Municipal Disaster Rescue", number: websiteConfig.emergencyHotline || "(02) 8888-ECO", note: "24/7 Rapid Response", icon: "🚨", category: "rescue" },
+      { id: "hotline-denr", name: "DENR Environmental Hotline", number: websiteConfig.denrHotline || "#911-DENR", note: "Enforcement & Violations", icon: "🌿", category: "denr" },
+      { id: "hotline-health", name: "City Health & Heat Helpline", number: websiteConfig.healthHotline || "(02) 8999-CLIMATE", note: "Medical & Climate Health", icon: "🏥", category: "health" }
+    ];
   }
 }
 loadConfigFromDisk();
@@ -1342,6 +1356,20 @@ const server = http.createServer(async (req, res) => {
         websiteConfig.logoImageUrl = updates.logoImageUrl;
         websiteConfig.logoType = 'image';
       }
+      // Synchronize emergency hotlines array and legacy fields
+      if (Array.isArray(updates.emergencyHotlines) && updates.emergencyHotlines.length > 0) {
+        websiteConfig.emergencyHotlines = updates.emergencyHotlines.filter(h => h && (h.name || h.number));
+        if (websiteConfig.emergencyHotlines[0]) {
+          websiteConfig.emergencyHotline = websiteConfig.emergencyHotlines[0].number;
+        }
+        if (websiteConfig.emergencyHotlines[1]) {
+          websiteConfig.denrHotline = websiteConfig.emergencyHotlines[1].number;
+        }
+        if (websiteConfig.emergencyHotlines[2]) {
+          websiteConfig.healthHotline = websiteConfig.emergencyHotlines[2].number;
+        }
+      }
+
       websiteConfig = {
         ...websiteConfig,
         ...updates,

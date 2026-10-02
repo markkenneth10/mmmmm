@@ -9,6 +9,32 @@
   "emergencyHotline": "(02) 8888-ECO",
   "denrHotline": "#911-DENR",
   "healthHotline": "(02) 8999-CLIMATE",
+  "emergencyHotlines": [
+    {
+      "id": "hotline-rescue",
+      "name": "Municipal Disaster Rescue",
+      "number": "(02) 8888-ECO",
+      "note": "24/7 Rapid Response",
+      "icon": "🚨",
+      "category": "rescue"
+    },
+    {
+      "id": "hotline-denr",
+      "name": "DENR Environmental Hotline",
+      "number": "#911-DENR",
+      "note": "Enforcement & Violations",
+      "icon": "🌿",
+      "category": "denr"
+    },
+    {
+      "id": "hotline-health",
+      "name": "City Health & Heat Helpline",
+      "number": "(02) 8999-CLIMATE",
+      "note": "Medical & Climate Health",
+      "icon": "🏥",
+      "category": "health"
+    }
+  ],
   "aboutWebsite": "Mobile and Web Climate Action Reporting and Information System is an integrated municipal digital infrastructure empowering citizens to document, verify, and resolve real-world environmental violations across Metro Verde. It bridges community observers with CENRO and DENR enforcement units through geospatial transparency.",
   "whyCreated": "Created to drastically shorten the municipal response cycle for ecological hazards from days to hours, eliminate illegal open dumping along riverbanks, curb clandestine deforestation in urban watersheds, and provide scientifically validated local climate intelligence to every resident.",
   "whoCreated": "Architected by Mark Kenneth Ulgasan in collaboration with the Municipal Climate Resilience Taskforce, LGU CENRO Officers, and Academic Environmental Science Advisors.",

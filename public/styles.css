@@ -1590,7 +1590,7 @@ button, input, select, textarea, a {
 
 .protocol-hotlines-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 0.5rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--border);

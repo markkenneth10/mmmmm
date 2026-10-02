@@ -254,25 +254,31 @@
       </div>
     </div>
 
-    <!-- Municipal Emergency Hotlines (3 Columns) -->
+    <!-- Municipal Emergency Hotlines (Dynamic Hotline Manager) -->
     <div style="margin-bottom: 1.5rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem;">
-      <label style="display:block; font-size:0.85rem; font-weight:800; color:var(--text-main); margin-bottom:0.85rem; display:flex; align-items:center; gap:0.4rem;">
-        <span>📞</span> Municipal Emergency & Environmental Hotlines
-      </label>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
         <div>
-          <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.35rem; color:var(--text-muted);">Municipal Emergency (Rescue)</label>
-          <input type="text" id="cms-emergency-hotline" class="admin-input" placeholder="(02) 8888-ECO">
+          <label style="display:block; font-size:0.92rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+            <span>📞</span> Municipal Emergency & Environmental Hotlines
+          </label>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem; max-width: 680px; line-height: 1.45;">
+            Edit existing hotlines or click <strong>Add Emergency Hotline</strong> to add new municipal dispatch numbers (e.g. MDRRMO, PNP Police, BFP Fire, Red Cross, Ambulance). All modifications are saved and updated live across the citizen web portal.
+          </p>
         </div>
-        <div>
-          <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.35rem; color:var(--text-muted);">DENR Environmental Hotline</label>
-          <input type="text" id="cms-denr-hotline" class="admin-input" placeholder="#911-DENR">
-        </div>
-        <div>
-          <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.35rem; color:var(--text-muted);">City Health & Heat Helpline</label>
-          <input type="text" id="cms-health-hotline" class="admin-input" placeholder="(02) 8999-CLIMATE">
-        </div>
+        <button type="button" class="btn-admin-primary" onclick="addNewHotlineRow()" style="font-size:0.82rem; padding:0.45rem 0.95rem; display:inline-flex; align-items:center; gap:0.4rem; cursor:pointer;">
+          <span>➕</span> Add Emergency Hotline
+        </button>
       </div>
+
+      <!-- Container for dynamic hotline cards -->
+      <div id="cms-hotlines-list-container" style="display: flex; flex-direction: column; gap: 0.85rem;">
+        <!-- Dynamically rendered by admin.js -->
+      </div>
+
+      <!-- Hidden legacy inputs for backward compatibility -->
+      <input type="hidden" id="cms-emergency-hotline" value="">
+      <input type="hidden" id="cms-denr-hotline" value="">
+      <input type="hidden" id="cms-health-hotline" value="">
     </div>
 
     <!-- Official Logo Upload Control -->

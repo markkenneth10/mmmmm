@@ -996,6 +996,151 @@ async function deleteMediaAsset(filename) {
  }
 }
 
+// 3. Website CMS & Branding (Dynamic Hotlines & Municipal Content)
+let adminHotlinesList = [];
+
+const HOTLINE_ICON_OPTIONS = [
+  { value: '🚨', label: '🚨 Disaster & Rescue (CDRRMO / Emergency)', category: 'rescue' },
+  { value: '🌿', label: '🌿 Environmental Protection (DENR / CENRO)', category: 'denr' },
+  { value: '🏥', label: '🏥 Health & Heat Helpline (DOH / City Health)', category: 'health' },
+  { value: '🚒', label: '🚒 Fire Department (BFP)', category: 'fire' },
+  { value: '👮', label: '👮 Police Assistance (PNP)', category: 'police' },
+  { value: '🌊', label: '🌊 Coast Guard & Water Search (PCG)', category: 'water' },
+  { value: '🚑', label: '🚑 Medical Ambulance Dispatch', category: 'ambulance' },
+  { value: '📞', label: '📞 General Municipal Helpline', category: 'general' }
+];
+
+function renderAdminHotlinesUI() {
+  const container = document.getElementById('cms-hotlines-list-container');
+  if (!container) return;
+
+  if (adminHotlinesList.length === 0) {
+    container.innerHTML = `
+      <div style="background: rgba(255,255,255,0.03); border: 1px dashed var(--border); border-radius: 8px; padding: 1.25rem; text-align: center; color: var(--text-muted);">
+        <p style="margin-bottom: 0.75rem; font-size: 0.85rem;">No emergency hotlines currently configured.</p>
+        <button type="button" class="btn-admin-primary" onclick="addNewHotlineRow()" style="font-size: 0.8rem; padding: 0.4rem 0.85rem;">➕ Add First Emergency Hotline</button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = adminHotlinesList.map((item, idx) => `
+    <div class="admin-hotline-card" data-index="${idx}" style="background: #172033; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; position: relative;">
+      <!-- Card Header: Index Badge & Reordering / Delete -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.25rem;">${item.icon || '📞'}</span>
+          <strong style="font-size: 0.85rem; color: #38bdf8;">Hotline #${idx + 1}: ${escapeHtml(item.name || 'Emergency Contact')}</strong>
+          ${item.note ? `<span style="font-size: 0.68rem; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 0.1rem 0.45rem; border-radius: 4px; font-weight: 700;">${escapeHtml(item.note)}</span>` : ''}
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.35rem;">
+          <button type="button" class="btn-admin-outline" onclick="moveHotlineRow(${idx}, -1)" ${idx === 0 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Move Up" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">▲</button>
+          <button type="button" class="btn-admin-outline" onclick="moveHotlineRow(${idx}, 1)" ${idx === adminHotlinesList.length - 1 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Move Down" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">▼</button>
+          <button type="button" class="btn-admin-danger" onclick="deleteHotlineRow(${idx})" title="Delete Hotline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; margin-left: 0.25rem;">🗑️ Delete</button>
+        </div>
+      </div>
+
+      <!-- Card Inputs Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem;">
+        <div>
+          <label style="display:block; font-size:0.75rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-muted);">Agency / Hotline Name</label>
+          <input type="text" class="admin-input" value="${escapeHtml(item.name || '')}" oninput="updateHotlineField(${idx}, 'name', this.value)" placeholder="e.g. Municipal Disaster Rescue" required style="font-size:0.85rem; padding:0.5rem 0.75rem;">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.75rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-muted);">Hotline / Contact Number</label>
+          <input type="text" class="admin-input" value="${escapeHtml(item.number || '')}" oninput="updateHotlineField(${idx}, 'number', this.value)" placeholder="e.g. (02) 8888-ECO or #911-DENR" required style="font-size:0.85rem; padding:0.5rem 0.75rem; font-weight:700; color:#34d399;">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.75rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-muted);">Availability / Note</label>
+          <input type="text" class="admin-input" value="${escapeHtml(item.note || '')}" oninput="updateHotlineField(${idx}, 'note', this.value)" placeholder="e.g. 24/7 Rapid Response, Toll-Free" style="font-size:0.85rem; padding:0.5rem 0.75rem;">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.75rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-muted);">Service Icon & Category</label>
+          <select class="admin-input" onchange="updateHotlineCategory(${idx}, this.value)" style="font-size:0.85rem; padding:0.5rem 0.75rem;">
+            ${HOTLINE_ICON_OPTIONS.map(opt => `
+              <option value="${opt.value}" ${item.icon === opt.value ? 'selected' : ''}>${opt.label}</option>
+            `).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Sync legacy hidden inputs
+  if (document.getElementById('cms-emergency-hotline')) {
+    document.getElementById('cms-emergency-hotline').value = adminHotlinesList[0]?.number || '';
+  }
+  if (document.getElementById('cms-denr-hotline')) {
+    document.getElementById('cms-denr-hotline').value = adminHotlinesList[1]?.number || '';
+  }
+  if (document.getElementById('cms-health-hotline')) {
+    document.getElementById('cms-health-hotline').value = adminHotlinesList[2]?.number || '';
+  }
+}
+
+function addNewHotlineRow(initialData) {
+  const newHotline = initialData || {
+    id: 'hotline_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+    name: 'Municipal Emergency Service',
+    number: '',
+    note: '24/7 Rapid Response',
+    icon: '🚨',
+    category: 'rescue'
+  };
+  adminHotlinesList.push(newHotline);
+  renderAdminHotlinesUI();
+
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#cms-hotlines-list-container input[type="text"]');
+    if (inputs.length > 0) {
+      inputs[inputs.length - 3].focus();
+    }
+  }, 60);
+}
+
+function deleteHotlineRow(index) {
+  if (adminHotlinesList.length <= 1) {
+    if (!confirm('This is the only configured emergency hotline. Are you sure you want to remove it?')) return;
+  }
+  adminHotlinesList.splice(index, 1);
+  renderAdminHotlinesUI();
+}
+
+function moveHotlineRow(index, direction) {
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= adminHotlinesList.length) return;
+  const temp = adminHotlinesList[index];
+  adminHotlinesList[index] = adminHotlinesList[targetIndex];
+  adminHotlinesList[targetIndex] = temp;
+  renderAdminHotlinesUI();
+}
+
+function updateHotlineField(index, field, value) {
+  if (adminHotlinesList[index]) {
+    adminHotlinesList[index][field] = value;
+    if (field === 'number') {
+      if (index === 0 && document.getElementById('cms-emergency-hotline')) {
+        document.getElementById('cms-emergency-hotline').value = value;
+      } else if (index === 1 && document.getElementById('cms-denr-hotline')) {
+        document.getElementById('cms-denr-hotline').value = value;
+      } else if (index === 2 && document.getElementById('cms-health-hotline')) {
+        document.getElementById('cms-health-hotline').value = value;
+      }
+    }
+  }
+}
+
+function updateHotlineCategory(index, iconValue) {
+  if (adminHotlinesList[index]) {
+    adminHotlinesList[index].icon = iconValue;
+    const match = HOTLINE_ICON_OPTIONS.find(opt => opt.value === iconValue);
+    if (match) {
+      adminHotlinesList[index].category = match.category;
+    }
+    renderAdminHotlinesUI();
+  }
+}
+
 // 3. Website CMS & Branding
 async function loadCMSData() {
  try {
@@ -1011,9 +1156,18 @@ async function loadCMSData() {
  document.getElementById('cms-website-name').value = config.websiteName || '';
  document.getElementById('cms-website-subtitle').value = config.websiteSubtitle || '';
  document.getElementById('cms-website-logo').value = config.websiteLogo || '';
-  document.getElementById('cms-emergency-hotline').value = config.emergencyHotline || '';
-  if (document.getElementById('cms-denr-hotline')) document.getElementById('cms-denr-hotline').value = config.denrHotline || '';
-  if (document.getElementById('cms-health-hotline')) document.getElementById('cms-health-hotline').value = config.healthHotline || '';
+
+  // Populate dynamic hotlines
+  if (Array.isArray(config.emergencyHotlines) && config.emergencyHotlines.length > 0) {
+    adminHotlinesList = JSON.parse(JSON.stringify(config.emergencyHotlines));
+  } else {
+    adminHotlinesList = [
+      { id: 'hotline-rescue', name: 'Municipal Disaster Rescue', number: config.emergencyHotline || '(02) 8888-ECO', note: '24/7 Rapid Response', icon: '🚨', category: 'rescue' },
+      { id: 'hotline-denr', name: 'DENR Environmental Hotline', number: config.denrHotline || '#911-DENR', note: 'Enforcement & Violations', icon: '🌿', category: 'denr' },
+      { id: 'hotline-health', name: 'City Health & Heat Helpline', number: config.healthHotline || '(02) 8999-CLIMATE', note: 'Medical & Climate Health', icon: '🏥', category: 'health' }
+    ];
+  }
+  renderAdminHotlinesUI();
 
   // Climate Info Cards
   const infoCards = config.climateInformation || [];
@@ -1129,6 +1283,22 @@ async function handleSaveCMS(e) {
  logoTypeVal = 'image';
  }
 
+  // Clean and validate emergency hotlines list
+  const cleanHotlines = adminHotlinesList
+    .filter(h => h && ((h.name && h.name.trim()) || (h.number && h.number.trim())))
+    .map(h => ({
+      id: h.id || ('hotline_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
+      name: (h.name || '').trim(),
+      number: (h.number || '').trim(),
+      note: (h.note || '').trim(),
+      icon: h.icon || '📞',
+      category: h.category || 'general'
+    }));
+
+  const primaryRescue = cleanHotlines[0]?.number || (document.getElementById('cms-emergency-hotline') ? document.getElementById('cms-emergency-hotline').value.trim() : '');
+  const primaryDenr = cleanHotlines[1]?.number || (document.getElementById('cms-denr-hotline') ? document.getElementById('cms-denr-hotline').value.trim() : '');
+  const primaryHealth = cleanHotlines[2]?.number || (document.getElementById('cms-health-hotline') ? document.getElementById('cms-health-hotline').value.trim() : '');
+
   const updates = {
     websiteName: document.getElementById('cms-website-name').value.trim(),
     websiteSubtitle: document.getElementById('cms-website-subtitle').value.trim(),
@@ -1137,9 +1307,10 @@ async function handleSaveCMS(e) {
     logoImageUrl: logoUrlVal,
     heroImageUrl: document.getElementById('cms-hero-image-url').value.trim(),
     aboutImageUrl: document.getElementById('cms-about-image-url').value.trim(),
-    emergencyHotline: document.getElementById('cms-emergency-hotline').value.trim(),
-    denrHotline: document.getElementById('cms-denr-hotline') ? document.getElementById('cms-denr-hotline').value.trim() : '',
-    healthHotline: document.getElementById('cms-health-hotline') ? document.getElementById('cms-health-hotline').value.trim() : '',
+    emergencyHotlines: cleanHotlines,
+    emergencyHotline: primaryRescue,
+    denrHotline: primaryDenr,
+    healthHotline: primaryHealth,
 
     climateChangeInfo: document.getElementById('cms-climate-change').value.trim(),
     climateActionInfo: document.getElementById('cms-climate-action').value.trim(),
