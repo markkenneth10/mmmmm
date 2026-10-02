@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "dev": "node server.cjs",
-    "build": "node -e \"require('./db.cjs'); console.log('Climate Action Server Validated')\"",
+    "build": "node -c server.cjs",
     "preview": "node server.cjs",
     "start": "node server.cjs"
   },

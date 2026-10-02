@@ -30,10 +30,6 @@ function persistToDisk() {
     const buffer = Buffer.from(data);
     fs.writeFileSync(DB_FILE, buffer);
     try { fs.writeFileSync(TMP_DB_FILE, buffer); } catch (_) {}
-    try {
-      const permBackup = path.join(DB_BACKUP_DIR, 'climate_database_permanent_backup.sqlite');
-      fs.writeFileSync(permBackup, buffer);
-    } catch (_) {}
   } catch (err) {
     console.error('[Database] Failed to persist SQLite database to disk:', err.message);
   }
@@ -61,14 +57,6 @@ async function initDatabase() {
     try {
       fileBuffer = fs.readFileSync(TMP_DB_FILE);
       console.log('[Database] Restored SQLite database from tmp backup', TMP_DB_FILE);
-    } catch (_) {}
-  }
-
-  const permBackup = path.join(DB_BACKUP_DIR, 'climate_database_permanent_backup.sqlite');
-  if (!fileBuffer && fs.existsSync(permBackup)) {
-    try {
-      fileBuffer = fs.readFileSync(permBackup);
-      console.log('[Database] Restored SQLite database from permanent backup', permBackup);
     } catch (_) {}
   }
 
@@ -269,22 +257,11 @@ async function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_part_activity ON activity_participations(activity_id);
   `);
 
-  // Column Alter Migrations for existing DBs
-  try { db.run("ALTER TABLE users ADD COLUMN avatar_url TEXT;"); } catch (_) {}
-  try { db.run("ALTER TABLE announcements ADD COLUMN hidden INTEGER DEFAULT 0;"); } catch (_) {}
-  try { db.run("ALTER TABLE activities ADD COLUMN points INTEGER DEFAULT 50;"); } catch (_) {}
-  try { db.run("ALTER TABLE activities ADD COLUMN hidden INTEGER DEFAULT 0;"); } catch (_) {}
-  try { db.run("ALTER TABLE activities ADD COLUMN image_url TEXT;"); } catch (_) {}
-
   isInitialized = true;
   persistToDisk();
   console.log('[Database] SQLite relational schema verified and ready.');
   return db;
 }
-
-// -------------------------------------------------------------
-// HELPER QUERY UTILITIES
-// -------------------------------------------------------------
 
 function run(sql, params = []) {
   if (!db) throw new Error('Database not initialized');
@@ -311,11 +288,7 @@ function queryOne(sql, params = []) {
   return res.length > 0 ? res[0] : null;
 }
 
-// -------------------------------------------------------------
-// DOMAIN DATA REPOSITORIES
-// -------------------------------------------------------------
-
-// --- 1. Admins Repository ---
+// Repositories
 const Admins = {
   getAll() {
     const rows = query('SELECT * FROM admins ORDER BY created_at ASC');
@@ -367,7 +340,6 @@ const Admins = {
   }
 };
 
-// --- 2. Citizen Users Repository ---
 const Users = {
   getAll() {
     return query('SELECT * FROM users ORDER BY created_at DESC');
@@ -400,18 +372,18 @@ const Users = {
     `, [
       u.id,
       u.email.toLowerCase().trim(),
-      u.password,
+      u.password || 'password123',
       u.full_name || u.name || '',
       u.phone || '',
       u.address || '',
       u.barangay || '',
-      u.avatar_url || u.avatarUrl || '',
+      u.avatar_url || u.avatarUrl || u.avatar || '',
       u.kyc_status || 'Unverified',
       u.kyc_document || '',
       u.kyc_doc_type || '',
       u.kyc_submitted_at || null,
       u.kyc_notes || '',
-      u.eco_points || 0,
+      u.eco_points || u.ecoPoints || 0,
       u.status || 'Active',
       u.created_at || Date.now()
     ]);
@@ -434,7 +406,6 @@ const Users = {
   }
 };
 
-// --- 3. Incident Reports Repository ---
 const Reports = {
   getAll() {
     return query('SELECT * FROM reports ORDER BY created_at DESC');
@@ -492,7 +463,6 @@ const Reports = {
   }
 };
 
-// --- 4. Website Configuration Repository ---
 const Config = {
   get(key = 'main_config') {
     const row = queryOne('SELECT config_value FROM website_config WHERE config_key = ?', [key]);
@@ -517,7 +487,6 @@ const Config = {
   }
 };
 
-// --- 5. Emergency Hotlines Repository ---
 const Hotlines = {
   getAll() {
     return query('SELECT * FROM emergency_hotlines ORDER BY sort_order ASC, updated_at ASC');
@@ -544,7 +513,6 @@ const Hotlines = {
   }
 };
 
-// --- 6. Weather Advisories Repository ---
 const Weather = {
   get() {
     return queryOne('SELECT * FROM weather_advisories WHERE id = ?', ['current']);
@@ -584,7 +552,6 @@ const Weather = {
   }
 };
 
-// --- 7. Announcements Repository (Support Add, Edit, Hide, Delete) ---
 const Announcements = {
   getAll(includeHidden = false) {
     if (includeHidden) {
@@ -629,7 +596,6 @@ const Announcements = {
   }
 };
 
-// --- 8. User Guides Repository ---
 const UserGuides = {
   getAll() {
     return query('SELECT * FROM user_guides ORDER BY created_at ASC');
@@ -663,7 +629,6 @@ const UserGuides = {
   }
 };
 
-// --- 9. Community Activities Repository (Support Add, Edit, Hide, Delete, Points) ---
 const Activities = {
   getAll(includeHidden = false) {
     const sql = includeHidden 
@@ -724,7 +689,6 @@ const Activities = {
   }
 };
 
-// --- 10. Activity Participations / Proof Submissions Repository ---
 const Participations = {
   getAll() {
     return query('SELECT * FROM activity_participations ORDER BY submitted_at DESC');
@@ -762,7 +726,6 @@ const Participations = {
 
     run('UPDATE activity_participations SET status = ?, reviewed_at = ?, review_notes = ? WHERE id = ?', [status, now, notes, id]);
 
-    // If newly approved, award points to user
     if (status === 'Approved' && previousStatus !== 'Approved') {
       const user = Users.getById(part.user_id) || Users.getByEmail(part.user_email);
       if (user) {
@@ -777,7 +740,6 @@ const Participations = {
   }
 };
 
-// --- 11. Sessions Repository ---
 const Sessions = {
   getAll() {
     return query('SELECT * FROM admin_sessions WHERE expires_at > ?', [Date.now()]);
@@ -790,39 +752,23 @@ const Sessions = {
       INSERT INTO admin_sessions (token, admin_id, role, email, name, expires_at, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(token) DO UPDATE SET
-        admin_id=excluded.admin_id,
         role=excluded.role,
         email=excluded.email,
         name=excluded.name,
         expires_at=excluded.expires_at;
-    `, [
-      token,
-      s.adminId || s.admin_id,
-      s.role,
-      s.email,
-      s.name,
-      s.expiresAt || s.expires_at,
-      s.createdAt || s.created_at || Date.now()
-    ]);
+    `, [token, s.admin_id || s.adminId, s.role, s.email, s.name, s.expires_at || s.expiresAt, Date.now()]);
     return this.get(token);
   },
   delete(token) {
     run('DELETE FROM admin_sessions WHERE token = ?', [token]);
-  },
-  cleanup() {
-    run('DELETE FROM admin_sessions WHERE expires_at <= ?', [Date.now()]);
   }
 };
 
-// --- 12. Media Uploads Repository ---
 const Media = {
   getAll() {
-    return query('SELECT filename, url, category, content_type, size, timestamp FROM media_uploads ORDER BY timestamp DESC');
+    return query('SELECT * FROM media_uploads ORDER BY timestamp DESC');
   },
-  get(filename) {
-    return queryOne('SELECT * FROM media_uploads WHERE filename = ?', [filename]);
-  },
-  save(m) {
+  save(item) {
     run(`
       INSERT INTO media_uploads (filename, url, category, content_type, size, base64_data, timestamp)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -834,87 +780,19 @@ const Media = {
         base64_data=excluded.base64_data,
         timestamp=excluded.timestamp;
     `, [
-      m.filename,
-      m.url,
-      m.category || 'media',
-      m.contentType || m.content_type || 'image/png',
-      m.size || 0,
-      m.base64 || m.base64_data || '',
-      m.timestamp || Date.now()
+      item.filename,
+      item.url,
+      item.category || 'media',
+      item.contentType || 'image/png',
+      item.size || 0,
+      item.base64Data || '',
+      item.timestamp || Date.now()
     ]);
-    return this.get(m.filename);
   },
   delete(filename) {
     run('DELETE FROM media_uploads WHERE filename = ?', [filename]);
   }
 };
-
-/**
- * Migration helper to import existing JSON data files into SQLite tables
- */
-function migrateFromJsonFiles(stores = {}) {
-  try {
-    // 1. Migrate Admins
-    if (Array.isArray(stores.admins) && stores.admins.length > 0) {
-      stores.admins.forEach(a => {
-        if (a && a.email) Admins.upsert(a);
-      });
-    }
-
-    // 2. Migrate Users
-    if (Array.isArray(stores.users) && stores.users.length > 0) {
-      stores.users.forEach(u => {
-        if (u && u.email) Users.upsert(u);
-      });
-    }
-
-    // 3. Migrate Reports
-    if (Array.isArray(stores.reports) && stores.reports.length > 0) {
-      stores.reports.forEach(r => {
-        if (r && r.id) Reports.upsert(r);
-      });
-    }
-
-    // 4. Migrate Config
-    if (stores.config && typeof stores.config === 'object') {
-      Config.set('main_config', stores.config);
-      if (Array.isArray(stores.config.emergencyHotlines)) {
-        Hotlines.saveAll(stores.config.emergencyHotlines);
-      }
-    }
-
-    // 5. Migrate Weather
-    if (stores.weather && typeof stores.weather === 'object') {
-      Weather.set(stores.weather);
-    }
-
-    // 6. Migrate Announcements
-    if (Array.isArray(stores.announcements) && stores.announcements.length > 0) {
-      stores.announcements.forEach(a => {
-        if (a && a.id) Announcements.upsert(a);
-      });
-    }
-
-    // 7. Migrate Guides
-    if (Array.isArray(stores.guides) && stores.guides.length > 0) {
-      stores.guides.forEach(g => {
-        if (g && g.id) UserGuides.upsert(g);
-      });
-    }
-
-    // 8. Migrate Activities
-    if (Array.isArray(stores.activities) && stores.activities.length > 0) {
-      stores.activities.forEach(act => {
-        if (act && act.id) Activities.upsert(act);
-      });
-    }
-
-    persistToDisk();
-    console.log('[Database] JSON to SQLite database migration complete.');
-  } catch (err) {
-    console.error('[Database] Migration error:', err.message);
-  }
-}
 
 module.exports = {
   initDatabase,
@@ -933,7 +811,5 @@ module.exports = {
   Activities,
   Participations,
   Sessions,
-  Media,
-  migrateFromJsonFiles,
-  DB_FILE
+  Media
 };
