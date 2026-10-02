@@ -1,0 +1,13 @@
+{
+  "name": "climate-action-system",
+  "version": "1.0.0",
+  "description": "Climate Action Reporting & Information System",
+  "main": "server.cjs",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node --experimental-sqlite server.cjs",
+    "dev": "node --experimental-sqlite server.cjs",
+    "build": "node -c server.cjs && node -c db.cjs"
+  },
+  "dependencies": {}
+}
