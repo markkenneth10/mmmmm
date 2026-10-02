@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>LGU CENRO Administrative Command Console | Climate Action System</title>
+ 
+ <!-- Dynamic Brand Logo Favicon -->
+ <link id="admin-favicon" rel="icon" type="image/png" href="/favicon.ico">
+
+ <!-- Google Fonts -->
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+ <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-body">
+
+ <!-- 1. ADMIN AUTHENTICATION SCREEN (Shown when logged out) -->
+ <div id="admin-auth-view" class="admin-login-wrap">
+ <div class="admin-login-card">
+ <div style="text-align: center; margin-bottom: 1.75rem;">
+ <div id="admin-auth-logo" style="width: 64px; height: 64px; margin: 0 auto 1rem; background: linear-gradient(135deg, #16a765, #0b4d2b); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(11,77,43,0.25); color: #FFFFFF;"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+ <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.35rem;">Administrative Console</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">LGU CENRO & Environmental Protection Directorate</p>
+ </div>
+
+ <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
+ <div style="margin-bottom: 1rem;">
+ <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">Official Administrative Email</label>
+ <input type="email" id="admin-email-input" class="admin-input" placeholder="Enter official admin email" required autocomplete="username">
+ </div>
+
+ <div style="margin-bottom: 1.25rem;">
+ <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">Password</label>
+ <input type="password" id="admin-password-input" class="admin-input" placeholder="••••••••" required>
+ </div>
+
+ <div id="admin-login-error" style="display: none; background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 8px; font-size: 0.84rem; font-weight: 600; border: 1px solid #fecaca; margin-bottom: 1rem;"></div>
+
+ <button type="submit" class="btn-admin-primary" style="width: 100%; padding: 0.85rem; font-size: 0.92rem; background: var(--primary);">
+ Sign In to Administrative Console →
+ </button>
+ </form>
+
+ <div style="margin-top: 1.5rem; text-align: center; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+ <button type="button" onclick="exitDashboard(false)" class="btn-admin-outline" style="width: 100%; padding: 0.75rem; font-size: 0.88rem; justify-content: center; display: inline-flex; align-items: center; gap: 0.5rem; border-color: var(--border); color: var(--text-main); font-weight: 700;">
+ Exit to Public Citizen Website
+ </button>
+ </div>
+ </div>
+ </div>
+
+ <!-- 2. MAIN ADMINISTRATIVE WORKSPACE (Shown when authenticated) -->
+ <div id="admin-workspace-view" style="display: none; flex-direction: column; min-height: 100vh;">
+ 
+ <!-- Topbar: Clean layout with logo alone, no cluttered icons beside logo -->
+ <header class="admin-topbar">
+ <div class="admin-topbar-left">
+ <div class="admin-brand">
+ <div class="admin-logo-box" id="admin-header-logo"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+ <div>
+ <div class="admin-brand-title">
+ <span id="admin-header-title">Climate Action</span>
+ <span id="admin-role-badge" class="admin-badge-super">SUPER ADMIN</span>
+ </div>
+ <div class="admin-brand-subtitle">Central Ecological Management & Governance Console</div>
+ </div>
+ </div>
+ </div>
+
+ <div class="admin-topbar-right">
+ <div class="admin-user-pill">
+ <div class="admin-avatar-circle" id="admin-header-avatar">SA</div>
+ <div class="admin-user-details">
+ <span class="admin-profile-name" id="admin-profile-name" style="font-weight: 700; font-size: 0.82rem; color: #FFFFFF; display: block; line-height: 1.2;">Administrator</span>
+ <span class="admin-profile-dept" id="admin-profile-dept" style="font-size: 0.68rem; color: rgba(255,255,255,0.75); display: block;">LGU CENRO Command</span>
+ </div>
+ </div>
+ <a href="/" target="_blank" class="btn-admin-outline" style="text-decoration: none; font-size: 0.78rem; padding: 0.45rem 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem; color: #FFFFFF; border-color: rgba(255,255,255,0.25);">
+ <span class="admin-site-link-text">Citizen Site</span> ↗
+ </a>
+ <button type="button" onclick="exitDashboard(true)" class="btn-admin-danger" style="font-size: 0.78rem; padding: 0.45rem 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem;" title="Sign out of Admin Console">
+ <span class="admin-signout-text">Sign Out</span> 
+ </button>
+ </div>
+ </header>
+
+ <!-- Mobile Drawer Backdrop -->
+ <div class="admin-sidebar-backdrop" onclick="closeAdminMobileSidebar()"></div>
+
+ <div class="admin-shell">
+ <!-- Sidebar Navigation -->
+ <aside class="admin-sidebar">
+ <!-- Mobile Drawer Header with Close Button -->
+ <div class="admin-sidebar-mobile-header">
+ <div style="display: flex; align-items: center; gap: 0.6rem;">
+ <div class="admin-logo-box" style="width: 32px; height: 32px; min-width: 32px; font-size: 1.1rem; border-radius: 8px;"></div>
+ <div>
+ <div style="font-weight: 800; color: var(--primary-dark); font-size: 0.92rem; line-height: 1.1;">Admin Console</div>
+ <div style="font-size: 0.68rem; color: var(--text-muted);">LGU CENRO Portal</div>
+ </div>
+ </div>
+ <button type="button" class="btn-admin-close-sidebar" onclick="closeAdminMobileSidebar()" aria-label="Close navigation menu"></button>
+ </div>
+
+ <div class="admin-nav-category">Main Console</div>
+ <button class="admin-nav-item active" onclick="switchAdminTab('overview')">Command Center</button>
+ <button class="admin-nav-item" onclick="switchAdminTab('triage')">Incident Triage & Dispatch</button>
+
+ <div class="admin-nav-category">Citizen Site Content</div>
+ <button class="admin-nav-item" onclick="switchAdminTab('cms')">Website CMS & Info</button>
+ <button class="admin-nav-item" onclick="switchAdminTab('weather')">Weather & Advisories</button>
+ <button class="admin-nav-item" onclick="switchAdminTab('announcements')">Announcements</button>
+ <button class="admin-nav-item" id="nav-activities" onclick="switchAdminTab('activities')">Community Activities & Proofs <span id="admin-proofs-pending-pill" class="admin-badge-pill" style="display:none; background: #EF4444; color: #fff; margin-left: auto; font-size: 0.68rem; padding: 0.15rem 0.45rem;">0</span></button>
+ <button class="admin-nav-item" onclick="switchAdminTab('guides')">User Guides Manager</button>
+
+ <div class="admin-nav-category">Governance & Users</div>
+ <button class="admin-nav-item" id="nav-kyc" onclick="switchAdminTab('kyc')">
+ Citizen KYC Verifications <span id="admin-kyc-pending-pill" class="admin-badge-pill" style="display:none; background: #EF4444; color: #fff; margin-left: auto; font-size: 0.68rem; padding: 0.15rem 0.45rem;">0</span>
+ </button>
+ <button class="admin-nav-item" onclick="switchAdminTab('users')">Citizen Users & Analytics</button>
+ <button class="admin-nav-item" id="nav-subadmins" onclick="switchAdminTab('subadmins')">Sub-Admin Management</button>
+ <button class="admin-nav-item" id="nav-settings" onclick="switchAdminTab('settings')">Super Admin Settings</button>
+
+ <div class="admin-nav-category" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">Citizen Portal & Session</div>
+ <a href="/" target="_blank" class="admin-nav-item" style="color: var(--primary); font-weight: 700; background: var(--primary-tint); text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+ View Public Website ↗
+ </a>
+ <button type="button" class="admin-nav-item" onclick="exitDashboard(true)" style="color: #DC2626; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+ Sign Out
+ </button>
+ </aside>
+
+ <!-- Content Views Area -->
+ <main class="admin-content">
+
+ <!-- TAB 1: COMMAND CENTER OVERVIEW -->
+ <section id="tab-overview" class="admin-section">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+ <div>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Operational Command Center</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Real-time municipal telemetry across Metro Verde sectors</p>
+ </div>
+ <button onclick="refreshAllAdminData()" class="btn-admin-outline" style="font-size: 0.8rem;">Refresh Telemetry</button>
+ </div>
+
+ <!-- KPI Cards -->
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+ <div class="admin-card" style="border-left: 4px solid #10b981;">
+ <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Total Citizen Reports</div>
+ <div style="font-size: 2rem; font-weight: 800; color: #fff; margin: 0.3rem 0;" id="kpi-admin-total-reports">0</div>
+ <div style="font-size: 0.75rem; color: #34d399;" id="kpi-admin-resolution-rate">Resolution: 0%</div>
+ </div>
+
+ <div class="admin-card" style="border-left: 4px solid #ef4444;">
+ <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Critical Hazards Active</div>
+ <div style="font-size: 2rem; font-weight: 800; color: #f87171; margin: 0.3rem 0;" id="kpi-admin-critical-reports">0</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted);">Immediate CENRO dispatch required</div>
+ </div>
+
+ <div class="admin-card" style="border-left: 4px solid #0284c7;">
+ <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Registered Citizens</div>
+ <div style="font-size: 2rem; font-weight: 800; color: #38bdf8; margin: 0.3rem 0;" id="kpi-admin-total-users">0</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted);" id="kpi-admin-active-today">Active today: 0 users</div>
+ </div>
+
+ <div class="admin-card" style="border-left: 4px solid #f59e0b;">
+ <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Current Weather Alert</div>
+ <div style="font-size: 2rem; font-weight: 800; color: #fbbf24; margin: 0.3rem 0;" id="kpi-admin-weather-alert">Yellow</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted);" id="kpi-admin-temp">32°C (Heat Index 38°C)</div>
+ </div>
+ </div>
+
+ <!-- Quick Actions & Urgent Tickets -->
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Priority Urgent Reports (Awaiting Resolution)</h3>
+ <div class="admin-table-container">
+ <table class="admin-table">
+ <thead>
+ <tr>
+ <th>Ticket ID</th>
+ <th>Category</th>
+ <th>Barangay & Location</th>
+ <th>Severity</th>
+ <th>Status</th>
+ <th>Assigned Response Unit</th>
+ <th>Action</th>
+ </tr>
+ </thead>
+ <tbody id="admin-quick-triage-table">
+ <!-- Rendered by JS -->
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </section>
+
+ <!-- TAB 2: INCIDENT TRIAGE & DISPATCH -->
+ <section id="tab-triage" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem;">
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>LGU Environmental Incident Dispatch</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Review citizen submissions, assign enforcement teams, and publish field inspection updates</p>
+ </div>
+
+ <div class="admin-card">
+ <div class="admin-table-container">
+ <table class="admin-table">
+ <thead>
+ <tr>
+ <th>Ticket</th>
+ <th>Report Title & Hazard</th>
+ <th>Citizen Reporter</th>
+ <th>Barangay</th>
+ <th>Severity</th>
+ <th>Current Status</th>
+ <th>Dispatched Unit</th>
+ <th>Manage</th>
+ </tr>
+ </thead>
+ <tbody id="admin-full-reports-table">
+ <!-- Rendered by JS -->
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </section>
+
+ <!-- TAB 3: WEBSITE CMS & BRANDING (ADMIN EDITS ALL WEBSITE INFO) -->
+ <section id="tab-cms" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem;">
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Website Content Management & Branding (CMS)</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Modify website name, logo, institutional information, climate change & awareness guides displayed to citizens</p>
+ </div>
+
+ <form id="admin-cms-form" onsubmit="handleSaveCMS(event)">
+  <!-- 1. Identity & Official Branding (File Logo Upload & Identity) -->
+  <div class="admin-card">
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+      1. Website Identity, Official Logo & Hotlines
+    </h3>
+    
+    <!-- Website Name & Subtitle (2 Columns) -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+      <div>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Website Name</label>
+        <input type="text" id="cms-website-name" class="admin-input" placeholder="e.g. Climate Action" required>
+      </div>
+      <div>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Website Subtitle / Slogan</label>
+        <input type="text" id="cms-website-subtitle" class="admin-input" placeholder="e.g. Reporting & Information System • Metro Verde" required>
+      </div>
+    </div>
+
+    <!-- Municipal Emergency Hotlines (Dynamic Hotline Manager) -->
+    <div style="margin-bottom: 1.5rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <label style="display:block; font-size:0.92rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+            Municipal Emergency & Environmental Hotlines
+          </label>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem; max-width: 680px; line-height: 1.45;">
+            Edit existing hotlines or click <strong>Add Emergency Hotline</strong> to add new municipal dispatch numbers (e.g. MDRRMO, PNP Police, BFP Fire, Red Cross, Ambulance). All modifications are saved and updated live across the citizen web portal.
+          </p>
+        </div>
+        <button type="button" class="btn-admin-primary" onclick="addNewHotlineRow()" style="font-size:0.82rem; padding:0.45rem 0.95rem; display:inline-flex; align-items:center; gap:0.4rem; cursor:pointer;">
+          + Add Emergency Hotline
+        </button>
+      </div>
+
+      <!-- Container for dynamic hotline cards -->
+      <div id="cms-hotlines-list-container" style="display: flex; flex-direction: column; gap: 0.85rem;">
+        <!-- Dynamically rendered by admin.js -->
+      </div>
+
+      <!-- Hidden legacy inputs for backward compatibility -->
+      <input type="hidden" id="cms-emergency-hotline" value="">
+      <input type="hidden" id="cms-denr-hotline" value="">
+      <input type="hidden" id="cms-health-hotline" value="">
+    </div>
+
+    <!-- Official Logo Upload Control -->
+    <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <label style="font-size:0.88rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+            Official Website Logo & Brand Icon
+          </label>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Upload a graphic image file or choose an official civic emoji</p>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn-admin-outline" id="btn-mode-image-logo" onclick="setLogoMode('image')" style="font-size:0.78rem; padding:0.4rem 0.85rem; border-color: var(--primary-light); color: var(--primary-dark); font-weight:700;">Uploaded Image Logo</button>
+          <button type="button" class="btn-admin-outline" id="btn-mode-emoji-logo" onclick="setLogoMode('emoji')" style="font-size:0.78rem; padding:0.4rem 0.85rem;">Use Text / Symbol</button>
+        </div>
+      </div>
+      
+      <input type="hidden" id="cms-logo-type" value="image">
+      <input type="hidden" id="cms-logo-image-url" value="">
+
+      <!-- IMAGE UPLOAD PANEL -->
+      <div id="cms-logo-image-panel" style="display:block; margin-top: 0.75rem; padding-top: 0.85rem; border-top: 1px solid var(--border);">
+        <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center;">
+          <!-- Logo Preview Box -->
+          <div style="text-align: center;">
+            <div id="cms-logo-preview-box" style="width: 150px; height: 110px; background: #FFFFFF; border: 2px dashed var(--border-focus); border-radius: 14px; display: flex; align-items: center; justify-content: center; overflow: visible; margin: 0 auto 0.5rem; position: relative;">
+              <img id="cms-logo-preview-img" src="" alt="Logo Preview" style="max-width: 100%; max-height: 95px; width: auto; height: auto; object-fit: contain; display: none; background: transparent;">
+              <span id="cms-logo-preview-placeholder" style="font-size: 0.75rem; color: var(--text-muted); text-align: center; padding: 0.5rem;">No Image Uploaded</span>
+            </div>
+            <span style="font-size: 0.72rem; color: var(--primary-light); font-weight: 700;">Live Logo Preview</span>
+          </div>
+
+          <!-- File Chooser & Controls -->
+          <div style="flex: 1; min-width: 260px;">
+            <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
+              <input type="file" id="cms-logo-file-input" accept="image/png, image/jpeg, image/webp, image/svg+xml, image/gif" style="display: none;" onchange="handleLogoFileSelect(event)">
+              <button type="button" class="btn-admin-primary" onclick="document.getElementById('cms-logo-file-input').click()" style="font-size: 0.85rem; padding: 0.65rem 1.35rem;">
+                Upload Logo from Computer
+              </button>
+              <button type="button" class="btn-admin-danger" id="btn-remove-logo-img" onclick="handleRemoveLogoImage()" style="display: none; font-size: 0.78rem; padding: 0.6rem 0.9rem;">
+                Remove Image Logo
+              </button>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45;">
+              Upload official municipal seal, agency badge, or brand logo. Formats: <strong>PNG, SVG, JPG, WebP</strong>. Transparent backgrounds recommended.
+            </p>
+            <div id="cms-logo-status" style="font-size: 0.78rem; color: var(--primary-light); margin-top: 0.4rem; font-weight: 600;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMOJI / TEXT PANEL -->
+      <div id="cms-logo-emoji-panel" style="display:none; margin-top: 0.75rem; padding-top: 0.85rem; border-top: 1px solid var(--border);">
+        <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--text-main); margin-bottom:0.35rem;">Brand Monogram / Text Symbol</label>
+        <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap: wrap;">
+          <input type="text" id="cms-website-logo" class="admin-input" style="max-width:140px; font-size:1.25rem; text-align:center;" placeholder="CA">
+          <span style="font-size:0.75rem; color:var(--text-muted);">Presets: </span>
+          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('CA')" style="font-size:0.8rem; padding:0.25rem 0.5rem; font-weight:700;">CA</button>
+          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('MV')" style="font-size:0.8rem; padding:0.25rem 0.5rem; font-weight:700;">MV</button>
+          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('ECO')" style="font-size:0.8rem; padding:0.25rem 0.5rem; font-weight:700;">ECO</button>
+          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('LGU')" style="font-size:0.8rem; padding:0.25rem 0.5rem; font-weight:700;">LGU</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Animated Background & Visual Media Grid (2 Columns) -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+      <!-- Animated Background Configuration -->
+      <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <label style="font-size:0.88rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.5rem; margin-bottom: 0.4rem;">
+            Animated Background Imagery
+          </label>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.85rem; line-height: 1.4;">
+            Enable smooth atmospheric nature animations on the citizen web portal.
+          </p>
+          <label style="display:flex; align-items:center; gap:0.6rem; color:var(--text-main); cursor:pointer; font-size: 0.85rem; font-weight: 700; margin-bottom: 1rem; background: #FFFFFF; padding: 0.75rem 0.85rem; border-radius: 8px; border: 1px solid var(--border);">
+            <input type="checkbox" id="cms-enable-animation" style="width: 18px; height: 18px; accent-color: var(--primary-light);">
+            <span>Enable Nature Background Animations</span>
+          </label>
+        </div>
+        <div>
+          <button type="button" class="btn-admin-outline" onclick="triggerBackgroundUpload()" style="width: 100%; font-size: 0.8rem; padding: 0.55rem; justify-content: center; font-weight:700;">
+            Upload Background Images (3 Slots)
+          </button>
+          <div id="cms-background-preview-list" style="display:flex; gap:0.5rem; margin-top: 0.75rem; min-height: 20px;"></div>
+        </div>
+      </div>
+
+      <!-- Hero Banner & Governance Media (Stacked) -->
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <!-- Hero Banner Image -->
+        <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
+          <label style="font-size:0.82rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:0.4rem;">
+            Homepage Hero Banner Image (Optional)
+          </label>
+          <input type="hidden" id="cms-hero-image-url" value="">
+          <div id="cms-hero-preview-box" style="height: 75px; background: #FFFFFF; border: 1px dashed var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 0.5rem;">
+            <img id="cms-hero-preview-img" src="" alt="Hero Banner Preview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+            <span id="cms-hero-placeholder" style="font-size: 0.72rem; color: var(--text-muted);">Default Atmospheric Gradient</span>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <input type="file" id="cms-hero-file-input" accept="image/*" style="display:none;" onchange="handleHeroFileSelect(event)">
+            <button type="button" class="btn-admin-outline" onclick="document.getElementById('cms-hero-file-input').click()" style="font-size:0.75rem; padding:0.35rem 0.75rem;">
+              Upload Banner File
+            </button>
+            <button type="button" class="btn-admin-danger" id="btn-remove-hero-img" onclick="handleRemoveHeroImage()" style="display:none; font-size:0.75rem; padding:0.35rem 0.65rem;">
+              Remove
+            </button>
+          </div>
+        </div>
+
+        <!-- About System Graphic -->
+        <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
+          <label style="font-size:0.82rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:0.4rem;">
+            Municipal System & Governance Graphic (Optional)
+          </label>
+          <input type="hidden" id="cms-about-image-url" value="">
+          <div id="cms-about-preview-box" style="height: 75px; background: #FFFFFF; border: 1px dashed var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 0.5rem;">
+            <img id="cms-about-preview-img" src="" alt="About Graphic Preview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+            <span id="cms-about-placeholder" style="font-size: 0.72rem; color: var(--text-muted);">Default Structural View</span>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <input type="file" id="cms-about-file-input" accept="image/*" style="display:none;" onchange="handleAboutFileSelect(event)">
+            <button type="button" class="btn-admin-outline" onclick="document.getElementById('cms-about-file-input').click()" style="font-size:0.75rem; padding:0.35rem 0.75rem;">
+              Upload Graphic File
+            </button>
+            <button type="button" class="btn-admin-danger" id="btn-remove-about-img" onclick="handleRemoveAboutImage()" style="display:none; font-size:0.75rem; padding:0.35rem 0.65rem;">
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Important Educational & Awareness Information -->
+  <div class="admin-card">
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+      2. Climate Change, Action & Awareness Guides
+    </h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+      <div>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Climate Change Information (Local Impacts & Science)</label>
+        <textarea id="cms-climate-change" class="admin-textarea" rows="4" required></textarea>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Climate Action Directives (What Citizens Can Do)</label>
+        <textarea id="cms-climate-action" class="admin-textarea" rows="4" required></textarea>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Climate Awareness & Environmental Laws (RA 9003, RA 8749, PD 705)</label>
+        <textarea id="cms-climate-awareness" class="admin-textarea" rows="4" required></textarea>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">About Climate Reporting Protocols & Response Rules</label>
+        <textarea id="cms-reporting-guide" class="admin-textarea" rows="4" required></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Website Information (About, Why Created, Who Created) -->
+  <div class="admin-card">
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+      3. Website Information & Authorship
+    </h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+      <div>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">About This Website</label>
+        <textarea id="cms-about-website" class="admin-textarea" rows="4" required></textarea>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Why This System Was Created (Objectives & Purpose)</label>
+        <textarea id="cms-why-created" class="admin-textarea" rows="4" required></textarea>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Who Created This Website (Authors & Leadership)</label>
+        <textarea id="cms-who-created" class="admin-textarea" rows="3" required></textarea>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Municipal Partners & Institutional Endorsements</label>
+        <textarea id="cms-partners" class="admin-textarea" rows="3" required></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 1.25rem; margin-bottom: 2rem;">
+    <button type="submit" class="btn-admin-primary" style="width: 100%; padding: 1rem; font-size: 1.05rem; justify-content: center; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
+      Save & Publish All Website Content Changes
+    </button>
+  </div>
+</form>
+
+ <!-- 4. Media Library & Uploaded Website Assets -->
+ <div class="admin-card" style="margin-top: 1.5rem;">
+ <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+ <div>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);">Media Library & Published Website Images</h3>
+ <p style="font-size: 0.78rem; color: var(--text-muted);">Uploaded logos, banners, circular illustrations, and educational guide diagrams</p>
+ </div>
+ <button type="button" onclick="loadMediaGallery()" class="btn-admin-outline" style="font-size:0.75rem; padding:0.35rem 0.75rem;">
+ Refresh Media
+ </button>
+ </div>
+
+ <div id="admin-media-gallery-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;">
+ <!-- Rendered by JS -->
+ </div>
+ </div>
+ </section>
+
+ <!-- TAB 4: WEATHER & CLIMATE ADVISORY CONTROL -->
+ <section id="tab-weather" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem;">
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Climate Advisory & Live Weather Condition Control</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Update weather telemetry, PAGASA alert level, AQI, and emergency climate advisories shown on citizen app</p>
+ </div>
+
+ <form id="admin-weather-form" onsubmit="handleSaveWeather(event)">
+ <div class="admin-card">
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Temperature (°C)</label>
+ <input type="number" id="weather-temp" class="admin-input" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Heat Index (°C)</label>
+ <input type="number" id="weather-heat-index" class="admin-input" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">PAGASA Alert Level</label>
+ <select id="weather-alert-level" class="admin-select">
+ <option value="Normal">Normal (Green)</option>
+ <option value="Yellow">Yellow Alert (Moderate Warning)</option>
+ <option value="Orange">Orange Alert (High Risk)</option>
+ <option value="Red">Red Alert (Emergency Evacuation)</option>
+ </select>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Air Quality Index (AQI)</label>
+ <input type="text" id="weather-aqi" class="admin-input" placeholder="e.g. Moderate (AQI 68)" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Typhoon Warning Signal</label>
+ <input type="text" id="weather-typhoon" class="admin-input" placeholder="e.g. Signal No. 1 or None">
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Weather State & Icon</label>
+ <input type="text" id="weather-condition" class="admin-input" placeholder="e.g. Partly Cloudy with Showers" required>
+ </div>
+ </div>
+
+ <div style="margin-bottom: 1.5rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Live Municipal Climate Advisory Broadcast Notice</label>
+ <textarea id="weather-advisory-notice" class="admin-textarea" rows="3" required></textarea>
+ </div>
+
+ <div style="margin-bottom: 1.5rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Recommended Citizen Safety Action</label>
+ <input type="text" id="weather-safety-tip" class="admin-input" required>
+ </div>
+
+ <button type="submit" class="btn-admin-primary">
+ Broadcast Weather & Climate Advisory to Website
+ </button>
+ </div>
+ </form>
+ </section>
+
+ <!-- TAB 5: ANNOUNCEMENTS & NOTIFICATIONS -->
+ <section id="tab-announcements" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem;">
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Admin Announcements & Citizen Notification Broadcast</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Publish official warnings, municipal drives, and send notifications to all citizen users</p>
+ </div>
+
+ <!-- Create Announcement -->
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Create New Announcement</h3>
+ <form id="admin-announcement-form" onsubmit="handleCreateAnnouncement(event)">
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Title</label>
+ <input type="text" id="ann-title" class="admin-input" placeholder="e.g. Emergency River Dredging Operation" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Category</label>
+ <select id="ann-category" class="admin-select">
+ <option value="Emergency Action">Emergency Action</option>
+ <option value="Advisory">Advisory</option>
+ <option value="Community Event">Community Event</option>
+ <option value="Public Notice">Public Notice</option>
+ </select>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Priority Level</label>
+ <select id="ann-priority" class="admin-select">
+ <option value="Critical">Critical (Red Banner & Alert)</option>
+ <option value="High">High (Orange Banner)</option>
+ <option value="Normal">Normal (Green Notice)</option>
+ </select>
+ </div>
+ </div>
+
+ <div style="margin-bottom: 1rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Announcement Body Text</label>
+ <textarea id="ann-content" class="admin-textarea" rows="3" placeholder="Describe the announcement, municipal instructions, or guidelines..." required></textarea>
+ </div>
+
+ <!-- Attach Announcement Image / Poster / Advisory Infographic -->
+ <div style="margin-bottom: 1.25rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem; color: #fff;">
+ Attach Announcement Image / Official Banner (Optional)
+ </label>
+ <input type="hidden" id="ann-image-url" value="">
+ <input type="file" id="ann-image-file" accept="image/*" style="display:none;" onchange="handleAnnouncementImageSelect(event)">
+ 
+ <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+ <button type="button" class="btn-admin-outline" onclick="document.getElementById('ann-image-file').click()" style="font-size:0.8rem; padding:0.4rem 0.85rem;">
+ Choose Image from Local File
+ </button>
+ <span style="font-size:0.75rem; color:#94a3b8;">Attach alert infographic, flood diagram, or tree planting drive poster</span>
+ </div>
+
+ <div id="ann-image-preview-box" style="display:none; margin-top:0.75rem; align-items:center; gap:1rem; background:#061009; padding:0.6rem; border-radius:8px; border:1px solid #1c4228;">
+ <img id="ann-image-preview-thumb" src="" alt="Announcement Preview" style="max-height:80px; max-width:140px; border-radius:6px; object-fit:cover; border:1px solid #10b981;">
+ <div>
+ <div id="ann-image-filename" style="font-size:0.8rem; color:#fff; font-weight:600;"></div>
+ <button type="button" onclick="clearAnnouncementImage()" class="btn-admin-danger" style="font-size:0.7rem; padding:0.25rem 0.55rem; margin-top:0.35rem;">Remove Image</button>
+ </div>
+ </div>
+ </div>
+
+ <button type="submit" class="btn-admin-primary">
+ Publish Announcement & Notify Citizens
+ </button>
+ </form>
+ </div>
+
+ <!-- Existing Announcements List -->
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Published Announcements</h3>
+ <div id="admin-announcements-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+ <!-- Rendered by JS -->
+ </div>
+ </div>
+ </section>
+
+ <!-- TAB: COMMUNITY ACTIVITIES & PARTICIPATION PROOFS -->
+ <section id="tab-activities" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+ <div>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">
+ Community Movements, Activities & Participation Proofs
+ </h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">
+ Create community drives, manage activity details, toggle visibility/hidden status, and review citizen participation proofs to award eco-points.
+ </p>
+ </div>
+ <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+ <button class="btn-admin-outline active" id="btn-act-tab-manage" onclick="switchActivitySubTab('manage')">
+ Manage Activities
+ </button>
+ <button class="btn-admin-outline" id="btn-act-tab-proofs" onclick="switchActivitySubTab('proofs')">
+ Review Proofs <span id="admin-act-pending-badge" style="background:#EF4444; color:#fff; font-size:0.7rem; padding:0.15rem 0.45rem; border-radius:999px; font-weight:800; margin-left:0.25rem;">0</span>
+ </button>
+ </div>
+ </div>
+
+ <!-- SUB-TAB 1: MANAGE ACTIVITIES -->
+ <div id="subtab-activities-manage">
+ <!-- Create / Edit Activity Card -->
+ <div class="admin-card">
+ <h3 id="admin-act-form-title" style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">
+ Add New Community Activity / Movement
+ </h3>
+ <form id="admin-activity-form" onsubmit="handleSaveAdminActivity(event)">
+ <input type="hidden" id="act-edit-id" value="">
+ 
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Activity Title *</label>
+ <input type="text" id="act-title" class="admin-input" placeholder="e.g. Mangrove Reforestation & River Cleanup Drive" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Category</label>
+ <select id="act-category" class="admin-select">
+ <option value="Environmental Drive">Environmental Drive</option>
+ <option value="Tree Planting">Tree Planting</option>
+ <option value="River Cleanup">River Cleanup</option>
+ <option value="Zero Waste Workshop">Zero Waste Workshop</option>
+ <option value="Coastal Restoration">Coastal Restoration</option>
+ <option value="Climate Education">Climate Education</option>
+ </select>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Event Date & Time *</label>
+ <input type="text" id="act-event-date" class="admin-input" placeholder="e.g. Saturday, Oct 24 • 7:00 AM - 11:00 AM" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Location / Barangay *</label>
+ <input type="text" id="act-location" class="admin-input" placeholder="e.g. Riverside Park, Barangay Makilas" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Organizer / Lead Unit</label>
+ <input type="text" id="act-organizer" class="admin-input" placeholder="e.g. LGU CENRO & Youth Volunteers">
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Equivalent Eco-Points Awarded *</label>
+ <input type="number" id="act-points" class="admin-input" min="10" max="1000" value="100" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Max Participants Capacity</label>
+ <input type="number" id="act-max-participants" class="admin-input" min="5" max="10000" value="100">
+ </div>
+ <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
+ <input type="checkbox" id="act-hidden" value="1" style="width: 18px; height: 18px; cursor: pointer;">
+ <label for="act-hidden" style="font-size: 0.85rem; font-weight: 700; color: #fff; cursor: pointer;">Hide Activity from Public View</label>
+ </div>
+ </div>
+
+ <div style="margin-bottom: 1rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Description & Objectives</label>
+ <textarea id="act-description" class="admin-textarea" rows="3" placeholder="Provide event instructions, meeting location, gear needed, and environmental goals..." required></textarea>
+ </div>
+
+ <!-- Attach Image -->
+ <div style="margin-bottom: 1.25rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem; color: #fff;">
+ Activity Photo / Drive Poster (Optional)
+ </label>
+ <input type="hidden" id="act-image-url" value="">
+ <input type="file" id="act-image-file" accept="image/*" style="display:none;" onchange="handleActivityImageSelect(event)">
+ 
+ <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+ <button type="button" class="btn-admin-outline" onclick="document.getElementById('act-image-file').click()" style="font-size:0.8rem; padding:0.4rem 0.85rem;">
+ Choose Image File
+ </button>
+ <span style="font-size:0.75rem; color:#94a3b8;">Upload flyer, site photo, or community banner</span>
+ </div>
+
+ <div id="act-image-preview-box" style="display:none; margin-top:0.75rem; align-items:center; gap:1rem; background:#061009; padding:0.6rem; border-radius:8px; border:1px solid #1c4228;">
+ <img id="act-image-preview-thumb" src="" alt="Activity Preview" style="max-height:80px; max-width:140px; border-radius:6px; object-fit:cover; border:1px solid #10b981;">
+ <div>
+ <div id="act-image-filename" style="font-size:0.8rem; color:#fff; font-weight:600;"></div>
+ <button type="button" onclick="clearActivityImage()" class="btn-admin-danger" style="font-size:0.7rem; padding:0.25rem 0.55rem; margin-top:0.35rem;">Remove Image</button>
+ </div>
+ </div>
+ </div>
+
+ <div style="display: flex; gap: 0.75rem;">
+ <button type="submit" class="btn-admin-primary" id="btn-save-activity">
+ Publish Community Activity
+ </button>
+ <button type="button" class="btn-admin-outline" id="btn-cancel-edit-activity" onclick="resetActivityForm()" style="display: none;">
+ Cancel Edit
+ </button>
+ </div>
+ </form>
+ </div>
+
+ <!-- Existing Activities List -->
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">
+ Published Community Activities & Movements
+ </h3>
+ <div id="admin-activities-list" style="display: flex; flex-direction: column; gap: 0.85rem;">
+ <!-- Rendered by JS -->
+ </div>
+ </div>
+ </div>
+
+ <!-- SUB-TAB 2: REVIEW PARTICIPATION PROOFS QUEUE -->
+ <div id="subtab-activities-proofs" style="display: none;">
+ <!-- Stats Summary Row -->
+ <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.5rem;">
+ <div class="admin-stat-card" style="border-left: 4px solid #F59E0B;">
+ <div class="admin-stat-label">Pending Proof Reviews</div>
+ <div class="admin-stat-val" id="admin-proofs-pending-count" style="color: #FBBF24;">0</div>
+ <div class="admin-stat-sub">Requires verification</div>
+ </div>
+ <div class="admin-stat-card" style="border-left: 4px solid #10B981;">
+ <div class="admin-stat-label">Approved Participations</div>
+ <div class="admin-stat-val" id="admin-proofs-approved-count" style="color: #34D399;">0</div>
+ <div class="admin-stat-sub">Eco-points granted</div>
+ </div>
+ <div class="admin-stat-card" style="border-left: 4px solid #EF4444;">
+ <div class="admin-stat-label">Rejected Submissions</div>
+ <div class="admin-stat-val" id="admin-proofs-rejected-count" style="color: #F87171;">0</div>
+ <div class="admin-stat-sub">Invalid or missing proof</div>
+ </div>
+ <div class="admin-stat-card" style="border-left: 4px solid #3B82F6;">
+ <div class="admin-stat-label">Total Eco-Points Awarded</div>
+ <div class="admin-stat-val" id="admin-proofs-points-total" style="color: #60A5FA;">0 pts</div>
+ <div class="admin-stat-sub">Earned by citizens</div>
+ </div>
+ </div>
+
+ <!-- Proof Filter Controls -->
+ <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+ <button class="btn-admin-outline active" id="btn-filter-proof-all" onclick="filterAdminProofs('all')">All Submissions</button>
+ <button class="btn-admin-outline" id="btn-filter-proof-pending" onclick="filterAdminProofs('pending')">Pending Review</button>
+ <button class="btn-admin-outline" id="btn-filter-proof-approved" onclick="filterAdminProofs('approved')">Approved</button>
+ <button class="btn-admin-outline" id="btn-filter-proof-rejected" onclick="filterAdminProofs('rejected')">Rejected</button>
+ </div>
+
+ <!-- Proof Submissions List -->
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">
+ Citizen Activity Participation Proofs Queue
+ </h3>
+ <div id="admin-proofs-container" style="display: flex; flex-direction: column; gap: 1rem;">
+ <!-- Rendered by JS -->
+ </div>
+ </div>
+ </div>
+ </section>
+
+ <!-- TAB: CITIZEN KYC IDENTITY VERIFICATIONS -->
+ <section id="tab-kyc" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+ <div>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+ Citizen Identity Verification (KYC) Queue
+ </h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">
+ Verify government IDs, validate submitted documents, and grant authorized incident reporting credentials to citizens.
+ </p>
+ </div>
+ <button class="btn-admin-primary" onclick="loadKycSubmissions()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+ Refresh Queue
+ </button>
+ </div>
+
+ <!-- KYC Metrics Row -->
+ <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.5rem;">
+ <div class="admin-stat-card" style="border-left: 4px solid #EF4444;">
+ <div class="admin-stat-label">Pending Verification</div>
+ <div class="admin-stat-val" id="admin-kyc-pending-count" style="color: #F87171;">0</div>
+ <div class="admin-stat-sub">Requires admin action</div>
+ </div>
+ <div class="admin-stat-card" style="border-left: 4px solid #10B981;">
+ <div class="admin-stat-label">Verified Citizens</div>
+ <div class="admin-stat-val" id="admin-kyc-verified-count" style="color: #34D399;">0</div>
+ <div class="admin-stat-sub">Authorized to report</div>
+ </div>
+ <div class="admin-stat-card" style="border-left: 4px solid #F59E0B;">
+ <div class="admin-stat-label">Rejected / Incomplete</div>
+ <div class="admin-stat-val" id="admin-kyc-rejected-count" style="color: #FBBF24;">0</div>
+ <div class="admin-stat-sub">Flagged submissions</div>
+ </div>
+ <div class="admin-stat-card" style="border-left: 4px solid #3B82F6;">
+ <div class="admin-stat-label">Total Citizens</div>
+ <div class="admin-stat-val" id="admin-kyc-total-count" style="color: #60A5FA;">0</div>
+ <div class="admin-stat-sub">Registered accounts</div>
+ </div>
+ </div>
+
+ <!-- Filter Pills -->
+ <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+ <button class="btn-admin-outline active" id="btn-filter-kyc-all" onclick="filterKycSubmissions('all')">All Submissions</button>
+ <button class="btn-admin-outline" id="btn-filter-kyc-pending" onclick="filterKycSubmissions('pending')">Pending Review</button>
+ <button class="btn-admin-outline" id="btn-filter-kyc-verified" onclick="filterKycSubmissions('verified')">Verified</button>
+ <button class="btn-admin-outline" id="btn-filter-kyc-rejected" onclick="filterKycSubmissions('rejected')">Rejected</button>
+ </div>
+
+ <!-- Submissions Container -->
+ <div id="admin-kyc-cards-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.25rem;">
+ <!-- Rendered by JS -->
+ </div>
+ </section>
+
+ <!-- TAB 6: CITIZEN USERS & ANALYTICS -->
+ <section id="tab-users" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem;">
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Citizen Users & Engagement Analytics</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Monitor active platform usage, registered citizen profiles, and verify user integrity</p>
+ </div>
+
+ <div class="admin-card">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);">Registered Citizen Accounts</h3>
+ <div style="font-size: 0.85rem; color: #34d399;" id="admin-user-count-badge">Total Users: 0</div>
+ </div>
+
+ <div class="admin-table-container">
+ <table class="admin-table">
+ <thead>
+ <tr>
+ <th>User ID</th>
+ <th>Full Name</th>
+ <th>Email</th>
+ <th>Phone</th>
+ <th>Barangay</th>
+ <th>KYC Status</th>
+ <th>Eco-Points</th>
+ <th>Reports</th>
+ <th>Status</th>
+ <th>Action</th>
+ </tr>
+ </thead>
+ <tbody id="admin-users-table-body">
+ <!-- Rendered by JS -->
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </section>
+
+ <!-- TAB 7: USER GUIDES MANAGER -->
+ <section id="tab-guides" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem;">
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Citizen User Guides Management</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Create, update, and manage official step-by-step citizen guides displayed on the website</p>
+ </div>
+
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Add New Citizen Guide</h3>
+ <form id="admin-guide-form" onsubmit="handleCreateGuide(event)">
+ <div class="admin-guide-header-grid" style="display: grid; gap: 1rem; margin-bottom: 1rem;">
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Icon</label>
+ <input type="text" id="guide-icon" class="admin-input" placeholder="" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Guide Title</label>
+ <input type="text" id="guide-title" class="admin-input" placeholder="e.g. How to Take Clear Geotagged Photos" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Category</label>
+ <select id="guide-category" class="admin-select">
+ <option value="Reporting">Reporting</option>
+ <option value="Tracking">Tracking</option>
+ <option value="Gamification">Gamification</option>
+ <option value="Community">Community</option>
+ </select>
+ </div>
+ </div>
+
+ <div style="margin-bottom: 1rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Summary (1-2 sentences)</label>
+ <input type="text" id="guide-summary" class="admin-input" placeholder="Brief overview of what this guide explains" required>
+ </div>
+
+ <div style="margin-bottom: 1rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Detailed Guide Content / Steps</label>
+ <textarea id="guide-content" class="admin-textarea" rows="3" placeholder="Step-by-step instructions for citizens..." required></textarea>
+ </div>
+
+ <!-- Attach Guide Diagram / Infographic / Photo -->
+ <div style="margin-bottom: 1.25rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem; color: #fff;">
+ Attach Guide Diagram / Step-by-Step Graphic (Optional)
+ </label>
+ <input type="hidden" id="guide-image-url" value="">
+ <input type="file" id="guide-image-file" accept="image/*" style="display:none;" onchange="handleGuideImageSelect(event)">
+ 
+ <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+ <button type="button" class="btn-admin-outline" onclick="document.getElementById('guide-image-file').click()" style="font-size:0.8rem; padding:0.4rem 0.85rem;">
+ Choose Diagram File from Device
+ </button>
+ <span style="font-size:0.75rem; color:#94a3b8;">Upload reference diagram, waste segregation chart, or photo example</span>
+ </div>
+
+ <div id="guide-image-preview-box" style="display:none; margin-top:0.75rem; align-items:center; gap:1rem; background:#061009; padding:0.6rem; border-radius:8px; border:1px solid #1c4228;">
+ <img id="guide-image-preview-thumb" src="" alt="Guide Preview" style="max-height:80px; max-width:140px; border-radius:6px; object-fit:cover; border:1px solid #10b981;">
+ <div>
+ <div id="guide-image-filename" style="font-size:0.8rem; color:#fff; font-weight:600;"></div>
+ <button type="button" onclick="clearGuideImage()" class="btn-admin-danger" style="font-size:0.7rem; padding:0.25rem 0.55rem; margin-top:0.35rem;">Remove Diagram</button>
+ </div>
+ </div>
+ </div>
+
+ <button type="submit" class="btn-admin-primary">
+ Add Guide to User Website
+ </button>
+ </form>
+ </div>
+
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Active Guides on User Website</h3>
+ <div id="admin-guides-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+ <!-- Rendered by JS -->
+ </div>
+ </div>
+ </section>
+
+ <!-- TAB 8: SUB-ADMIN MANAGEMENT (SUPER ADMIN ONLY) -->
+ <section id="tab-subadmins" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem;">
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Sub-Admin Delegation & Granular Access Control</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Create municipal sub-admin accounts and customize permissions to limit their administrative access</p>
+ </div>
+
+ <!-- Create Sub-Admin Form -->
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Create New Sub-Admin Account</h3>
+ <form id="create-subadmin-form" onsubmit="handleCreateSubAdmin(event)">
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Full Name</label>
+ <input type="text" id="subadmin-name" class="admin-input" placeholder="e.g. Officer Juan Ramos" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Official Email</label>
+ <input type="email" id="subadmin-email" class="admin-input" placeholder="e.g. juan.ramos@cenro.gov.ph" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Initial Password</label>
+ <input type="password" id="subadmin-password" class="admin-input" placeholder="Minimum 4 characters" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Department / Unit</label>
+ <input type="text" id="subadmin-dept" class="admin-input" placeholder="e.g. CENRO River Taskforce" required>
+ </div>
+ </div>
+
+ <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem;">
+ <label style="display:block; font-size:0.85rem; font-weight:700; color: var(--primary-dark); margin-bottom:0.75rem;">Limit Sub-Admin Permissions & Access Scope:</label>
+ 
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem;">
+ <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+ <input type="checkbox" id="perm-triage" value="can_triage_reports" checked>
+ <span>Can Triage & Update Incident Reports</span>
+ </label>
+ <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+ <input type="checkbox" id="perm-announcements" value="can_post_announcements" checked>
+ <span>Can Post Municipal Announcements</span>
+ </label>
+ <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+ <input type="checkbox" id="perm-weather" value="can_manage_weather" checked>
+ <span>Can Manage Weather & Climate Advisories</span>
+ </label>
+ <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+ <input type="checkbox" id="perm-cms" value="can_edit_cms">
+ <span>Can Modify Website CMS & Branding</span>
+ </label>
+ <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+ <input type="checkbox" id="perm-users" value="can_manage_users">
+ <span>Can Manage Citizens & User Guides</span>
+ </label>
+ </div>
+ </div>
+
+ <button type="submit" class="btn-admin-primary">
+ Provision Sub-Admin Account
+ </button>
+ </form>
+ </div>
+
+ <!-- Existing Sub-Admins Table -->
+ <div class="admin-card">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Active Sub-Admins</h3>
+ <div class="admin-table-container">
+ <table class="admin-table">
+ <thead>
+ <tr>
+ <th>Name</th>
+ <th>Email</th>
+ <th>Department</th>
+ <th>Assigned Permissions</th>
+ <th>Status</th>
+ <th>Manage Access</th>
+ </tr>
+ </thead>
+ <tbody id="subadmins-table-body">
+ <!-- Rendered by JS -->
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </section>
+
+ <!-- TAB 9: SUPER ADMIN SETTINGS (CHANGE CREDENTIALS) -->
+ <section id="tab-settings" class="admin-section" style="display: none;">
+ <div style="margin-bottom: 1.5rem;">
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Super Admin Security & Credentials Settings</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Change Super Admin email, password, and system administrator identity</p>
+ </div>
+
+ <div class="admin-card" style="max-width: 620px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+ <div>
+ <div style="font-weight: 800; font-size: 1rem; color: #fff;" id="admin-settings-profile-name">Mark Kenneth Ulgasan</div>
+ <div style="font-size: 0.8rem; color: #10B981;" id="admin-settings-profile-dept">Executive Directorate • Super Administrator</div>
+ </div>
+ <div style="display: flex; gap: 0.5rem;">
+ <a href="/" target="_blank" class="btn-admin-outline" style="text-decoration: none; font-size: 0.82rem; background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(52,211,153,0.3); padding: 0.45rem 0.8rem; font-weight: 700;">
+ Public Website ↗
+ </a>
+ <button type="button" onclick="exitDashboard(true)" class="btn-admin-outline" style="color: #f87171; border-color: rgba(239,68,68,0.3); background: rgba(127,29,29,0.2); padding: 0.45rem 0.8rem; font-weight: 700; cursor: pointer;">
+ Sign Out
+ </button>
+ </div>
+ </div>
+
+ <div class="admin-card" style="max-width: 620px;">
+ <div style="background: var(--primary-tint); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; margin-bottom: 1.5rem; font-size: 0.82rem; color: var(--primary-dark);">
+ <strong>Super Administrator Identity & Access Governance</strong><br>
+ Authorized Email: <strong id="settings-current-email-badge">markkennethulgasan@gmail.com</strong> • Full Root Privileges
+ </div>
+
+ <form id="superadmin-settings-form" onsubmit="handleSaveSuperAdminSettings(event)">
+ <div class="admin-two-col-grid" style="display: grid; gap: 1rem; margin-bottom: 1.25rem;">
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Super Admin Name</label>
+ <input type="text" id="settings-admin-name" class="admin-input" value="Mark Kenneth Ulgasan" required>
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Email Address</label>
+ <input type="email" id="settings-admin-email" class="admin-input" value="markkennethulgasan@gmail.com" required>
+ </div>
+ </div>
+
+ <div class="admin-two-col-grid" style="display: grid; gap: 1rem; margin-bottom: 1.25rem;">
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Department / Directorate</label>
+ <input type="text" id="settings-admin-dept" class="admin-input" value="Executive Directorate & System Administration">
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Contact Phone</label>
+ <input type="text" id="settings-admin-phone" class="admin-input" value="+63 917 123 4567">
+ </div>
+ </div>
+
+ <div style="margin-bottom: 1.25rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem; color: #f59e0b;">Current Password (Required for Authorization)</label>
+ <input type="password" id="settings-current-password" class="admin-input" placeholder="Enter current password to verify changes" required autocomplete="current-password">
+ </div>
+
+ <div class="admin-two-col-grid" style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">New Password (Optional)</label>
+ <input type="password" id="settings-new-password" class="admin-input" placeholder="Minimum 4 characters" autocomplete="new-password">
+ </div>
+ <div>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Confirm New Password</label>
+ <input type="password" id="settings-confirm-password" class="admin-input" placeholder="Repeat new password" autocomplete="new-password">
+ </div>
+ </div>
+
+ <div id="settings-success-msg" style="display: none; background: #065f46; color: var(--primary-dark); padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem;"></div>
+ <div id="settings-error-msg" style="display: none; background: #7f1d1d; color: #fecaca; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem;"></div>
+
+ <button type="submit" class="btn-admin-primary" style="width: 100%;">
+ Update Super Admin Credentials & Profile
+ </button>
+ </form>
+ </div>
+
+ <!-- SQLITE RELATIONAL DATABASE ARCHITECTURE & SYSTEM PERSISTENCE -->
+ <div class="admin-card" style="max-width: 680px; margin-top: 1.5rem; border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 1.5rem; box-shadow: var(--shadow-md);">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+ <div>
+ <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-dark); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+ SQLite Relational Database & System Persistence
+ </h3>
+ <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
+ Authoritative relational SQLite 3 storage engine for municipal accounts, incident tickets, KYC files, and live CMS updates.
+ </p>
+ </div>
+ <div id="sqlite-status-pill" style="padding: 0.4rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; background: var(--primary-tint); color: var(--primary-dark); border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 0.4rem;">
+ Active & Synced
+ </div>
+ </div>
+
+ <!-- Database Info & Stats Grid -->
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+ 
+ <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem;">
+ <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Database Engine</div>
+ <div style="font-size: 0.95rem; font-weight: 800; color: var(--primary-dark);" id="sqlite-engine-name">SQLite 3 (WASM)</div>
+ <div style="font-size: 0.72rem; color: var(--text-muted);" id="sqlite-file-name">climate_database.sqlite</div>
+ </div>
+
+ <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem;">
+ <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Total Records</div>
+ <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-dark);" id="sqlite-total-records">--</div>
+ <div style="font-size: 0.72rem; color: var(--text-muted);" id="sqlite-file-size">Size: --</div>
+ </div>
+
+ <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem;">
+ <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Relational Integrity</div>
+ <div style="font-size: 0.95rem; font-weight: 800; color: var(--primary-light);">ACID Persistent</div>
+ <div style="font-size: 0.72rem; color: var(--text-muted);">Auto Disk Commit</div>
+ </div>
+
+ </div>
+
+ <!-- Live Relational Tables Table -->
+ <div style="margin-bottom: 1.25rem; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #FFFFFF;">
+ <table class="admin-table" style="font-size: 0.82rem;">
+ <thead>
+ <tr>
+ <th style="padding: 0.65rem 0.85rem;">Table Name</th>
+ <th style="padding: 0.65rem 0.85rem;">Description</th>
+ <th style="padding: 0.65rem 0.85rem; text-align: right;">Total Rows</th>
+ </tr>
+ </thead>
+ <tbody id="sqlite-tables-tbody">
+ <tr><td colspan="3" style="text-align:center; padding:1rem; color:var(--text-muted);">Loading database tables telemetry...</td></tr>
+ </tbody>
+ </table>
+ </div>
+
+ <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+ <button type="button" class="btn-admin-primary" onclick="downloadDatabaseBackup()" style="flex: 1; min-width: 180px;">
+ Download SQLite Database (.sqlite)
+ </button>
+ <button type="button" class="btn-admin-outline" onclick="triggerDatabaseSync()" style="padding: 0.55rem 1.1rem;">
+ Force Database Sync
+ </button>
+ <button type="button" class="btn-admin-outline" onclick="loadDatabaseStatus()" style="padding: 0.55rem 1rem;">
+ Refresh Status
+ </button>
+ </div>
+ <div id="sqlite-action-msg" style="display: none; margin-top: 0.85rem; padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600;"></div>
+ </div>
+
+ <!-- SUPABASE CLOUD ARCHITECTURE: DATABASE, STORAGE, ACCOUNT SYNC -->
+ <div class="admin-card" style="max-width: 680px; margin-top: 1.5rem; border: 1px solid #1C4228; background: #0B1E12; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid #1C4228; padding-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+ <div>
+ <h3 style="font-size: 1.25rem; font-weight: 800; color: #FFFFFF; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+ Supabase Cloud Architecture
+ </h3>
+ <p style="font-size: 0.8rem; color: #94A3B8; margin: 0; line-height: 1.4;">
+ Real-time cloud database, storage buckets (incident photos, KYC, avatars), and user accounts synchronization.
+ </p>
+ </div>
+ <div id="supabase-status-pill" style="padding: 0.4rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; background: #1E293B; color: #94A3B8; display: inline-flex; align-items: center; gap: 0.4rem;">
+ Checking...
+ </div>
+ </div>
+
+ <!-- Live Service Status Cards -->
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+ 
+ <!-- 1. Database Card -->
+ <div style="background: #05140A; border: 1px solid #163820; border-radius: 8px; padding: 0.85rem;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+ <span style="font-size: 0.8rem; font-weight: 700; color: #E2E8F0;">PostgreSQL Database</span>
+ <span id="supabase-db-badge" style="font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px; background: #1E293B; color: #94A3B8;">Checking</span>
+ </div>
+ <div id="supabase-db-details" style="font-size: 0.72rem; color: #94A3B8; line-height: 1.4;">
+ Reports: <strong id="supabase-count-reports" style="color: #34D399;">--</strong> | Config: <strong id="supabase-status-config" style="color: #34D399;">--</strong>
+ </div>
+ </div>
+
+ <!-- 2. Storage Card -->
+ <div style="background: #05140A; border: 1px solid #163820; border-radius: 8px; padding: 0.85rem;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+ <span style="font-size: 0.8rem; font-weight: 700; color: #E2E8F0;">Cloud Storage</span>
+ <span id="supabase-storage-badge" style="font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px; background: #1E293B; color: #94A3B8;">Checking</span>
+ </div>
+ <div id="supabase-storage-details" style="font-size: 0.72rem; color: #94A3B8; line-height: 1.4;">
+ Bucket: <code style="color: #38BDF8; font-size: 0.72rem;">climate-uploads</code>
+ </div>
+ </div>
+
+ <!-- 3. Account / Users Card -->
+ <div style="background: #05140A; border: 1px solid #163820; border-radius: 8px; padding: 0.85rem;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+ <span style="font-size: 0.8rem; font-weight: 700; color: #E2E8F0;">User Accounts</span>
+ <span id="supabase-users-badge" style="font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px; background: #1E293B; color: #94A3B8;">Checking</span>
+ </div>
+ <div id="supabase-users-details" style="font-size: 0.72rem; color: #94A3B8; line-height: 1.4;">
+ Registered Users: <strong id="supabase-count-users" style="color: #34D399;">--</strong>
+ </div>
+ </div>
+
+ </div>
+
+ <!-- Connection Details & Form -->
+ <form id="supabase-config-form" onsubmit="handleSaveSupabaseConfig(event)">
+ <div style="margin-bottom: 1rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem; color: #CBD5E1;">
+ Supabase Project URL
+ </label>
+ <input type="url" id="supabase-input-url" class="admin-input" placeholder="https://your-project-id.supabase.co" required>
+ <span style="font-size: 0.72rem; color: #94A3B8;">Found in Supabase Dashboard → Project Settings → API</span>
+ </div>
+
+ <div style="margin-bottom: 1rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem; color: #CBD5E1;">
+ API Key (anon public key or service_role secret key)
+ </label>
+ <input type="password" id="supabase-input-key" class="admin-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required autocomplete="off">
+ <span style="font-size: 0.72rem; color: #94A3B8;">Use <code>service_role</code> secret key for automatic storage bucket creation and administrative sync</span>
+ </div>
+
+ <div id="supabase-result-msg" style="display: none; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.82rem; margin-bottom: 1rem;"></div>
+
+ <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+ <button type="button" class="btn-admin-primary" id="btn-autoconnect-supabase" onclick="triggerSupabaseAutoConnect()" style="flex: 1; min-width: 140px; background: #059669; border-color: #10B981;">
+ Auto Connect
+ </button>
+ <button type="submit" class="btn-admin-primary" id="btn-save-supabase" style="flex: 1; min-width: 140px;">
+ Save & Connect
+ </button>
+ <button type="button" class="btn-admin-outline" onclick="testSupabaseConnection()" style="padding: 0.5rem 1rem;">
+ Diagnostic Test
+ </button>
+ <button type="button" class="btn-admin-outline" onclick="triggerSupabaseSync()" style="padding: 0.5rem 1rem;">
+ Auto Sync All
+ </button>
+ </div>
+ </form>
+
+ <!-- SQL Schema Setup Section -->
+ <div style="margin-top: 1.5rem; background: #05140A; border: 1px dashed #163820; border-radius: 8px; padding: 1rem;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+ <span style="font-size: 0.82rem; font-weight: 700; color: #34D399;">Supabase Schema & Storage Policies Script</span>
+ <button type="button" class="btn-admin-outline" id="btn-copy-supabase-sql" onclick="copySupabaseSchema()" style="font-size: 0.72rem; padding: 0.3rem 0.7rem;">
+ Copy Complete SQL Script
+ </button>
+ </div>
+ <p style="font-size: 0.75rem; color: #94A3B8; margin-bottom: 0.75rem; line-height: 1.4;">
+ Creates the <strong>climate-uploads</strong> storage bucket, <strong>reports</strong> table, <strong>users</strong> accounts table, and <strong>website_config</strong> with public RLS policies. Open <strong>SQL Editor</strong> in Supabase, paste, and click <strong>Run</strong>.
+ </p>
+ <textarea id="supabase-sql-schema" readonly style="width: 100%; height: 130px; background: #030A05; color: #A7F3D0; border: 1px solid #14351E; border-radius: 6px; font-family: monospace; font-size: 0.72rem; padding: 0.5rem; resize: vertical;"></textarea>
+ </div>
+ </div>
+ </section>
+
+ </main>
+ </div>
+
+ <!-- Admin Footer Navigation Bar with Relocated Hamburger Menu -->
+   <!-- Admin Footer Navigation Bar with Relocated Hamburger Menu -->
+  <nav class="admin-footer-navbar" id="admin-footer-navbar" aria-label="Admin Navigation Footer">
+    <button type="button" class="admin-footer-nav-item active" data-tab="overview" onclick="switchAdminTab('overview')">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+      <span class="admin-footer-label">Overview</span>
+    </button>
+    <button type="button" class="admin-footer-nav-item" data-tab="triage" onclick="switchAdminTab('triage')">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+      <span class="admin-footer-label">Tickets</span>
+    </button>
+    <button type="button" class="admin-footer-nav-item" data-tab="kyc" onclick="switchAdminTab('kyc')">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+      <span class="admin-footer-label">KYC</span>
+    </button>
+    <button type="button" class="admin-footer-nav-item" data-tab="users" onclick="switchAdminTab('users')">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+      <span class="admin-footer-label">Users</span>
+    </button>
+    <button type="button" class="admin-footer-nav-item" data-tab="settings" onclick="switchAdminTab('settings')">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      <span class="admin-footer-label">Settings</span>
+    </button>
+    <button type="button" class="admin-footer-nav-item admin-footer-hamburger-btn" onclick="toggleAdminMobileSidebar()" aria-label="Open Full Navigation Drawer">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>
+      <span class="admin-footer-label">Menu</span>
+    </button>
+  </nav>
+ </div>
+
+ <!-- Incident Status Update Modal -->
+ <div class="modal-overlay" id="admin-triage-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; padding: 1rem;">
+ <div style="background: #FFFFFF; border: 1px solid var(--border); box-shadow: var(--shadow-lg); border-radius: 16px; padding: 1.5rem; max-width: 540px; width: 100%; color: #fff; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark);">Update Incident Ticket</h3>
+ <button onclick="closeAdminTriageModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+ </div>
+
+ <div id="triage-modal-ticket-id" style="font-weight: 800; font-size: 0.9rem; color: #38bdf8; margin-bottom: 0.5rem;"></div>
+ <div id="triage-modal-title" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;"></div>
+
+ <div style="margin-bottom: 1rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Status Transition</label>
+ <select id="triage-select-status" class="admin-select">
+ <option value="Submitted">Submitted (Awaiting Review)</option>
+ <option value="Under Review">Under Review (CENRO Desk Triage)</option>
+ <option value="Verified">Verified (Field Unit Dispatched)</option>
+ <option value="In Progress">In Progress (Active Cleanup / Legal Action)</option>
+ <option value="Resolved">Resolved (Remediation Complete)</option>
+ <option value="Closed">Closed (Citizen & Auditor Confirmed)</option>
+ </select>
+ </div>
+
+ <div style="margin-bottom: 1rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Assigned Enforcement Unit / Contractor</label>
+ <input type="text" id="triage-assigned-unit" class="admin-input" placeholder="e.g. CENRO Quick Response Unit Bravo">
+ </div>
+
+ <div style="margin-bottom: 1.5rem;">
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Inspection Remarks & Findings (Visible to Citizen)</label>
+ <textarea id="triage-inspection-notes" class="admin-textarea" rows="3" placeholder="State inspection details, equipment deployed, or citation tickets issued..."></textarea>
+ </div>
+
+ <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+ <button onclick="closeAdminTriageModal()" class="btn-admin-outline">Cancel</button>
+ <button onclick="saveAdminTriageUpdate()" class="btn-admin-primary">Save & Notify Citizen</button>
+ </div>
+ </div>
+ </div>
+
+ <!-- KYC Document Zoom & Inspection Modal -->
+ <div class="modal-overlay" id="admin-kyc-zoom-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 210; align-items: center; justify-content: center; padding: 1rem;">
+ <div style="background: #FFFFFF; border: 1px solid var(--border); box-shadow: var(--shadow-lg); border-radius: 16px; padding: 1.5rem; max-width: 720px; width: 100%; color: #fff; max-height: 92vh; overflow-y: auto;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+ <div>
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark);" id="kyc-zoom-modal-title">Verification Document Inspection</h3>
+ <div style="font-size: 0.78rem; color: var(--text-muted);" id="kyc-zoom-modal-sub"></div>
+ </div>
+ <button onclick="closeAdminKycZoomModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer;">&times;</button>
+ </div>
+
+ <div style="text-align: center; margin-bottom: 1.25rem;">
+ <img id="kyc-zoom-img" src="" alt="Enlarged ID Document" style="max-width: 100%; max-height: 65vh; object-fit: contain; border-radius: 8px; border: 1px solid #1c4228; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+ </div>
+
+ <div style="display: flex; justify-content: flex-end;">
+ <button onclick="closeAdminKycZoomModal()" class="btn-admin-primary">Close Inspection</button>
+ </div>
+ </div>
+ </div>
+
+ <script src="/admin/admin.js"></script>
+</body>
+</html>

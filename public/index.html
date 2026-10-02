@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title id="page-title">Climate Action | Mobile & Web Climate Action Reporting and Information System</title>
+ <meta name="description" content="Official Civic Climate Dashboard and Reporting Portal for Metro Verde. Report environmental hazards, inspect real-time resolution lifecycles, access verified climate intelligence, and participate in community restoration.">
+
+ <!-- Favicon / Brand Icon -->
+ <link id="site-favicon" rel="icon" type="image/png" href="/favicon.ico">
+
+ <!-- Google Fonts: Plus Jakarta Sans -->
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+ <!-- Leaflet GIS Map CSS -->
+ <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+ <!-- Design System CSS -->
+ <link rel="stylesheet" href="/styles.css">
+ <script>
+ (function() {
+ try {
+ var raw = localStorage.getItem('climate_site_config') || localStorage.getItem('climate_brand_logo_updated');
+ var logoUrl = '/assets/ic_climate_app_icon.jpg';
+ if (raw) {
+ var cfg = JSON.parse(raw);
+ var stored = cfg.logoImageUrl || (cfg.config && cfg.config.logoImageUrl);
+ if (stored) logoUrl = stored;
+ }
+ window.__permanentLogoUrl = logoUrl;
+ } catch (e) {
+ window.__permanentLogoUrl = '/assets/ic_climate_app_icon.jpg';
+ }
+ })();
+ </script>
+</head>
+<body>
+  <div class="animated-bg-container"></div>
+
+ <!-- =========================================================================
+ MANDATORY CITIZEN AUTHENTICATION GATEWAY (Shown when opening website)
+ ========================================================================= -->
+ <div id="auth-barrier-screen" class="auth-barrier-overlay" style="display: none;">
+ <div class="auth-barrier-card">
+ <button type="button" class="auth-barrier-close" onclick="dismissBarrierToGuest()" aria-label="Close modal">&times;</button>
+ <div class="auth-barrier-header">
+ <div class="auth-barrier-logo"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+ <div class="auth-barrier-title">Climate Action Citizen Portal</div>
+ <div class="auth-barrier-subtitle">City Government of Metro Verde • Municipal Environmental Gateway</div>
+ </div>
+
+ <div class="auth-barrier-tabs">
+ <button class="auth-barrier-tab active" id="barrier-tab-register" onclick="setBarrierMode('register')">Create Account</button>
+ <button class="auth-barrier-tab" id="barrier-tab-login" onclick="setBarrierMode('login')">Sign In</button>
+ </div>
+
+ <div class="auth-barrier-body">
+ <!-- Register Form (Default) -->
+ <form id="barrier-register-form" onsubmit="handleBarrierRegister(event)">
+ <div class="form-group" style="margin-bottom: 0.65rem;">
+ <label class="form-label" for="barrier-reg-name">Full Name *</label>
+ <input type="text" id="barrier-reg-name" class="form-control" placeholder="Juan dela Cruz" required autocomplete="name">
+ </div>
+ <div class="form-group" style="margin-bottom: 0.65rem;">
+ <label class="form-label" for="barrier-reg-email">Email Address *</label>
+ <input type="email" id="barrier-reg-email" class="form-control" placeholder="citizen@example.ph" required autocomplete="email">
+ </div>
+ <div class="form-group" style="margin-bottom: 0.65rem;">
+ <label class="form-label" for="barrier-reg-phone">Mobile Phone *</label>
+ <input type="tel" id="barrier-reg-phone" class="form-control" placeholder="09171234567" required autocomplete="tel">
+ </div>
+ <div class="form-group" style="margin-bottom: 0.65rem;">
+ <label class="form-label" for="barrier-reg-barangay">Barangay *</label>
+ <select id="barrier-reg-barangay" class="form-control" required>
+ <option value="Barangay Makilas">Barangay Makilas</option>
+ <option value="Poblacion">Poblacion</option>
+ <option value="Lumbia">Lumbia</option>
+ <option value="Taway">Taway</option>
+ <option value="Maasin">Maasin</option>
+ <option value="Barangay San Isidro">Barangay San Isidro</option>
+ <option value="Barangay Riverside">Barangay Riverside</option>
+ <option value="Barangay Malinis">Barangay Malinis</option>
+ </select>
+ </div>
+ <div class="form-group" style="margin-bottom: 0.65rem;">
+ <label class="form-label" for="barrier-reg-address">Street Address *</label>
+ <input type="text" id="barrier-reg-address" class="form-control" placeholder="Street / Purok" required autocomplete="street-address">
+ </div>
+ <div class="form-group" style="margin-bottom: 0.85rem;">
+ <label class="form-label" for="barrier-reg-password">Password *</label>
+ <input type="password" id="barrier-reg-password" class="form-control" placeholder="At least 6 characters" minlength="6" required autocomplete="new-password">
+ </div>
+ <div id="barrier-reg-error" style="display: none; background: #FEF2F2; color: var(--red); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); font-size: 0.8rem; margin-bottom: 0.75rem; border: 1px solid #FECACA;"></div>
+ <button type="submit" class="btn-primary" style="width: 100%; padding: 0.75rem; font-size: 0.9rem; justify-content: center;">
+ Create Account
+ </button>
+ <div style="text-align: center; margin-top: 0.75rem; font-size: 0.82rem; color: var(--text-muted);">
+ Already have an account? <button type="button" onclick="setBarrierMode('login')" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline; padding: 0;">Sign In</button>
+ </div>
+ </form>
+
+ <!-- Sign In Form -->
+ <form id="barrier-login-form" onsubmit="handleBarrierLogin(event)" style="display: none;">
+ <div class="form-group" style="margin-bottom: 0.75rem;">
+ <label class="form-label" for="barrier-login-email">Email Address *</label>
+ <input type="email" id="barrier-login-email" class="form-control" placeholder="citizen@example.ph" required autocomplete="username">
+ </div>
+ <div class="form-group" style="margin-bottom: 0.85rem;">
+ <label class="form-label" for="barrier-login-password">Password *</label>
+ <input type="password" id="barrier-login-password" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+ </div>
+ <div id="barrier-login-error" style="display: none; background: #FEF2F2; color: var(--red); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); font-size: 0.8rem; margin-bottom: 0.75rem; border: 1px solid #FECACA;"></div>
+ <button type="submit" class="btn-primary" style="width: 100%; padding: 0.75rem; font-size: 0.9rem; justify-content: center;">
+ Sign In
+ </button>
+ <div style="text-align: center; margin-top: 0.75rem; font-size: 0.82rem; color: var(--text-muted);">
+ Don't have an account? <button type="button" onclick="setBarrierMode('register')" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline; padding: 0;">Create Account</button>
+ </div>
+ </form>
+
+ <!-- Guest Exploration Option -->
+ <div style="margin-top: 1.25rem; pt: 1rem; border-top: 1px solid var(--border); text-align: center; padding-top: 0.85rem;">
+ <button type="button" onclick="dismissBarrierToGuest()" style="background: none; border: none; font-size: 0.8rem; color: var(--text-muted); cursor: pointer; text-decoration: underline; font-weight: 600;">
+ Explore Public Advisories as Guest &rarr;
+ </button>
+ <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.35rem; line-height: 1.4;">
+ * Guest users can view weather & advisories. Incident reporting requires a registered & verified citizen account.
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- =========================================================================
+ 1. TWO-TIER STICKY HEADER
+ ========================================================================= -->
+ <header class="header-nav">
+ <!-- Top Row: Logo, Weather Pill, Notifications, Citizen User Profile -->
+ <div class="nav-top-row">
+ <!-- Left: Logo & Branding -->
+ <div class="brand-wrapper" onclick="switchTab('dashboard')" role="button" aria-label="Go to Dashboard">
+ <div class="brand-icon-box has-image" id="site-logo-icon">
+ <img src="/assets/ic_climate_app_icon.jpg" alt="Official Logo" class="brand-logo-img">
+ </div>
+ <script>
+ if (window.__permanentLogoUrl && window.__permanentLogoUrl !== '/assets/ic_climate_app_icon.jpg') {
+ var el = document.getElementById('site-logo-icon');
+ var img = el ? el.querySelector('img') : null;
+ if (img) img.src = window.__permanentLogoUrl;
+ }
+ </script>
+ <div class="brand-text-block">
+ <div class="brand-name-row">
+ <span class="brand-name" id="site-brand-name">Climate Action</span>
+ <span class="badge-portal-pill">CITIZEN PORTAL</span>
+ </div>
+ <div class="brand-sub" id="site-brand-sub">Reporting & Information System • Metro Verde</div>
+ </div>
+ </div>
+
+ <!-- Right Header Actions -->
+ <div class="header-right-actions">
+ <!-- Live Weather Pill (Desktop) -->
+ <div class="weather-pill-header" id="header-weather-pill" onclick="switchTab('dashboard')" title="View Live Weather & PAGASA Advisory">
+ <span id="header-weather-icon"><svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg></span>
+ <span id="header-weather-text">32°C • Yellow Alert</span>
+ </div>
+
+ <!-- Notification Bell & Dropdown -->
+ <div class="notif-dropdown-wrapper">
+ <button class="btn-icon-nav" id="btn-notif-bell" onclick="toggleNotificationsMenu(event)" aria-label="Notifications" title="Official Advisories & Updates">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg><span class="notif-badge-count" id="notif-badge-count">3</span>
+ </button>
+
+ <div class="notif-dropdown-menu" id="notif-dropdown-menu" onclick="event.stopPropagation()">
+ <div class="notif-header">
+ <span style="font-weight: 800;">Official Alerts & Bulletins</span>
+ <div style="display: flex; align-items: center; gap: 0.6rem;">
+ <button onclick="markAllNotifsRead()" style="background:none; border:none; color:var(--primary-light); font-size:0.75rem; font-weight:700; cursor:pointer;">Mark Read</button>
+ <button type="button" onclick="closeNotificationsMenu()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; line-height:1; cursor:pointer; padding:0 4px;" aria-label="Close notifications">&times;</button>
+ </div>
+ </div>
+ <div class="notif-list" id="notif-items-list">
+ <!-- Rendered by JS -->
+ </div>
+ </div>
+ </div>
+
+ <!-- Citizen Profile Dropdown or Sign In -->
+ <div id="citizen-auth-container">
+ <!-- Populated by JS -->
+ </div>
+
+ <!-- Mobile / Tablet Navigation Drawer Toggle -->
+ <button type="button" class="btn-hamburger-mobile" id="btn-hamburger-mobile" onclick="openMobileDrawer()" aria-label="Open Navigation Drawer Menu" title="Menu">
+ <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+ </button>
+ </div>
+ </div>
+
+ <!-- Navigation Sub-Bar (Desktop Sticky Pill Navigation) -->
+ <div class="nav-sub-bar">
+ <nav class="nav-tabs-wrapper">
+ <button class="nav-tab-pill active" data-tab="dashboard">Dashboard</button>
+ <button class="nav-tab-pill" data-tab="report">Report Incident</button>
+ <button class="nav-tab-pill" data-tab="tracker">Incident Tracker</button>
+ <button class="nav-tab-pill" data-tab="map">GIS Map</button>
+ <button class="nav-tab-pill" data-tab="education">Climate Info</button>
+ <button class="nav-tab-pill" data-tab="guides">User Guides</button>
+ <button class="nav-tab-pill" data-tab="activities">Community Drives</button>
+ <button class="nav-tab-pill" data-tab="profile">Profile & Settings</button>
+ </nav>
+ </div>
+ </header>
+
+ <!-- =========================================================================
+ MOBILE SLIDE-OUT DRAWER MENU
+ ========================================================================= -->
+ <div class="mobile-drawer-overlay" id="mobile-drawer" onclick="closeMobileDrawer(event)">
+ <div class="mobile-drawer-panel" onclick="event.stopPropagation()">
+ <div class="drawer-header">
+ <button class="drawer-close-btn" onclick="closeMobileDrawer()">&times;</button>
+ <div style="display: flex; align-items: center; gap: 0.75rem;">
+ <div class="brand-icon-box has-image" id="drawer-logo-icon" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px;">
+ <img src="/assets/ic_climate_app_icon.jpg" alt="Official Logo" class="brand-logo-img">
+ </div>
+ <div>
+ <div style="font-weight: 800; font-size: 1.05rem;" id="drawer-brand-name">Climate Action</div>
+ <div style="font-size: 0.7rem; color: rgba(255,255,255,0.8);" id="drawer-brand-sub">Metro Verde Citizen Portal</div>
+ </div>
+ </div>
+ <div id="drawer-user-card" style="background: rgba(255,255,255,0.15); padding: 0.65rem 0.85rem; border-radius: 12px; margin-top: 0.25rem;">
+ <!-- User info rendered by JS -->
+ </div>
+ </div>
+
+ <ul class="drawer-nav-list">
+ <li><button class="drawer-nav-btn active" data-tab="dashboard">Home Dashboard</button></li>
+ <li><button class="drawer-nav-btn" data-tab="report">Report Incident</button></li>
+ <li><button class="drawer-nav-btn" data-tab="tracker">Incident Tracker</button></li>
+ <li><button class="drawer-nav-btn" data-tab="map">Interactive GIS Map</button></li>
+ <li><button class="drawer-nav-btn" data-tab="education">Climate Knowledge & Info</button></li>
+ <li><button class="drawer-nav-btn" data-tab="guides">Citizen User Guides</button></li>
+ <li><button class="drawer-nav-btn" data-tab="activities">Community Activities</button></li>
+ <li><button class="drawer-nav-btn" data-tab="profile">Citizen Profile</button></li>
+ <li><button class="drawer-nav-btn" onclick="closeMobileDrawer(); openNotificationsModal();" style="color: var(--amber-dark); font-weight: 700;"><svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> Official Alerts & Bulletins</button></li>
+ </ul>
+
+ <div class="drawer-footer">
+ <div style="font-weight: 700; margin-bottom: 0.45rem; color: var(--text-main); display: flex; align-items: center; gap: 0.35rem;">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+ 24/7 Municipal Hotlines
+ </div>
+ <div id="cms-display-drawer-hotlines-list" style="display: flex; flex-direction: column; gap: 0.35rem;">
+ <div>Rescue: <strong id="cms-display-drawer-rescue-hotline">(02) 8888-ECO</strong></div>
+ <div>DENR Protection: <strong id="cms-display-drawer-denr-hotline">#911-DENR</strong></div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- =========================================================================
+ MAIN CONTENT CONTAINER
+ ========================================================================= -->
+ <main class="main-wrapper">
+
+ <!-- Active High-Priority Announcement Alert (if any) -->
+ <div id="urgent-announcement-banner" class="announcement-alert-banner" style="display: none; background: #FEF2F2; border: 1.5px solid #FCA5A5; border-radius: var(--radius-lg); padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+ <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; flex-wrap: wrap;">
+ <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+ <div style="flex: 1; min-width: 240px;">
+ <strong id="urgent-ann-title" style="color: #991B1B;">Emergency PAGASA Advisory</strong>:
+ <span id="urgent-ann-body" style="font-size: 0.88rem; color: #7F1D1D;">Low Pressure Area approaching Eastern Seaboard. Heavy precipitation expected.</span>
+ </div>
+ </div>
+ <button onclick="dismissUrgentBanner()" style="background:none; border:none; font-size:1.4rem; color:#991B1B; cursor:pointer;">&times;</button>
+ </div>
+
+ <!-- =======================================================================
+ SECTION 1: DASHBOARD (MAIN HOMEPAGE PER MOCKUP & PROMPT)
+ ======================================================================= -->
+ <section id="section-dashboard" class="portal-section active">
+
+ <!-- ROW 1: TODAY'S CLIMATE STATUS + ENVIRONMENTAL REPORTS OVERVIEW -->
+ <div class="home-top-grid">
+ <!-- Left: Today's Climate Status Card -->
+ <div class="climate-status-card">
+ <div>
+ <div class="status-card-header">
+ <span class="status-pill-title">TODAY'S CLIMATE STATUS</span>
+ <span class="status-updated-indicator" onclick="refreshClimateTelemetry()" title="Click to refresh telemetry">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg> Live Telemetry
+ </span>
+ </div>
+
+ <div class="climate-main-weather-row">
+ <div class="weather-big-temp-block">
+ <span class="weather-big-icon" id="dash-weather-icon"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg></span>
+ <div>
+ <div class="temp-large-number">
+ <span id="dash-weather-temp">32</span><span class="temp-unit-c">°C</span>
+ </div>
+ <div class="weather-condition-text" id="dash-weather-condition">Partly Cloudy</div>
+ <div class="weather-feels-text" id="dash-weather-feels">Feels like 36°C</div>
+ </div>
+ </div>
+
+ <!-- 3 Climate Telemetry Indicators -->
+ <div class="climate-telemetry-row">
+ <div class="telemetry-item-box">
+ <div class="telemetry-item-label">Heat Index</div>
+ <div class="telemetry-item-val" id="dash-weather-heat">38°C</div>
+ <div class="telemetry-item-sub" style="color: #FEF08A;">(High)</div>
+ </div>
+ <div class="telemetry-item-box">
+ <div class="telemetry-item-label">Air Quality</div>
+ <div class="telemetry-item-val" id="dash-weather-aqi">68</div>
+ <div class="telemetry-item-sub" style="color: #BBF7D0;">Moderate</div>
+ </div>
+ <div class="telemetry-item-box">
+ <div class="telemetry-item-label">Rain Risk</div>
+ <div class="telemetry-item-val" id="dash-weather-rain">45%</div>
+ <div class="telemetry-item-sub" style="color: #BAE6FD;">Possible</div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Bottom PAGASA Status Bar -->
+ <div class="pagasa-status-strip" onclick="openAdvisoryModal()" title="View full meteorological bulletin">
+ <span class="pagasa-alert-badge" id="dash-weather-alert"><span class="advisory-dot"></span> PAGASA Status: Yellow Alert</span>
+ <span class="pagasa-advisory-ticker" id="dash-weather-advisory-text">Low Pressure Area approaching Eastern Seaboard. Preemptive culvert monitoring active. &gt;</span>
+ </div>
+ </div>
+
+ <!-- Right: Citizen Account Activity & Reports (Personalized Real Data) -->
+ <div class="reports-overview-card">
+ <div class="overview-card-title">
+ <span>MY CITIZEN ACTIVITY & REPORTS</span>
+ <span id="dash-user-kyc-pill" class="badge-portal-pill" style="font-size: 0.7rem; background: var(--primary);">Loading Status...</span>
+ </div>
+
+ <div class="reports-stat-grid">
+ <!-- 1. My Total Reports -->
+ <div class="report-stat-widget">
+ <div class="stat-widget-top">
+ <div class="stat-widget-icon red"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+ <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">FILED BY ME</span>
+ </div>
+ <div>
+ <div class="stat-widget-number" id="kpi-user-total-reports">0</div>
+ <div class="stat-widget-label">My Submissions</div>
+ <div class="stat-widget-trend" id="kpi-user-reports-trend">Real-time account log</div>
+ </div>
+ </div>
+
+ <!-- 2. Pending Triage -->
+ <div class="report-stat-widget">
+ <div class="stat-widget-top">
+ <div class="stat-widget-icon amber"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+ <span style="font-size: 0.7rem; color: var(--amber-dark); font-weight: 700;">AWAITING TRIAGE</span>
+ </div>
+ <div>
+ <div class="stat-widget-number" id="kpi-user-pending-reports">0</div>
+ <div class="stat-widget-label">Pending Review</div>
+ <div class="stat-widget-trend">Under CENRO intake</div>
+ </div>
+ </div>
+
+ <!-- 3. In Progress -->
+ <div class="report-stat-widget">
+ <div class="stat-widget-top">
+ <div class="stat-widget-icon blue"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></div>
+ <span style="font-size: 0.7rem; color: #0284C7; font-weight: 700;">DISPATCHED</span>
+ </div>
+ <div>
+ <div class="stat-widget-number" id="kpi-user-inprogress-reports">0</div>
+ <div class="stat-widget-label">In Progress</div>
+ <div class="stat-widget-trend">Field unit deployed</div>
+ </div>
+ </div>
+
+ <!-- 4. Resolved -->
+ <div class="report-stat-widget">
+ <div class="stat-widget-top">
+ <div class="stat-widget-icon green"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
+ <span style="font-size: 0.7rem; color: var(--emerald); font-weight: 700;">REMEDIATED</span>
+ </div>
+ <div>
+ <div class="stat-widget-number" id="kpi-user-resolved-reports">0</div>
+ <div class="stat-widget-label">Resolved Incidents</div>
+ <div class="stat-widget-trend">Remediated & Closed</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- KYC Status Notification Alert Bar -->
+ <div id="dash-kyc-alert-banner" style="margin-top: 1.25rem;">
+ <!-- Rendered dynamically by JS -->
+ </div>
+
+ <!-- ROW 2: "REPORT AN ENVIRONMENTAL INCIDENT" CTA WIDE BANNER -->
+ <div class="report-cta-banner" id="home-report-cta-banner">
+ <div class="report-cta-top">
+ <div class="report-cta-badge-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
+ <div class="report-cta-text-content">
+ <h2 class="report-cta-headline">REPORT AN ENVIRONMENTAL INCIDENT</h2>
+ <p class="report-cta-desc">
+ See flooding, illegal dumping, pollution or another environmental problem? Report it to the municipality and help make our community safer and cleaner.
+ </p>
+ <div class="report-cta-buttons-row">
+ <button class="btn-cta-primary" onclick="openReportWithCategory()">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> Report Now
+ </button>
+ <button class="btn-cta-outline" onclick="switchTab('tracker')">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> View Incident Tracker
+ </button>
+ </div>
+ </div>
+ </div>
+
+ <!-- Horizontal Quick-Select Category Carousel -->
+ <div class="quick-category-pills-row">
+ <button class="quick-category-pill" onclick="openReportWithCategory('Flooding')">
+ Flooding & Drainage
+ </button>
+ <button class="quick-category-pill" onclick="openReportWithCategory('Improper waste disposal')">
+ Illegal Dumping
+ </button>
+ <button class="quick-category-pill" onclick="openReportWithCategory('Water pollution')">
+ Water Pollution
+ </button>
+ <button class="quick-category-pill" onclick="openReportWithCategory('Air pollution')">
+ Air Pollution
+ </button>
+ <button class="quick-category-pill" onclick="openReportWithCategory('Illegal cutting of trees')">
+ Tree Cutting / Forest
+ </button>
+ <button class="quick-category-pill" onclick="openReportWithCategory('Open burning')">
+ Open Burning
+ </button>
+ <button class="quick-category-pill" onclick="openReportWithCategory('Wildlife Concern')">
+ Wildlife Concern
+ </button>
+ <button class="quick-category-pill" onclick="openReportWithCategory('Other')">
+ Other Hazard
+ </button>
+ </div>
+ </div>
+
+ <!-- ROW 3: MIDDLE TWO-COLUMN GRID -->
+ <div class="home-middle-grid">
+ <!-- LEFT COLUMN: Recent Reports + Climate Info (6 Cards) -->
+ <div class="middle-left-column">
+ 
+ <!-- My Environmental Reports Table (Account-Specific Real Data) -->
+ <div class="recent-reports-card">
+ <div class="card-title-bar">
+ <h3 class="card-section-heading">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> MY SUBMITTED REPORTS & STATUS
+ </h3>
+ <a href="#" class="card-action-link" onclick="switchTab('tracker'); return false;">View Tracker →</a>
+ </div>
+
+ <div class="reports-table-wrapper">
+ <table class="reports-data-table">
+ <thead>
+ <tr>
+ <th>Type</th>
+ <th>Location</th>
+ <th>Status</th>
+ <th>Date</th>
+ </tr>
+ </thead>
+ <tbody id="dashboard-recent-table-body">
+ <!-- Rendered dynamically by JS with real account reports -->
+ </tbody>
+ </table>
+ </div>
+ </div>
+
+ <!-- Climate Information (6 Rich Visual Cards) -->
+ <div class="climate-info-card">
+ <div class="card-title-bar">
+ <h3 class="card-section-heading">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> CLIMATE INFORMATION
+ </h3>
+ <a href="#" class="card-action-link" onclick="switchTab('education'); return false;">View All →</a>
+ </div>
+
+ <div class="climate-info-grid" id="climate-info-pillars-grid">
+ <!-- 1. Climate Change -->
+ <div class="info-box-card" onclick="openInfoCardModal('climate-change')">
+ <div class="info-card-image-box">
+ <img src="/assets/climate_change_thumb_1789457800658.jpg" onerror="this.src='https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80'" alt="Climate Change" class="info-card-img">
+ </div>
+ <div class="info-card-body">
+ <div class="info-card-title">Climate Vulnerability</div>
+ <div class="info-card-desc">Understanding the risks for a safer future.</div>
+ </div>
+ </div>
+
+ <!-- 2. Flood Safety -->
+ <div class="info-box-card" onclick="openInfoCardModal('flood-safety')">
+ <div class="info-card-image-box">
+ <img src="https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=600&q=80" alt="Flood Safety" class="info-card-img">
+ </div>
+ <div class="info-card-body">
+ <div class="info-card-title">Flood Preparedness</div>
+ <div class="info-card-desc">Be prepared, stay safe and protect waterways.</div>
+ </div>
+ </div>
+
+ <!-- 3. Forest Protection -->
+ <div class="info-box-card" onclick="openInfoCardModal('forest-protection')">
+ <div class="info-card-image-box">
+ <img src="/assets/climate_hero_banner.jpg" onerror="this.src='https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80'" alt="Forest Protection" class="info-card-img">
+ </div>
+ <div class="info-card-body">
+ <div class="info-card-title">Forest Protection</div>
+ <div class="info-card-desc">Healthy forests, healthier tomorrow and stable slopes.</div>
+ </div>
+ </div>
+
+ <!-- 4. Waste Management -->
+ <div class="info-box-card" onclick="openInfoCardModal('waste-mgmt')">
+ <div class="info-card-image-box">
+ <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80" alt="Waste Management" class="info-card-img">
+ </div>
+ <div class="info-card-body">
+ <div class="info-card-title">Solid Waste Management</div>
+ <div class="info-card-desc">Reduce • Reuse • Recycle with RA 9003 compliance.</div>
+ </div>
+ </div>
+
+ <!-- 5. Water Protection -->
+ <div class="info-box-card" onclick="openInfoCardModal('water-protection')">
+ <div class="info-card-image-box">
+ <img src="https://images.unsplash.com/photo-1618083707368-b3823daa2726?auto=format&fit=crop&w=600&q=80" alt="Water Protection" class="info-card-img">
+ </div>
+ <div class="info-card-body">
+ <div class="info-card-title">Water Resource Protection</div>
+ <div class="info-card-desc">Clean water, healthy communities and stream protection.</div>
+ </div>
+ </div>
+
+ <!-- 6. Energy Saving -->
+ <div class="info-box-card" onclick="openInfoCardModal('energy-saving')">
+ <div class="info-card-image-box">
+ <img src="https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=600&q=80" alt="Energy Saving" class="info-card-img">
+ </div>
+ <div class="info-card-body">
+ <div class="info-card-title">Energy Efficiency</div>
+ <div class="info-card-desc">Small actions, big impact for low-carbon living.</div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ </div>
+
+ <!-- RIGHT COLUMN: GIS Incident Map Preview + Climate Challenge -->
+ <div class="middle-right-column">
+ 
+ <!-- GIS Incident Map Preview Card -->
+ <div class="gis-map-card">
+ <div class="map-header-row">
+ <h3 class="card-section-heading" style="font-size: 0.95rem;">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg> ENVIRONMENTAL INCIDENT MAP
+ </h3>
+ <div class="map-legend-pills">
+ <span><span class="legend-dot critical"></span> Critical</span>
+ <span><span class="legend-dot pending"></span> Pending</span>
+ <span><span class="legend-dot investigating"></span> In Triage</span>
+ <span><span class="legend-dot inprogress"></span> In Progress</span>
+ <span><span class="legend-dot resolved"></span> Resolved</span>
+ </div>
+ </div>
+
+ <!-- Embedded Live Leaflet Map Preview -->
+ <div class="gis-preview-map-box" id="dashboard-preview-map"></div>
+
+ <div class="gis-map-action-row">
+ <button class="btn-open-full-map" onclick="switchTab('map')">
+ Open Full GIS Map & Hotspot Layers →
+ </button>
+ </div>
+ </div>
+
+ <!-- Municipal Response Protocol Card -->
+ <div class="response-protocol-card">
+ <div>
+ <div class="card-title-bar">
+ <h3 class="card-section-heading" style="font-size: 0.95rem;">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+ MUNICIPAL RESPONSE PROTOCOL
+ </h3>
+ <span style="font-size: 0.72rem; color: var(--emerald-dark); font-weight: 700; background: #DCFCE7; padding: 0.15rem 0.5rem; border-radius: 999px;">CENRO Standards</span>
+ </div>
+ <div class="protocol-steps-list">
+ <div class="protocol-step-item">
+ <span class="protocol-step-badge">Stage 1</span>
+ <div>
+ <div style="font-weight: 700; color: var(--text-main);">Intake & Digital Triage</div>
+ <div style="color: var(--text-muted); font-size: 0.72rem;">Automated deduplication and geotag verification (< 1 hr).</div>
+ </div>
+ </div>
+ <div class="protocol-step-item">
+ <span class="protocol-step-badge">Stage 2</span>
+ <div>
+ <div style="font-weight: 700; color: var(--text-main);">Eco-Warden Field Dispatch</div>
+ <div style="color: var(--text-muted); font-size: 0.72rem;">On-site photographic inspection within 4 hours for Critical tickets.</div>
+ </div>
+ </div>
+ <div class="protocol-step-item">
+ <span class="protocol-step-badge">Stage 3</span>
+ <div>
+ <div style="font-weight: 700; color: var(--text-main);">Inter-Agency Remediation</div>
+ <div style="color: var(--text-muted); font-size: 0.72rem;">Culvert clearance, waste extraction, or environmental citations.</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="protocol-hotlines-row" id="cms-display-protocol-hotlines-list">
+ <div class="protocol-hotline-item">
+ <div class="protocol-hotline-label">Disaster Rescue</div>
+ <div class="protocol-hotline-number">(02) 8888-ECO</div>
+ </div>
+ <div class="protocol-hotline-item">
+ <div class="protocol-hotline-label">DENR Hotline</div>
+ <div class="protocol-hotline-number">#911-DENR</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ </div>
+ </div>
+
+ <!-- ROW 4: BOTTOM THREE-COLUMN GRID -->
+ <div class="home-bottom-grid">
+ <!-- 1. Community Climate Activities -->
+ <div class="community-activities-card">
+ <div class="card-title-bar">
+ <h3 class="card-section-heading">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> COMMUNITY CLIMATE ACTIVITIES
+ </h3>
+ <a href="#" class="card-action-link" onclick="switchTab('activities'); return false;">View All →</a>
+ </div>
+
+ <div class="activity-items-stack" id="dashboard-activities-container">
+ <!-- Rendered by JS -->
+ </div>
+ </div>
+
+ <!-- 2. Today's Climate Tip -->
+ <div class="climate-tip-card">
+ <div>
+ <div class="tip-icon-row">
+ <div class="tip-badge-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg></div>
+ <div class="tip-card-heading">TODAY'S CLIMATE TIP</div>
+ </div>
+ <p class="tip-card-quote" id="daily-climate-tip-text">
+ "Conserve water, even during rainy days. It helps prevent stormwater culvert overload and ensures ample reservoir reserves during dry periods."
+ </p>
+ </div>
+ <button class="btn-tip-learn" onclick="switchTab('education')">
+ Learn More →
+ </button>
+ </div>
+
+ <!-- 3. Official Municipal Information & Verification -->
+ <div class="brand-verification-card">
+ <div>
+ <div class="verif-top-block">
+ <div class="verif-logo-circle"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+ <div>
+ <div class="verif-title">Climate Action System</div>
+ <div style="font-size: 0.72rem; color: rgba(255,255,255,0.75);">City of Metro Verde</div>
+ </div>
+ </div>
+ <p class="verif-tagline">
+ Together for a safer, cleaner, and ecologically resilient municipal future.
+ </p>
+ </div>
+
+ <div class="verif-badges-column">
+ <div class="verif-badge-pill">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Secure Citizen Reporting Portal
+ </div>
+ <div class="verif-badge-pill">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><path d="M3 21h18M3 10h18M5 10v11M9 10v11M15 10v11M19 10v11M12 3l9 7H3l9-7z"></path></svg> Official LGU & CENRO Mandate
+ </div>
+ </div>
+ </div>
+ </div>
+
+ </section>
+
+ <!-- =======================================================================
+ SECTION 2: REPORT INCIDENT
+ ======================================================================= -->
+ <section id="section-report" class="portal-section">
+ <div class="section-header">
+ <h2 class="section-title">Report an Environmental Incident</h2>
+ <p class="section-desc">Submit geotagged observations of flooding, illegal dumping, deforestation, open burning, or water pollution to CENRO enforcement teams.</p>
+ </div>
+
+ <!-- KYC Required Gate (Shown if user is guest or KYC is not 'verified') -->
+ <div id="report-kyc-gate" class="card" style="display: block; text-align: center; padding: 2.5rem 1.5rem; max-width: 620px; margin: 0 auto; border-top: 5px solid var(--amber);">
+ <div style="margin-bottom: 0.75rem;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--primary-light);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+ <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem;" id="report-kyc-gate-title">
+ Identity Verification Required to Submit Reports
+ </h3>
+ <div id="report-kyc-gate-badge" style="margin-bottom: 1rem;">
+ <!-- Dynamically set by JS (e.g. Unverified, Pending Review, Rejected) -->
+ </div>
+ <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.65; margin-bottom: 1.5rem;" id="report-kyc-gate-desc">
+ To prevent misinformation, fake complaints, and malicious reporting, the City Environment & Natural Resources Office (CENRO) enforces strict identity verification under Municipal Ecological Ordinance #2026-04. Please upload your valid government ID to activate real-time incident reporting.
+ </p>
+ <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+ <button class="btn-primary" id="btn-report-verify-kyc" onclick="openKycModal()" style="padding: 0.75rem 1.5rem; font-size: 0.95rem;">
+ Upload & Verify Government ID
+ </button>
+ <button class="btn-secondary" onclick="switchTab('dashboard')" style="padding: 0.75rem 1.25rem; font-size: 0.95rem;">
+ Return to Dashboard
+ </button>
+ </div>
+ </div>
+
+ <!-- Form Grid (Hidden until user is logged in AND KYC verified) -->
+ <div id="report-form-container" class="report-form-grid" style="display: none;">
+ <!-- Form Left Card -->
+ <div class="card">
+ <div style="margin-bottom: 1.25rem; background: var(--primary-tint); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-focus); display: flex; justify-content: space-between; align-items: center;">
+ <div>
+ <span style="font-size: 0.78rem; color: var(--text-muted);">Filing as:</span>
+ <strong style="color: var(--primary-dark); margin-left: 4px;" id="reporter-display-name">—</strong>
+ <span style="font-size: 0.74rem; color: var(--text-muted);" id="reporter-display-email"></span>
+ </div>
+ <span class="status-badge resolved" style="font-size: 0.7rem;" id="reporter-display-badge">Verified Citizen</span>
+ </div>
+
+ <form id="incident-report-form" onsubmit="handleFormSubmit(event)">
+ <div class="form-group">
+ <label class="form-label" for="report-title">Incident Headline / Summary *</label>
+ <input type="text" id="report-title" class="form-control" placeholder="e.g. Uncontrolled industrial runoff into community creek" required>
+ </div>
+
+ <div class="form-group">
+ <label class="form-label" for="report-category">Environmental Hazard Category *</label>
+ <select id="report-category" class="form-control" required>
+ <option value="">Select hazard category...</option>
+ <option value="Flooding">Severe Stormwater Flooding / Culvert Obstruction</option>
+ <option value="Improper waste disposal">Improper Waste Disposal (Plastic & Dumped Refuse)</option>
+ <option value="Illegal cutting of trees">Illegal Cutting of Trees (Deforestation)</option>
+ <option value="Open burning">Open Burning (Agricultural / Trash Smog)</option>
+ <option value="Water pollution">Chemical / Oily Water Pollution</option>
+ <option value="Air pollution">Toxic Smokestack / Vehicular Emissions</option>
+ <option value="Wildlife Concern">Wildlife & Habitat Endangerment</option>
+ <option value="Extreme heat vulnerability">Urban Heat Island Critical Exposure</option>
+ </select>
+ </div>
+
+ <div class="form-group">
+ <label class="form-label" for="report-severity">Hazard Severity Level *</label>
+ <select id="report-severity" class="form-control" required>
+ <option value="Low">Low - Informational littering or planting request</option>
+ <option value="Moderate" selected>Moderate - Accumulating garbage / localized smoke</option>
+ <option value="High">High - Large open dumping / road flooding / logging</option>
+ <option value="Critical">Critical - Active chemical runoff / severe flash flood danger</option>
+ </select>
+ </div>
+
+ <div class="form-group">
+ <label class="form-label" for="report-barangay">Barangay (Jurisdiction) *</label>
+ <select id="report-barangay" class="form-control" required>
+ <option value="Barangay Makilas">Barangay Makilas (River Basin Corridor)</option>
+ <option value="Poblacion">Poblacion (Central Commercial District)</option>
+ <option value="Lumbia">Lumbia (Downstream Estuary)</option>
+ <option value="Taway">Taway (Upper Watershed Foothills)</option>
+ <option value="Maasin">Maasin (Agricultural Plain)</option>
+ <option value="Barangay San Isidro">Barangay San Isidro (Forest Reserve)</option>
+ <option value="Barangay Riverside">Barangay Riverside (Industrial Zone)</option>
+ <option value="Barangay Malinis">Barangay Malinis (Urban Center)</option>
+ </select>
+ </div>
+
+ <div class="form-group">
+ <label class="form-label" for="report-landmark">Exact Street, GPS, or Landmark *</label>
+ <input type="text" id="report-landmark" class="form-control" placeholder="e.g. Purok 4 Riverside Causeway near Spillway Bridge" required>
+ </div>
+
+ <div class="form-group">
+ <label class="form-label" for="report-desc">Comprehensive Description & Observed Impact *</label>
+ <textarea id="report-desc" class="form-control" rows="4" placeholder="Describe the duration of violation, water discoloration, smoke density, obstructed roads, or community health risks..." required></textarea>
+ </div>
+
+ <!-- Photographic Evidence Attachment -->
+ <div class="form-group">
+ <label class="form-label">Photographic Evidence</label>
+ <div class="photo-upload-box" onclick="document.getElementById('photo-input').click()">
+ <input type="file" id="photo-input" accept="image/*" style="display: none;" onchange="handlePhotoSelect(event)">
+ <div id="photo-upload-placeholder">
+ <div style="margin-bottom: 0.35rem;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--primary);"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
+ <div style="font-weight: 700; color: var(--primary-light);">Tap to upload or take site photograph</div>
+ <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.25rem;">JPEG, PNG supported (Max 5MB)</div>
+ </div>
+ <img id="photo-preview-img" style="display: none; max-height: 180px; width: auto; border-radius: 8px; margin: 0 auto;" alt="Incident Evidence">
+ </div>
+ </div>
+
+ <button type="submit" class="btn-primary" style="width: 100%; padding: 0.95rem; font-size: 0.95rem;" id="btn-submit-report">
+ Submit Environmental Incident Report
+ </button>
+ </form>
+ </div>
+
+ <!-- SLA & Resolution Lifecycle Column -->
+ <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+ <div class="card">
+ <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem;">
+ Official LGU Response Standards
+ </h3>
+ <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+ Reports undergo automated geospatial categorization and are assigned to CENRO Quick Response Teams. Critical tickets receive on-site dispatch within 4 hours.
+ </p>
+ <div style="background: var(--surface-alt); padding: 0.85rem; border-radius: var(--radius-md); font-size: 0.82rem; border-left: 4px solid var(--emerald);">
+ <strong>Whistleblower Legal Protection:</strong>
+ <div style="margin-top: 0.25rem; color: var(--text-muted);">
+ Citizens reporting real ecological violations are legally protected. Reports can be submitted with confidential contact info.
+ </div>
+ </div>
+ </div>
+
+ <!-- 5-Stage Interactive Status Timeline Card -->
+ <div class="card">
+ <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.75rem;">
+ 5-Stage Resolution Lifecycle
+ </h3>
+ <div class="status-timeline-track">
+ <div class="timeline-step-item done">
+ <div class="timeline-step-marker"></div>
+ <div class="timeline-step-title">1. Report Submitted</div>
+ <div class="timeline-step-meta">Citizen ticket generated & geotagged in database.</div>
+ </div>
+ <div class="timeline-step-item done">
+ <div class="timeline-step-marker"></div>
+ <div class="timeline-step-title">2. Verified by Barangay Eco-Warden</div>
+ <div class="timeline-step-meta">Field inspection confirms photographic validity.</div>
+ </div>
+ <div class="timeline-step-item done">
+ <div class="timeline-step-marker"></div>
+ <div class="timeline-step-title">3. Assigned to CENRO</div>
+ <div class="timeline-step-meta">Escalated to specialized solid waste or water quality division.</div>
+ </div>
+ <div class="timeline-step-item current">
+ <div class="timeline-step-marker">●</div>
+ <div class="timeline-step-title">4. Under Investigation & Remediation</div>
+ <div class="timeline-step-meta">Municipal crew declogging, cleaning, or citing violators.</div>
+ </div>
+ <div class="timeline-step-item">
+ <div class="timeline-step-marker">○</div>
+ <div class="timeline-step-title">5. Resolved & Audited</div>
+ <div class="timeline-step-meta">Final audit photo uploaded. +50 eco-points credited.</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </section>
+
+ <!-- =======================================================================
+ SECTION 3: INCIDENT TRACKER
+ ======================================================================= -->
+ <section id="section-tracker" class="portal-section">
+ <div class="section-header">
+ <h2 class="section-title">Environmental Incident Tracker</h2>
+ <p class="section-desc">Search, filter, and inspect verified community reports and municipal dispatch milestones across Metro Verde.</p>
+ </div>
+
+ <!-- Filters & Search Bar -->
+ <div class="card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+ <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+ <input type="text" id="tracker-search-input" class="form-control" placeholder="Search reports by title, barangay, or ID..." style="max-width: 420px;" oninput="handleTrackerSearch(event)">
+
+ <div style="display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.25rem;">
+ <button class="nav-tab-pill active" data-tracker-filter="All" onclick="filterTrackerByStatus('All')">All (<span id="tracker-count-all">0</span>)</button>
+ <button class="nav-tab-pill" data-tracker-filter="Investigating" onclick="filterTrackerByStatus('Investigating')">Investigating</button>
+ <button class="nav-tab-pill" data-tracker-filter="In Progress" onclick="filterTrackerByStatus('In Progress')">In Progress</button>
+ <button class="nav-tab-pill" data-tracker-filter="Resolved" onclick="filterTrackerByStatus('Resolved')">Resolved</button>
+ <button class="nav-tab-pill" data-tracker-filter="Pending" onclick="filterTrackerByStatus('Pending')">Pending</button>
+ </div>
+ </div>
+ </div>
+
+ <!-- Incident Cards Grid -->
+ <div id="tracker-reports-grid" class="grid-3">
+ <!-- Rendered by JS -->
+ </div>
+ </section>
+
+ <!-- =======================================================================
+ SECTION 4: FULL GIS HOTSPOT MAP
+ ======================================================================= -->
+ <section id="section-map" class="portal-section">
+ <div class="section-header">
+ <h2 class="section-title">Geographic Incident Hotspot Map</h2>
+ <p class="section-desc">Spatial distribution of environmental incidents, vulnerable watersheds, flood-prone lowlands, and deforested slopes.</p>
+ </div>
+
+ <div class="gis-fullmap-grid">
+ <div class="card gis-fullmap-card">
+ <iframe src="https://www.google.com/maps/embed?pb=!1m17!1m11!1m3!1d6.768591743443858!2d122.58692013881347!3d7.782322064218956!2m2!1f317.6762!2f90!3m2!1i1024!2i768!4f35!3m3!1m2!1s0x3253d88cb728d389%3A0x3578cb456c703220!2sIpil%2C%20Zamboanga%20Sibugay!5e1!3m2!1sen!2sph!4v1790923041062!5m2!1sen!2sph" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+ </div>
+
+ <div style="display: flex; flex-direction: column; gap: 1rem;">
+ <div class="card">
+ <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--primary-dark);">
+ Map Legend & Layer Toggles
+ </h3>
+ <div style="display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.84rem;">
+ <div style="display: flex; align-items: center; gap: 0.6rem;">
+ <span class="legend-dot critical" style="width: 12px; height: 12px;"></span>
+ <span><strong>Critical Hazard</strong> (Immediate flood/poison)</span>
+ </div>
+ <div style="display: flex; align-items: center; gap: 0.6rem;">
+ <span class="legend-dot pending" style="width: 12px; height: 12px;"></span>
+ <span><strong>High Severity</strong> (Large open dump / logging)</span>
+ </div>
+ <div style="display: flex; align-items: center; gap: 0.6rem;">
+ <span class="legend-dot investigating" style="width: 12px; height: 12px;"></span>
+ <span><strong>Investigating / Triage</strong> (Warden dispatched)</span>
+ </div>
+ <div style="display: flex; align-items: center; gap: 0.6rem;">
+ <span class="legend-dot inprogress" style="width: 12px; height: 12px;"></span>
+ <span><strong>In Progress</strong> (Clean-up active)</span>
+ </div>
+ <div style="display: flex; align-items: center; gap: 0.6rem;">
+ <span class="legend-dot resolved" style="width: 12px; height: 12px;"></span>
+ <span><strong>Resolved</strong> (Audited and safe)</span>
+ </div>
+ </div>
+ </div>
+
+ <!-- Pin Detail Card -->
+ <div class="card" style="flex: 1;">
+ <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--primary-dark);">
+ Selected Incident Telemetry
+ </h3>
+ <div id="map-pin-detail-box" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+ Click any pin on the map to view instant incident description, barangay, and audit history.
+ </div>
+ </div>
+ </div>
+ </div>
+ </section>
+
+ <!-- =======================================================================
+ SECTION 5: CLIMATE INFO & CMS
+ ======================================================================= -->
+ <section id="section-education" class="portal-section">
+ <div class="section-header">
+ <h2 class="section-title">Climate Knowledge & Official Information</h2>
+ <p class="section-desc">Authoritative municipal climate science, environmental legal frameworks, and research background curated by CENRO advisors.</p>
+ </div>
+
+ <!-- CMS Core Dynamic Cards -->
+ <div class="cms-advisories-grid">
+ <div class="card" style="border-left: 5px solid var(--red);">
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem;">
+ Climate Change Realities in Metro Verde
+ </h3>
+ <p id="cms-display-climate-change" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-main);">
+ Metro Verde is experiencing rapid temperature spikes with urban heat index frequently reaching 42°C in dense barangays. Increasing sea surface temperatures in nearby bays also generate high-precipitation storm cells that overwhelm outdated stormwater spillways.
+ </p>
+ </div>
+
+ <div class="card" style="border-left: 5px solid var(--emerald);">
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem;">
+ Community Climate Action & Restoration
+ </h3>
+ <p id="cms-display-climate-action" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-main);">
+ Key local climate actions include: (1) Preserving indigenous mangrove nurseries along coastal estuaries, (2) Mandatory household segregation of biodegradable and recyclable solid waste under RA 9003, (3) Transitioning to solar-powered barangay streetlighting, and (4) Rapid citizen reporting of unauthorized tree felling.
+ </p>
+ </div>
+
+ <div class="card" style="border-left: 5px solid #0284C7;">
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem;">
+ Climate Awareness & Environmental Laws
+ </h3>
+ <p id="cms-display-climate-awareness" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-main);">
+ Environmental violations are strictly governed by Philippine Environmental Laws including Republic Act 9003 (Ecological Solid Waste Management Act), Republic Act 8749 (Philippine Clean Air Act), Republic Act 9275 (Clean Water Act), and Presidential Decree 705 (Revised Forestry Code). Fines range up to ₱100,000 with criminal liability.
+ </p>
+ </div>
+
+ <div class="card" style="border-left: 5px solid #F59E0B;">
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+ Official Incident Reporting Protocol & Evidence Guidelines
+ </h3>
+ <p id="cms-display-reporting-guide" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-main);">
+ When filing an environmental incident: (1) Ensure your personal safety first, (2) Capture at least one clear photograph of the hazard, (3) Specify the exact street, landmark, or GPS coordinate, (4) Categorize the severity accurately. CENRO field units are dispatched within 4 hours for Critical tickets.
+ </p>
+ </div>
+ </div>
+
+ <!-- CMS About the System & Institutional Mandate Card -->
+ <div class="card" style="margin-bottom: 2rem; border-top: 4px solid var(--primary);">
+ <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap;">
+ <div style="flex: 1; min-width: 280px;">
+ <div class="status-badge" style="background: var(--surface-alt); color: var(--primary-dark); font-weight: 800; font-size: 0.72rem; margin-bottom: 0.5rem; display: inline-block;">
+ INSTITUTIONAL MANDATE & GOVERNANCE
+ </div>
+ <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.75rem;">
+ About the Climate Action Infrastructure
+ </h3>
+ <p id="cms-display-about-website" style="font-size: 0.92rem; line-height: 1.65; color: var(--text-main); margin-bottom: 1rem;">
+ Mobile and Web Climate Action Reporting and Information System is an integrated municipal digital infrastructure empowering citizens to document, verify, and resolve real-world environmental violations across Metro Verde. It bridges community observers with CENRO and DENR enforcement units through geospatial transparency.
+ </p>
+ </div>
+ <div id="cms-display-about-img-box" style="display: none; max-width: 320px; width: 100%;">
+ <img id="cms-display-about-img" src="" alt="About System Overview" style="width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border); object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+ </div>
+ </div>
+
+ <div class="grid-2" style="gap: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+ <div style="background: var(--surface-alt); padding: 1rem; border-radius: 10px;">
+ <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg> Mandate & Purpose
+ </h4>
+ <p id="cms-display-why-created" style="font-size: 0.85rem; line-height: 1.6; color: var(--text-muted);">
+ Created to drastically shorten the municipal response cycle for ecological hazards from days to hours, eliminate illegal open dumping along riverbanks, curb clandestine deforestation in urban watersheds, and provide scientifically validated local climate intelligence to every resident.
+ </p>
+ </div>
+
+ <div style="background: var(--surface-alt); padding: 1rem; border-radius: 10px;">
+ <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> System Architect & Partners
+ </h4>
+ <p id="cms-display-who-created" style="font-size: 0.85rem; line-height: 1.6; color: var(--text-muted); margin-bottom: 0.5rem;">
+ Architected by Mark Kenneth Ulgasan in collaboration with the Municipal Climate Resilience Taskforce, LGU CENRO Officers, and Academic Environmental Science Advisors.
+ </p>
+ <div style="font-size: 0.78rem; color: var(--primary-dark); font-weight: 700;">Coordinating Agencies:</div>
+ <p id="cms-display-contact-partners" style="font-size: 0.82rem; line-height: 1.5; color: var(--text-muted); margin-top: 0.2rem;">
+ City Environment and Natural Resources Office (CENRO), City Disaster Risk Reduction and Management Office (CDRRMO), Department of Environment and Natural Resources (DENR Region IV-A), and Metro Verde State University.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1rem; color: var(--primary-dark);">
+ Scientific Research & Policy Articles
+ </h3>
+ <div id="articles-grid" class="grid-3">
+ <!-- Rendered by JS -->
+ </div>
+ </section>
+
+ <!-- =======================================================================
+ SECTION 6: USER GUIDES
+ ======================================================================= -->
+ <section id="section-guides" class="portal-section">
+ <div class="section-header">
+ <h2 class="section-title">Citizen User Guides</h2>
+ <p class="section-desc">Clear instructions for taking photographic evidence, tracking municipal remediation, and redeeming eco-rewards.</p>
+ </div>
+
+ <div id="user-guides-container" class="user-guides-grid">
+ <!-- Rendered by JS -->
+ </div>
+ </section>
+
+ <!-- =======================================================================
+ SECTION 8: COMMUNITY ACTIVITIES
+ ======================================================================= -->
+ <section id="section-activities" class="portal-section">
+ <div class="section-header">
+ <h2 class="section-title">Community Climate Action & Restoration Drives</h2>
+ <p class="section-desc">Join municipal tree-planting initiatives, river cleanups, and zero-waste workshops to earn verified volunteer hours and eco-points.</p>
+ </div>
+
+ <div id="activities-grid" class="grid-3">
+ <!-- Rendered by JS -->
+ </div>
+ </section>
+
+ <!-- =======================================================================
+ SECTION 9: CITIZEN PROFILE & ECO-POINTS
+ ======================================================================= -->
+ <section id="section-profile" class="portal-section">
+ <div class="section-header">
+ <h2 class="section-title">Citizen Profile & Account Information</h2>
+ <p class="section-desc">Track your citizen verification status, accumulated eco-points, community rank, and environmental stewardship awards.</p>
+ </div>
+
+ <!-- Profile Overview Card -->
+ <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #FFFFFF 0%, #F5FBF7 100%); border-left: 6px solid var(--primary-light);">
+ <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; justify-content: space-between;">
+ <div style="display: flex; align-items: center; gap: 1.25rem;">
+ <div class="profile-avatar-wrapper" onclick="document.getElementById('profile-avatar-file-input').click()" title="Click to upload profile photo">
+ <img id="profile-avatar-img" src="" style="display: none;" alt="Citizen Profile Photo">
+ <span id="profile-avatar-initials">--</span>
+ <div class="profile-avatar-overlay"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
+ </div>
+ <input type="file" id="profile-avatar-file-input" accept="image/*" style="display: none;" onchange="handleAvatarFileChange(event)">
+ <div>
+ <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+ <h3 id="profile-user-name" style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0;">Citizen Name</h3>
+ <span id="profile-kyc-badge" class="badge-portal-pill" style="font-size: 0.72rem; background: var(--amber-dark);">Unverified</span>
+ </div>
+ <div id="profile-user-barangay" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+ Loading location...
+ </div>
+ <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.35rem;">
+ <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.82rem; font-weight: 700;">
+ <svg class="icon-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> <span id="profile-user-email-pill">--</span>
+ </span>
+ <span id="profile-user-contacts" style="font-size: 0.82rem; color: var(--text-muted);">
+ --
+ </span>
+ </div>
+ </div>
+ </div>
+
+ <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+ <button class="btn-secondary" onclick="handleCitizenLogout()" style="padding: 0.6rem 1.1rem; font-size: 0.85rem; color: var(--red); border-color: #FECACA;">
+ Sign Out
+ </button>
+ </div>
+ </div>
+
+ <!-- Eco-Points & Rank Bar -->
+ <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+ <div style="background: #FFFFFF; border: 1px solid var(--border); padding: 1rem; border-radius: var(--radius-md);">
+ <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Current Eco-Points</div>
+ <div id="profile-eco-points" style="font-size: 1.8rem; font-weight: 800; color: var(--primary-light); margin: 0.2rem 0;">0 <span style="font-size: 0.9rem;">pts</span></div>
+ <div style="font-size: 0.75rem; color: var(--text-muted);">+100 pts on KYC approval • +50 pts on report remediation</div>
+ </div>
+ <div style="background: #FFFFFF; border: 1px solid var(--border); padding: 1rem; border-radius: var(--radius-md);">
+ <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Citizen Level</div>
+ <div id="profile-citizen-level" style="font-size: 1.3rem; font-weight: 800; color: var(--primary-dark); margin: 0.2rem 0;">Registered Citizen</div>
+ <div id="profile-citizen-rank" style="font-size: 0.75rem; color: var(--text-muted);">Status: <strong>Active Account</strong></div>
+ </div>
+ <div style="background: #FFFFFF; border: 1px solid var(--border); padding: 1rem; border-radius: var(--radius-md);">
+ <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Reporting Authorization</div>
+ <div id="profile-report-auth-status" style="font-size: 1.1rem; font-weight: 800; color: var(--amber-dark); margin: 0.2rem 0;">KYC Required</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted);">Verified ID required to file incident reports</div>
+ </div>
+ </div>
+ </div>
+
+ <!-- KYC Verification Status & Action Card -->
+ <div class="card" id="profile-kyc-card" style="margin-bottom: 1.5rem; border-left: 6px solid var(--amber);">
+ <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+ <div>
+ <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+ 
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin: 0;">Government ID (KYC) Verification</h3>
+ <span id="profile-kyc-status-chip" class="badge-portal-pill" style="font-size: 0.7rem; background: var(--amber-dark);">Action Needed</span>
+ </div>
+ <p id="profile-kyc-desc" style="font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+ To submit real-time environmental hazard reports and prevent false alerts, verify your identity with a valid government ID.
+ </p>
+ <div id="profile-kyc-details" style="font-size: 0.82rem; color: var(--primary-dark); margin-top: 0.5rem; font-weight: 600; display: none;">
+ <!-- Details rendered by JS -->
+ </div>
+ </div>
+ <button id="btn-profile-kyc-action" class="btn-primary" onclick="openKycModal()" style="padding: 0.65rem 1.25rem; font-size: 0.88rem;">
+ Upload & Verify Government ID
+ </button>
+ </div>
+ </div>
+
+ <!-- Profile Edit & Settings Form -->
+ <div class="card" style="margin-bottom: 1.5rem;">
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+ Edit Profile Information & Contact Details
+ </h3>
+ <form id="profile-settings-form" onsubmit="handleSaveProfileSettings(event)">
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+ <div class="form-group" style="grid-column: 1 / -1;">
+ <label class="form-label" for="edit-profile-email">Registered Email Address (Official Citizen Account)</label>
+ <input type="email" id="edit-profile-email" class="form-control" readonly style="background: #F8FAFC; color: #1E293B; font-weight: 700; cursor: not-allowed; border-color: #CBD5E1;">
+ <small style="font-size: 0.72rem; color: var(--text-muted);">This is your official registered citizen portal login email address.</small>
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="edit-profile-name">Full Legal Name *</label>
+ <input type="text" id="edit-profile-name" class="form-control" required>
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="edit-profile-phone">Mobile Phone Number *</label>
+ <input type="tel" id="edit-profile-phone" class="form-control" placeholder="+63 917 123 4567" required>
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="edit-profile-barangay">Barangay Residence *</label>
+ <select id="edit-profile-barangay" class="form-control" required>
+ <option value="Barangay Makilas">Barangay Makilas</option>
+ <option value="Poblacion">Poblacion</option>
+ <option value="Lumbia">Lumbia</option>
+ <option value="Taway">Taway</option>
+ <option value="Maasin">Maasin</option>
+ <option value="Barangay San Isidro">Barangay San Isidro</option>
+ <option value="Barangay Riverside">Barangay Riverside</option>
+ <option value="Barangay Malinis">Barangay Malinis</option>
+ </select>
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="edit-profile-city">City / Municipality</label>
+ <input type="text" id="edit-profile-city" class="form-control" value="Metro Verde City" readonly>
+ </div>
+ <div class="form-group" style="grid-column: 1 / -1;">
+ <label class="form-label" for="edit-profile-address">Street Address / Purok *</label>
+ <input type="text" id="edit-profile-address" class="form-control" placeholder="House #, Street name, Purok" required>
+ </div>
+ <div class="form-group" style="grid-column: 1 / -1;">
+ <label class="form-label" for="edit-profile-bio">Climate Stewardship Bio</label>
+ <textarea id="edit-profile-bio" class="form-control" rows="2" placeholder="Tell the community about your environmental involvement or advocacy..."></textarea>
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="edit-profile-emg-name">Emergency Contact Name</label>
+ <input type="text" id="edit-profile-emg-name" class="form-control" placeholder="Contact person in disaster">
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="edit-profile-emg-phone">Emergency Contact Phone</label>
+ <input type="tel" id="edit-profile-emg-phone" class="form-control" placeholder="+63 917 000 0000">
+ </div>
+ </div>
+ <div id="profile-save-status" style="display: none; padding: 0.6rem 0.85rem; border-radius: var(--radius-md); font-size: 0.82rem; margin-top: 1rem;"></div>
+ <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+ <button type="submit" class="btn-primary" id="btn-save-profile" style="padding: 0.75rem 1.5rem; font-size: 0.92rem;">
+ Save Profile Changes
+ </button>
+ </div>
+ </form>
+ </div>
+
+ <!-- Citizen Verification & Civic Standing -->
+ <div class="card" style="margin-bottom: 1.5rem;">
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">
+ Citizen Account Standing & Response Participation
+ </h3>
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+ <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem;">
+ <div style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">Identity Compliance</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Government ID verified under Municipal Ordinance #2026-04.</div>
+ </div>
+ <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem;">
+ <div style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">Priority Triage Access</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Direct dispatch queue routing for confirmed environmental violations.</div>
+ </div>
+ <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem;">
+ <div style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">Community Restoration</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Authorized volunteer for barangay tree drives and river cleanups.</div>
+ </div>
+ </div>
+ </div>
+
+ <!-- My Joined Movements & Activity Participations Section -->
+ <div class="card" style="margin-bottom: 1.5rem; border-left: 6px solid #10B981;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+ <div>
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin: 0;">
+ My Joined Movements & Participation Proofs
+ </h3>
+ <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+ Track your submitted activity proofs, admin verification status, and earned eco-points.
+ </p>
+ </div>
+ <button class="btn-secondary" onclick="loadMyParticipations()" style="padding: 0.45rem 0.85rem; font-size: 0.8rem;">
+ Refresh History
+ </button>
+ </div>
+ <div id="my-participations-container">
+ <div style="text-align: center; color: var(--text-muted); padding: 1.5rem; font-size: 0.88rem;">
+ Loading your activity participation history...
+ </div>
+ </div>
+ </div>
+
+ <!-- Quick Action Buttons -->
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+ <button class="btn-primary" onclick="switchTab('report')" style="padding: 1rem; font-size: 0.95rem; justify-content: center;">
+ Submit New Incident Report
+ </button>
+ <button class="btn-secondary" onclick="switchTab('tracker')" style="padding: 1rem; font-size: 0.95rem; justify-content: center;">
+ View My Incident Reports
+ </button>
+ <button class="btn-secondary" onclick="switchTab('activities')" style="padding: 1rem; font-size: 0.95rem; justify-content: center;">
+ Browse Community Drives
+ </button>
+ </div>
+ </section>
+
+ </main>
+
+ <!-- =========================================================================
+ MODALS
+ ========================================================================= -->
+
+ <!-- 0. Activity Participation Proof Modal -->
+ <div class="modal-overlay" id="activity-proof-modal" style="display: none;">
+ <div class="modal-content" style="max-width: 520px;">
+ <button class="modal-close" onclick="closeActivityProofModal()">&times;</button>
+ 
+ <div style="margin-bottom: 1.25rem;">
+ <span class="badge-portal-pill" style="font-size: 0.72rem; background: var(--primary-light); color: #fff;">Community Movement</span>
+ <h3 id="proof-modal-act-title" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-top: 0.35rem;">
+ Submit Activity Participation Proof
+ </h3>
+ <p id="proof-modal-act-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.5;">
+ Upload a clear photo showing your participation in this activity to claim your Eco-Points.
+ </p>
+ </div>
+
+ <form id="activity-proof-form" onsubmit="handleActivityProofSubmit(event)">
+ <input type="hidden" id="proof-activity-id" value="">
+ <input type="hidden" id="proof-activity-title" value="">
+ <input type="hidden" id="proof-activity-points" value="50">
+
+ <!-- Activity Info Banner -->
+ <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+ <span style="font-size: 0.85rem; font-weight: 700; color: #065F46;" id="proof-modal-act-name">Selected Activity</span>
+ <span class="status-badge resolved" style="font-size: 0.75rem;" id="proof-modal-act-points">+50 Eco-Points</span>
+ </div>
+
+ <!-- Photo Upload Box -->
+ <div class="form-group">
+ <label class="form-label">Attach Proof Photo / Activity Picture *</label>
+ <div style="background: #F8FAFC; border: 2px dashed #CBD5E1; border-radius: 10px; padding: 1.25rem; text-align: center; cursor: pointer; position: relative;" onclick="document.getElementById('proof-photo-file-input').click()">
+ <input type="file" id="proof-photo-file-input" accept="image/*" style="display: none;" onchange="handleProofPhotoSelect(event)">
+ 
+ <div id="proof-photo-placeholder">
+ <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.75" style="color: var(--primary-light); margin-bottom: 0.5rem; display: block; margin-left: auto; margin-right: auto;">
+ <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+ <circle cx="12" cy="13" r="4"></circle>
+ </svg>
+ <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">Click to Select / Capture Photo</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Attach photo of your participation at the venue/site</div>
+ </div>
+
+ <div id="proof-photo-preview-box" style="display: none;">
+ <img id="proof-photo-preview-img" src="" alt="Proof Preview" style="max-height: 180px; width: auto; border-radius: 8px; object-fit: cover; margin: 0 auto; border: 2px solid var(--primary-light);">
+ <button type="button" onclick="clearProofPhoto(event)" class="btn-secondary" style="margin-top: 0.5rem; padding: 0.3rem 0.65rem; font-size: 0.75rem; color: var(--red); border-color: #FECACA;">
+ Change Photo
+ </button>
+ </div>
+ </div>
+ </div>
+
+ <!-- Participation Description -->
+ <div class="form-group">
+ <label class="form-label" for="proof-description">Participation Details / Remarks</label>
+ <textarea id="proof-description" class="form-control" rows="2" placeholder="Describe your activity participation or role..."></textarea>
+ </div>
+
+ <div id="proof-submit-error" style="display: none; padding: 0.6rem 0.85rem; border-radius: 6px; font-size: 0.82rem; background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; margin-bottom: 1rem;"></div>
+
+ <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem;">
+ <button type="button" class="btn-secondary" onclick="closeActivityProofModal()" style="padding: 0.65rem 1.1rem; font-size: 0.88rem;">
+ Cancel
+ </button>
+ <button type="submit" class="btn-primary" id="btn-submit-proof" style="padding: 0.65rem 1.25rem; font-size: 0.88rem;">
+ Submit Proof for Approval
+ </button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <!-- 1. Incident Status Timeline & Detail Modal -->
+ <div class="modal-overlay" id="incident-modal" style="display: none;">
+ <div class="modal-content">
+ <button class="modal-close" onclick="closeModal('incident-modal')">&times;</button>
+ <div id="modal-incident-body">
+ <!-- Rendered dynamically by JS -->
+ </div>
+ </div>
+ </div>
+
+ <!-- 2. Climate Information Pillar Modal -->
+ <div class="modal-overlay" id="info-pillar-modal" style="display: none;">
+ <div class="modal-content">
+ <button class="modal-close" onclick="closeModal('info-pillar-modal')">&times;</button>
+ <div id="modal-info-pillar-body">
+ <!-- Rendered dynamically by JS -->
+ </div>
+ </div>
+ </div>
+
+ <!-- 3. Citizen Auth Modal (Sign In & Register) -->
+ <div class="modal-overlay" id="auth-modal" style="display: none;">
+ <div class="modal-content" style="max-width: 480px;">
+ <button class="modal-close" onclick="closeAuthModal()">&times;</button>
+
+ <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+ <button class="btn-primary" id="auth-tab-login" onclick="setAuthMode('login')" style="flex: 1; padding: 0.6rem;">Citizen Sign In</button>
+ <button class="btn-secondary" id="auth-tab-register" onclick="setAuthMode('register')" style="flex: 1; padding: 0.6rem;">Create Account</button>
+ </div>
+
+ <!-- Login Form -->
+ <form id="citizen-login-form" onsubmit="handleCitizenLogin(event)">
+ <div class="form-group">
+ <label class="form-label" for="citizen-login-email">Email Address</label>
+ <input type="email" id="citizen-login-email" class="form-control" placeholder="e.g. citizen@example.ph" required autocomplete="username">
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="citizen-login-password">Password</label>
+ <input type="password" id="citizen-login-password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+ </div>
+ <div id="auth-login-error" style="display: none; background: var(--red-light); color: var(--red); padding: 0.65rem; border-radius: var(--radius-md); font-size: 0.8rem; margin-bottom: 1rem;"></div>
+ <button type="submit" class="btn-primary" style="width: 100%; padding: 0.85rem;">
+ Sign In to Citizen Portal
+ </button>
+ </form>
+
+ <!-- Register Form -->
+ <form id="citizen-register-form" onsubmit="handleCitizenRegister(event)" style="display: none;">
+ <div class="form-group">
+ <label class="form-label" for="reg-name">Full Name *</label>
+ <input type="text" id="reg-name" class="form-control" placeholder="Enter your full name" required>
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="reg-email">Email Address *</label>
+ <input type="email" id="reg-email" class="form-control" placeholder="e.g. maria@example.ph" required>
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="reg-phone">Phone Number</label>
+ <input type="tel" id="reg-phone" class="form-control" placeholder="+63 917 123 4567">
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="reg-barangay">Barangay Residence *</label>
+ <select id="reg-barangay" class="form-control" required>
+ <option value="Barangay Makilas">Barangay Makilas</option>
+ <option value="Poblacion">Poblacion</option>
+ <option value="Lumbia">Lumbia</option>
+ <option value="Taway">Taway</option>
+ <option value="Maasin">Maasin</option>
+ <option value="Barangay San Isidro">Barangay San Isidro</option>
+ <option value="Barangay Riverside">Barangay Riverside</option>
+ <option value="Barangay Malinis">Barangay Malinis</option>
+ </select>
+ </div>
+ <div class="form-group">
+ <label class="form-label" for="reg-password">Password *</label>
+ <input type="password" id="reg-password" class="form-control" placeholder="Minimum 6 characters" required>
+ </div>
+ <div id="auth-reg-error" style="display: none; background: var(--red-light); color: var(--red); padding: 0.65rem; border-radius: var(--radius-md); font-size: 0.8rem; margin-bottom: 1rem;"></div>
+ <button type="submit" class="btn-primary" style="width: 100%; padding: 0.85rem;">
+ Create Citizen Account
+ </button>
+ </form>
+ </div>
+ </div>
+
+ <!-- 4. Citizen KYC Verification Modal -->
+ <div class="modal-overlay" id="kyc-modal" style="display: none;">
+ <div class="modal-content" style="max-width: 640px; max-height: 90vh; overflow-y: auto;">
+ <button class="modal-close" onclick="closeKycModal()">&times;</button>
+ 
+ <div style="border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+ <div style="display: flex; align-items: center; gap: 0.5rem;">
+ <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+ <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--primary-dark); margin: 0;">
+ Citizen Identity Verification (KYC)
+ </h3>
+ </div>
+ <p style="font-size: 0.84rem; color: var(--text-muted); margin-top: 0.35rem; line-height: 1.5;">
+ Under City Ecological Ordinance #2026-04, all reporting citizens must undergo one-time government ID verification to eliminate misinformation, spam, and fraudulent hazard reports.
+ </p>
+ </div>
+
+ <form id="kyc-submission-form" onsubmit="handleKycSubmit(event)">
+ <!-- Document Type -->
+ <div class="form-group">
+ <label class="form-label" for="kyc-doc-type">Select Valid Government Issued ID *</label>
+ <select id="kyc-doc-type" class="form-control" required>
+ <option value="">Choose valid ID type...</option>
+ <option value="Philippine National ID (PhilSys)">Philippine Identification Card (PhilSys National ID)</option>
+ <option value="Driver's License (LTO)">Driver's License (Land Transportation Office)</option>
+ <option value="Philippine Passport (DFA)">Philippine Passport (DFA)</option>
+ <option value="Unified Multi-Purpose ID (UMID)">Unified Multi-Purpose ID (UMID / SSS / GSIS)</option>
+ <option value="Postal ID (PhilPost)">Postal ID (PhilPost Digital / Card)</option>
+ <option value="Voter's ID / COMELEC Certificate">COMELEC Voter's ID or Certification</option>
+ <option value="PRC Identification Card">Professional Regulation Commission (PRC) Card</option>
+ <option value="Barangay Resident ID">Official Barangay Resident Identification Card</option>
+ <option value="Student ID (College / University)">Student ID (Tertiary Institution)</option>
+ <option value="Senior Citizen / PWD ID">Senior Citizen / PWD Identification Card</option>
+ </select>
+ </div>
+
+ <!-- Document / ID Number -->
+ <div class="form-group">
+ <label class="form-label" for="kyc-doc-number">Document / ID Identification Number *</label>
+ <input type="text" id="kyc-doc-number" class="form-control" placeholder="e.g. 1234-5678-9012-3456" required>
+ </div>
+
+ <!-- 3 Upload Zones: Front, Back, Selfie with ID -->
+ <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin: 1rem 0 0.5rem;">
+ Upload Verification Documents (JPG, PNG, WebP) *
+ </div>
+
+ <div class="kyc-doc-upload-grid">
+ <!-- 1. Front of ID -->
+ <div>
+ <label class="form-label" style="font-size: 0.8rem;">1. Front of Valid ID *</label>
+ <div class="kyc-upload-box" id="kyc-box-front" onclick="document.getElementById('kyc-file-front').click()">
+ <input type="file" id="kyc-file-front" accept="image/*" style="display: none;" onchange="handleKycFileUpload(event, 'front')">
+ <div id="kyc-preview-front-placeholder">
+ <div style="margin-bottom: 0.25rem;"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--primary);"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="17" y2="8"></line><line x1="15" y1="12" x2="17" y2="12"></line></svg></div>
+ <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary);">Upload Front</div>
+ <div style="font-size: 0.7rem; color: var(--text-muted);">Clear photo of ID front</div>
+ </div>
+ <img id="kyc-img-front" class="kyc-preview-img" style="display: none;" alt="Front of ID">
+ <button type="button" id="kyc-btn-remove-front" class="kyc-remove-btn" style="display: none;" onclick="removeKycFile(event, 'front')">Remove</button>
+ </div>
+ </div>
+
+ <!-- 2. Back of ID -->
+ <div>
+ <label class="form-label" style="font-size: 0.8rem;">2. Back of Valid ID</label>
+ <div class="kyc-upload-box" id="kyc-box-back" onclick="document.getElementById('kyc-file-back').click()">
+ <input type="file" id="kyc-file-back" accept="image/*" style="display: none;" onchange="handleKycFileUpload(event, 'back')">
+ <div id="kyc-preview-back-placeholder">
+ <div style="margin-bottom: 0.25rem;"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--primary);"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="7" y1="16" x2="13" y2="16"></line></svg></div>
+ <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary);">Upload Back</div>
+ <div style="font-size: 0.7rem; color: var(--text-muted);">Barcode / signature side</div>
+ </div>
+ <img id="kyc-img-back" class="kyc-preview-img" style="display: none;" alt="Back of ID">
+ <button type="button" id="kyc-btn-remove-back" class="kyc-remove-btn" style="display: none;" onclick="removeKycFile(event, 'back')">Remove</button>
+ </div>
+ </div>
+
+ <!-- 3. Selfie holding ID -->
+ <div>
+ <label class="form-label" style="font-size: 0.8rem;">3. Selfie Holding ID *</label>
+ <div class="kyc-upload-box" id="kyc-box-selfie" onclick="document.getElementById('kyc-file-selfie').click()">
+ <input type="file" id="kyc-file-selfie" accept="image/*" style="display: none;" onchange="handleKycFileUpload(event, 'selfie')">
+ <div id="kyc-preview-selfie-placeholder">
+ <div style="margin-bottom: 0.25rem;"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--primary);"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
+ <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary);">Selfie With ID</div>
+ <div style="font-size: 0.7rem; color: var(--text-muted);">Hold ID next to your face</div>
+ </div>
+ <img id="kyc-img-selfie" class="kyc-preview-img" style="display: none;" alt="Selfie with ID">
+ <button type="button" id="kyc-btn-remove-selfie" class="kyc-remove-btn" style="display: none;" onclick="removeKycFile(event, 'selfie')">Remove</button>
+ </div>
+ </div>
+ </div>
+
+ <div style="background: var(--surface-alt); padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border); font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5;">
+ <strong>Privacy Assurance:</strong> Uploaded identity documents are encrypted and accessible strictly by authorized CENRO compliance officers for verification. They are never published publicly.
+ </div>
+
+ <div id="kyc-submit-error" style="display: none; background: #FEF2F2; color: var(--red); padding: 0.65rem 0.85rem; border-radius: var(--radius-md); font-size: 0.82rem; margin-bottom: 1rem; border: 1px solid #FECACA;"></div>
+
+ <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+ <button type="button" class="btn-secondary" onclick="closeKycModal()">Cancel</button>
+ <button type="submit" class="btn-primary" id="btn-submit-kyc" style="padding: 0.75rem 1.5rem;">
+ Submit Documents for Admin Review
+ </button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <!-- Toast Notification -->
+ <div class="toast-msg" id="toast-message">
+ <span id="toast-icon"></span>
+ <span id="toast-text">Action completed successfully!</span>
+ </div>
+
+ <!-- =========================================================================
+ MOBILE BOTTOM NAVIGATION BAR (Fixed at bottom)
+ ========================================================================= -->
+ <nav class="mobile-bottom-nav">
+ <button class="bottom-nav-item active" data-bottom-tab="dashboard" onclick="switchTab('dashboard')">
+ <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span>
+ <span>Home</span>
+ </button>
+ <button class="bottom-nav-item" data-bottom-tab="map" onclick="switchTab('map')">
+ <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg></span>
+ <span>Map</span>
+ </button>
+ 
+ <!-- Elevated Center Circular Report Button -->
+ <div class="bottom-nav-item-elevated" onclick="openReportWithCategory()">
+ <div class="floating-report-btn">
+ <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+ </div>
+ <span class="floating-report-label">Report</span>
+ </div>
+
+ <button class="bottom-nav-item" data-bottom-tab="tracker" onclick="switchTab('tracker')">
+ <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg></span>
+ <span>Track</span>
+ </button>
+ <button class="bottom-nav-item" data-bottom-tab="profile" onclick="switchTab('profile')">
+ <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+ <span>Profile</span>
+ </button>
+ </nav>
+
+ <!-- =========================================================================
+ OFFICIAL CIVIC FOOTER
+ ========================================================================= -->
+ <footer class="web-footer">
+ <div class="footer-grid">
+ <!-- Col 1: System Brand & Description -->
+ <div>
+ <div class="footer-brand-title" style="display: flex; align-items: center; gap: 0.5rem;">
+ <div class="brand-icon-box has-image" id="footer-logo-icon" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; border-radius: 8px;">
+ <img src="/assets/ic_climate_app_icon.jpg" alt="Official Logo" class="brand-logo-img">
+ </div>
+ <span id="footer-brand-name">Climate Action</span>
+ </div>
+ <p id="cms-display-footer-about" style="line-height: 1.6; margin-bottom: 1rem;">
+ Mobile and Web Climate Action Reporting and Information System. An integrated municipal platform empowering citizen-driven environmental governance and rapid hazard remediation across Metro Verde.
+ </p>
+ <div style="font-size: 0.78rem; color: var(--text-muted);">
+ System Architect: <strong id="cms-display-footer-creator">Mark Kenneth Ulgasan</strong>
+ </div>
+ </div>
+
+ <!-- Col 2: Quick Links -->
+ <div>
+ <div class="footer-column-heading">Citizen Navigation</div>
+ <ul class="footer-links-list">
+ <li><a href="#" onclick="switchTab('dashboard'); return false;">Dashboard Overview</a></li>
+ <li><a href="#" onclick="switchTab('report'); return false;">Report Incident</a></li>
+ <li><a href="#" onclick="switchTab('tracker'); return false;">Incident Tracker</a></li>
+ <li><a href="#" onclick="switchTab('map'); return false;">GIS Hotspot Map</a></li>
+ <li><a href="#" onclick="switchTab('education'); return false;">Climate Information</a></li>
+ <li><a href="#" onclick="switchTab('activities'); return false;">Community Drives</a></li>
+ </ul>
+ </div>
+
+ <!-- Col 3: Emergency Hotlines -->
+ <div>
+ <div class="footer-column-heading">Municipal Emergency Hotlines</div>
+ <div id="cms-display-footer-hotlines-list">
+ <p style="line-height: 1.7;">
+ Municipal Disaster Rescue: <strong id="cms-display-emergency-hotline">(02) 8888-ECO</strong><br>
+ DENR Environmental Protection: <strong id="cms-display-denr-hotline">#911-DENR</strong><br>
+ City Health & Heat Helpline: <strong id="cms-display-health-hotline">(02) 8999-CLIMATE</strong><br>
+ CENRO Inquiries: <strong>cenro@metroverde.gov.ph</strong>
+ </p>
+ </div>
+ </div>
+
+ <!-- Col 4: Governance & Verification Badges -->
+ <div>
+ <div class="footer-column-heading">System Governance</div>
+ <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+ <div style="background: var(--surface-alt); padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.78rem;">
+ <strong>Secure Citizen Portal</strong><br>
+ <span>Verified 256-bit encryption & whistleblower privacy protocols.</span>
+ </div>
+ <div style="background: var(--surface-alt); padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.78rem;">
+ <strong>Official Municipal Data</strong><br>
+ <span>Synchronized with CENRO, CDRRMO, and PAGASA bulletins.</span>
+ </div>
+ </div>
+ </div>
+ </div>
+
+  <!-- Official Municipal Footer Strip -->
+  <div class="footer-bottom-strip">
+  <div style="max-width: 1440px; width: 100%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <div>
+  © 2026 Climate Action Reporting & Information System • City Government of Metro Verde.
+  </div>
+  <div style="font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; color: #4ADE80;">
+  Official Municipal Environmental Portal
+  </div>
+  </div>
+  </div>
+ </footer>
+
+ <!-- Leaflet GIS Map JS -->
+ <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+ <script src="/app.js"></script>
+</body>
+</html>

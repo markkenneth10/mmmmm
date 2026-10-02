@@ -1,0 +1,18 @@
+[
+  {
+    "id": "USR-1001",
+    "name": "Mark Kenneth Ulgasan",
+    "email": "markkennethulgasan@gmail.com",
+    "password": "kenmark10",
+    "phone": "+63 917 123 4567",
+    "barangay": "Barangay Central",
+    "address": "Executive Directorate & System Administration",
+    "role": "Administrator",
+    "ecoPoints": 999,
+    "kycStatus": "verified",
+    "kycIdType": "Government / Civil Service ID",
+    "kycIdNumber": "CENRO-SUPER-ADMIN",
+    "badges": ["Super Administrator", "Executive Directorate", "Verified Citizen"],
+    "createdAt": 1789467840000
+  }
+]

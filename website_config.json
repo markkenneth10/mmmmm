@@ -1,0 +1,47 @@
+{
+  "websiteName": "Climate Action",
+  "websiteSubtitle": "Reporting & Information System • Metro Verde",
+  "websiteLogo": "",
+  "logoType": "image",
+  "logoImageUrl": "/assets/ic_climate_app_icon.jpg",
+  "heroImageUrl": "",
+  "aboutImageUrl": "",
+  "emergencyHotline": "(02) 8888-ECO",
+  "denrHotline": "#911-DENR",
+  "healthHotline": "(02) 8999-CLIMATE",
+  "emergencyHotlines": [
+    {
+      "id": "hotline-rescue",
+      "name": "Municipal Disaster Rescue",
+      "number": "(02) 8888-ECO",
+      "note": "24/7 Rapid Response",
+      "icon": "",
+      "category": "rescue"
+    },
+    {
+      "id": "hotline-denr",
+      "name": "DENR Environmental Hotline",
+      "number": "#911-DENR",
+      "note": "Enforcement & Violations",
+      "icon": "",
+      "category": "denr"
+    },
+    {
+      "id": "hotline-health",
+      "name": "City Health & Heat Helpline",
+      "number": "(02) 8999-CLIMATE",
+      "note": "Medical & Climate Health",
+      "icon": "",
+      "category": "health"
+    }
+  ],
+  "aboutWebsite": "Mobile and Web Climate Action Reporting and Information System is an integrated municipal digital infrastructure empowering citizens to document, verify, and resolve real-world environmental violations across Metro Verde. It bridges community observers with CENRO and DENR enforcement units through geospatial transparency.",
+  "whyCreated": "Created to drastically shorten the municipal response cycle for ecological hazards from days to hours, eliminate illegal open dumping along riverbanks, curb clandestine deforestation in urban watersheds, and provide scientifically validated local climate intelligence to every resident.",
+  "whoCreated": "Architected by Mark Kenneth Ulgasan in collaboration with the Municipal Climate Resilience Taskforce, LGU CENRO Officers, and Academic Environmental Science Advisors.",
+  "contactPartners": "City Environment and Natural Resources Office (CENRO), City Disaster Risk Reduction and Management Office (CDRRMO), Department of Environment and Natural Resources (DENR Region IV-A), and Metro Verde State University.",
+  "climateChangeInfo": "Metro Verde is experiencing rapid temperature spikes with urban heat index frequently reaching 42°C in dense barangays. Increasing sea surface temperatures in nearby bays also generate high-precipitation storm cells that overwhelm outdated stormwater spillways.",
+  "climateActionInfo": "Key local climate actions include: (1) Preserving indigenous mangrove nurseries along coastal estuaries, (2) Mandatory household segregation of biodegradable and recyclable solid waste under RA 9003, (3) Transitioning to solar-powered barangay streetlighting, and (4) Rapid citizen reporting of unauthorized tree felling.",
+  "climateAwarenessInfo": "Environmental violations are strictly governed by Philippine Environmental Laws including Republic Act 9003 (Ecological Solid Waste Management Act), Republic Act 8749 (Philippine Clean Air Act), Republic Act 9275 (Clean Water Act), and Presidential Decree 705 (Revised Forestry Code). Fines range up to ₱100,000 with criminal liability.",
+  "reportingGuideInfo": "When filing an environmental incident: (1) Ensure your personal safety first, (2) Capture at least one clear photograph of the hazard, (3) Specify the exact street, landmark, or GPS coordinate, (4) Categorize the severity accurately. CENRO field units are dispatched within 4 hours for Critical tickets.",
+  "updatedAt": 1790597695422
+}
