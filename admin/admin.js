@@ -1548,9 +1548,9 @@ function renderKycCards() {
  badgeText = ' Rejected';
  }
 
- const frontImg = item.kycFrontImage || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&q=80';
- const backImg = item.kycBackImage || frontImg;
- const selfieImg = item.kycSelfieImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+ const frontImg = item.kycFrontImage || '';
+ const backImg = item.kycBackImage || '';
+ const selfieImg = item.kycSelfieImage || '';
 
  const submitDate = item.kycSubmittedAt ? new Date(item.kycSubmittedAt).toLocaleDateString() : 'N/A';
 
