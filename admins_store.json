@@ -1,0 +1,14 @@
+[
+  {
+    "id": "admin-super-01",
+    "email": "markkennethulgasan@gmail.com",
+    "password": "kenmark10",
+    "name": "Mark Kenneth Ulgasan",
+    "role": "super_admin",
+    "department": "Executive Directorate & System Administration",
+    "phone": "+63 917 123 4567",
+    "permissions": ["all"],
+    "status": "Active",
+    "createdAt": 1789467840000
+  }
+]
