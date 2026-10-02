@@ -1,568 +1,471 @@
 import React, { useState } from 'react';
 import {
-  ShieldAlert, CloudSun, Megaphone, Calendar, Users, Settings,
-  CheckCircle2, XCircle, Eye, EyeOff, Trash2, Award, Download
+  ShieldAlert,
+  LayoutDashboard,
+  ClipboardList,
+  UserCheck,
+  SunMedium,
+  Users,
+  Search,
+  CheckCircle,
+  AlertTriangle,
+  Send,
+  PlusCircle,
+  Sparkles,
+  MapPin,
+  Clock,
+  ShieldCheck,
+  CheckCheck
 } from 'lucide-react';
 import { useClimate } from '../context/ClimateContext';
+import { Report, ReportStatus, User } from '../types';
 
 export const AdminScreen: React.FC = () => {
   const {
-    reports, updateReportStatus,
-    weather, updateWeather,
-    announcements, addAnnouncement, toggleHideAnnouncement, deleteAnnouncement,
-    activities, addActivity, toggleHideActivity, deleteActivity,
-    participations, reviewParticipationProof,
-    users, toggleUserStatus
+    currentUser,
+    allUsers,
+    reports,
+    weather,
+    updateReportStatus,
+    updateWeather,
+    approveKycUser,
+    awardPointsToUser,
+    setSelectedReport
   } = useClimate();
 
-  const [activeAdminSubTab, setActiveAdminSubTab] = useState<'overview' | 'triage' | 'weather' | 'announcements' | 'activities' | 'users' | 'settings'>('overview');
-  const [actSubTab, setActSubTab] = useState<'manage' | 'proofs'>('manage');
+  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'triage' | 'kyc' | 'weather' | 'users'>('overview');
 
-  // New Announcement Form
-  const [annTitle, setAnnTitle] = useState('');
-  const [annCategory, setAnnCategory] = useState('Advisory');
-  const [annPriority, setAnnPriority] = useState<'Normal' | 'High' | 'Critical'>('Normal');
-  const [annContent, setAnnContent] = useState('');
+  // Triage state
+  const [triageSearch, setTriageSearch] = useState('');
+  const [selectedReportId, setSelectedReportId] = useState<number | null>(reports[0]?.id || null);
+  const [statusVal, setStatusVal] = useState<ReportStatus>('In Progress');
+  const [officerVal, setOfficerVal] = useState('Officer Ricardo Reyes');
+  const [remarksVal, setRemarksVal] = useState('');
+  const [evidenceVal, setEvidenceVal] = useState('');
 
-  // New Activity Form
-  const [actTitle, setActTitle] = useState('');
-  const [actCategory, setActCategory] = useState('Tree Planting');
-  const [actDate, setActDate] = useState('');
-  const [actLocation, setActLocation] = useState('');
-  const [actPoints, setActPoints] = useState(100);
-  const [actDescription, setActDescription] = useState('');
+  // Weather state
+  const [weatherAlertLevel, setWeatherAlertLevel] = useState(weather.alertLevel);
+  const [weatherTemp, setWeatherTemp] = useState(weather.temp);
+  const [weatherHeatIndex, setWeatherHeatIndex] = useState(weather.heatIndex);
+  const [weatherAdvisory, setWeatherAdvisory] = useState(weather.advisoryText);
 
-  // Weather Form
-  const [temp, setTemp] = useState(weather.temperature);
-  const [heat, setHeat] = useState(weather.heatIndex);
-  const [condition, setCondition] = useState(weather.condition);
-  const [typhoon, setTyphoon] = useState(weather.typhoonSignal);
-  const [notice, setNotice] = useState(weather.advisoryNotice);
+  // Users bonus state
+  const [bonusUserId, setBonusUserId] = useState<number>(allUsers[0]?.id || 1);
+  const [bonusAmount, setBonusAmount] = useState<number>(25);
+  const [bonusReason, setBonusReason] = useState('Community Environmental Volunteer Commendation');
 
-  const pendingParticipations = participations.filter(p => p.status === 'Pending');
+  const selectedReportToEdit = reports.find(r => r.id === selectedReportId);
 
-  const handleSaveWeather = (e: React.FormEvent) => {
+  const handleTriageSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedReportId || !remarksVal.trim()) return;
+    updateReportStatus(selectedReportId, statusVal, remarksVal, officerVal, evidenceVal);
+    setRemarksVal('');
+  };
+
+  const handleWeatherSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateWeather({
-      temperature: Number(temp),
-      heatIndex: Number(heat),
-      condition,
-      typhoonSignal: typhoon,
-      advisoryNotice: notice
+      alertLevel: weatherAlertLevel as any,
+      temp: weatherTemp,
+      heatIndex: weatherHeatIndex,
+      advisoryText: weatherAdvisory
     });
-    alert('Weather & Climate Telemetry Updated!');
   };
 
-  const handleSaveAnnouncement = (e: React.FormEvent) => {
+  const handleGrantBonus = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!annTitle || !annContent) return;
-    addAnnouncement({ title: annTitle, category: annCategory, priority: annPriority, content: annContent });
-    setAnnTitle('');
-    setAnnContent('');
-    alert('Announcement published to citizen portal!');
+    awardPointsToUser(bonusUserId, bonusAmount, bonusReason);
   };
 
-  const handleSaveActivity = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!actTitle) return;
-    addActivity({ title: actTitle, category: actCategory, date: actDate, location: actLocation, points: actPoints, description: actDescription });
-    setActTitle('');
-    setActDescription('');
-    alert('Community drive published!');
-  };
+  const criticalCount = reports.filter(r => r.severity === 'Critical' && r.status !== 'Resolved').length;
+  const resolvedCount = reports.filter(r => r.status === 'Resolved').length;
+  const resolutionRate = reports.length > 0 ? Math.round((resolvedCount / reports.length) * 100) : 0;
+  const pendingKycUsers = allUsers.filter(u => !u.isVerified || u.kycStatus === 'pending');
+
+  const filteredTriageReports = reports.filter(r => {
+    if (!triageSearch) return true;
+    const q = triageSearch.toLowerCase();
+    return (
+      r.title.toLowerCase().includes(q) ||
+      r.barangay.toLowerCase().includes(q) ||
+      r.category.toLowerCase().includes(q)
+    );
+  });
 
   return (
-    <div className="space-y-6 pb-20">
-      
-      {/* Admin Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+    <div className="space-y-6 pb-12">
+      {/* Top Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-amber-400 bg-amber-950 px-2.5 py-0.5 rounded-full border border-amber-800/60">
-              Administrative Control
+            <span className="text-[10px] font-extrabold uppercase tracking-wider bg-amber-400 text-amber-950 px-2.5 py-0.5 rounded-full">
+              LGU CENRO Executive Directorate
             </span>
-            <h1 className="text-2xl font-extrabold text-white">LGU CENRO Command Center</h1>
+            <span className="text-xs text-slate-300">Logged in as {currentUser?.name} ({currentUser?.role})</span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Metro Verde Environmental Governance & Telemetry Management</p>
+          <h1 className="text-2xl font-black tracking-tight mt-1">
+            Administrative Command Console
+          </h1>
+          <p className="text-xs text-slate-400">
+            Central Ecological Governance, Dispatch Orchestration & Telemetry System
+          </p>
+        </div>
+
+        {/* Tab Buttons */}
+        <div className="flex flex-wrap gap-1 bg-white/10 backdrop-blur-md p-1 rounded-2xl text-xs font-bold">
+          <button
+            onClick={() => setActiveAdminTab('overview')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              activeAdminTab === 'overview' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveAdminTab('triage')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              activeAdminTab === 'triage' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            Triage & Dispatch
+          </button>
+          <button
+            onClick={() => setActiveAdminTab('kyc')}
+            className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeAdminTab === 'kyc' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <span>Citizen KYC</span>
+            {pendingKycUsers.length > 0 && (
+              <span className="w-4 h-4 rounded-full bg-amber-400 text-amber-950 text-[10px] flex items-center justify-center font-bold">
+                {pendingKycUsers.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveAdminTab('weather')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              activeAdminTab === 'weather' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            Advisories
+          </button>
+          <button
+            onClick={() => setActiveAdminTab('users')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              activeAdminTab === 'users' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            Citizens
+          </button>
         </div>
       </div>
 
-      {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-800">
-        {[
-          { id: 'overview', label: 'Command Center', icon: ShieldAlert },
-          { id: 'triage', label: `Incident Triage (${reports.filter(r=>r.status!=='Resolved').length})`, icon: ShieldAlert },
-          { id: 'weather', label: 'Weather Telemetry', icon: CloudSun },
-          { id: 'announcements', label: 'Announcements', icon: Megaphone },
-          { id: 'activities', label: `Activities & Proofs (${pendingParticipations.length})`, icon: Calendar },
-          { id: 'users', label: 'Citizen Roster', icon: Users },
-          { id: 'settings', label: 'Settings', icon: Settings }
-        ].map(tab => {
-          const Icon = tab.icon;
-          const isActive = activeAdminSubTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveAdminSubTab(tab.id as any)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                isActive
-                  ? 'bg-amber-600 text-white shadow-md'
-                  : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* SUBTAB 1: OVERVIEW */}
-      {activeAdminSubTab === 'overview' && (
+      {/* 1. OVERVIEW TAB */}
+      {activeAdminTab === 'overview' && (
         <div className="space-y-6">
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 border-l-4 border-l-emerald-500">
-              <div className="text-xs font-bold text-slate-400 uppercase">Total Incident Reports</div>
-              <div className="text-3xl font-extrabold text-emerald-400 mt-1">{reports.length}</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-emerald-600">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Reports</span>
+              <p className="text-3xl font-black text-slate-900 mt-1">{reports.length}</p>
+              <p className="text-xs text-emerald-700 mt-2 font-semibold">Resolution rate: {resolutionRate}%</p>
             </div>
 
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 border-l-4 border-l-amber-500">
-              <div className="text-xs font-bold text-slate-400 uppercase">Pending Proof Reviews</div>
-              <div className="text-3xl font-extrabold text-amber-400 mt-1">{pendingParticipations.length}</div>
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-red-500">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Critical Hazards</span>
+              <p className="text-3xl font-black text-red-600 mt-1">{criticalCount}</p>
+              <p className="text-xs text-slate-500 mt-2">Active CENRO alerts</p>
             </div>
 
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 border-l-4 border-l-sky-500">
-              <div className="text-xs font-bold text-slate-400 uppercase">Registered Citizens</div>
-              <div className="text-3xl font-extrabold text-sky-400 mt-1">{users.length}</div>
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-blue-500">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Registered Citizens</span>
+              <p className="text-3xl font-black text-blue-600 mt-1">{allUsers.length}</p>
+              <p className="text-xs text-slate-500 mt-2">
+                {allUsers.filter(u => u.isVerified).length} verified reporters
+              </p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-amber-500">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Municipal Weather</span>
+              <p className="text-3xl font-black text-amber-600 mt-1">{weather.alertLevel} Alert</p>
+              <p className="text-xs text-slate-500 mt-2">{weather.temp}°C (Heat index {weather.heatIndex}°C)</p>
+            </div>
+          </div>
+
+          {/* Urgent Priority Tickets */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-black text-slate-900 text-base">Urgent Priority Incidents (Active)</h3>
+                <p className="text-xs text-slate-500">Critical hazards requiring immediate dispatch coordination</p>
+              </div>
+              <button
+                onClick={() => setActiveAdminTab('triage')}
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-800"
+              >
+                Go to Triage Console &rarr;
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px]">
+                    <th className="py-2.5 px-3">Ticket</th>
+                    <th className="py-2.5 px-3">Incident Title</th>
+                    <th className="py-2.5 px-3">Barangay</th>
+                    <th className="py-2.5 px-3">Severity</th>
+                    <th className="py-2.5 px-3">Status</th>
+                    <th className="py-2.5 px-3">Assigned Unit</th>
+                    <th className="py-2.5 px-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {reports
+                    .filter(r => r.severity === 'Critical' || r.status === 'Submitted')
+                    .map(r => (
+                      <tr key={r.id} className="hover:bg-slate-50/80">
+                        <td className="py-3 px-3 font-mono font-bold text-slate-500">#{r.id}</td>
+                        <td className="py-3 px-3 font-bold text-slate-900">{r.title}</td>
+                        <td className="py-3 px-3 text-slate-600">{r.barangay}</td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                              r.severity === 'Critical'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {r.severity}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="font-semibold text-slate-700">{r.status}</span>
+                        </td>
+                        <td className="py-3 px-3 text-slate-600">
+                          {r.assignedOfficer || <span className="text-slate-400 italic">Unassigned</span>}
+                        </td>
+                        <td className="py-3 px-3">
+                          <button
+                            onClick={() => {
+                              setSelectedReportId(r.id);
+                              setActiveAdminTab('triage');
+                            }}
+                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg border border-emerald-200"
+                          >
+                            Dispatch
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       )}
 
-      {/* SUBTAB 2: TRIAGE */}
-      {activeAdminSubTab === 'triage' && (
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-lg font-extrabold text-white">Incident Triage & Field Unit Dispatch</h2>
-
-          <div className="space-y-4">
-            {reports.map(r => (
-              <div key={r.id} className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-sky-400">{r.id}</span>
-                    <h3 className="text-base font-extrabold text-white">{r.title}</h3>
-                  </div>
-
-                  <select
-                    value={r.status}
-                    onChange={e => updateReportStatus(r.id, e.target.value as any)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-bold focus:outline-none"
-                  >
-                    <option value="Submitted">Submitted</option>
-                    <option value="In Inspection">In Inspection</option>
-                    <option value="Action In Progress">Action In Progress</option>
-                    <option value="Resolved">Resolved</option>
-                  </select>
-                </div>
-
-                <p className="text-xs text-slate-300">{r.description}</p>
-
-                <div className="flex items-center gap-2 pt-2">
-                  <input
-                    type="text"
-                    defaultValue={r.inspectionNotes || ''}
-                    onBlur={e => updateReportStatus(r.id, r.status, e.target.value)}
-                    placeholder="Add inspection remark or response unit assignment..."
-                    className="flex-1 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* SUBTAB 3: WEATHER */}
-      {activeAdminSubTab === 'weather' && (
-        <div className="max-w-xl bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-lg font-extrabold text-white">Weather Telemetry & Emergency Advisories</h2>
-
-          <form onSubmit={handleSaveWeather} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Temperature (°C)</label>
-                <input
-                  type="number"
-                  value={temp}
-                  onChange={e => setTemp(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Heat Index (°C)</label>
-                <input
-                  type="number"
-                  value={heat}
-                  onChange={e => setHeat(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">Condition</label>
+      {/* 2. TRIAGE & DISPATCH TAB */}
+      {activeAdminTab === 'triage' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Table / Select List (2 cols) */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-black text-slate-900 text-base">Select Incident to Triage</h3>
               <input
                 type="text"
-                value={condition}
-                onChange={e => setCondition(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                required
+                value={triageSearch}
+                onChange={e => setTriageSearch(e.target.value)}
+                placeholder="Filter by title or barangay..."
+                className="text-xs px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-800"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">Typhoon Signal</label>
-              <select
-                value={typhoon}
-                onChange={e => setTyphoon(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-              >
-                <option value="None">None (Normal)</option>
-                <option value="Signal 1">Signal #1</option>
-                <option value="Signal 2">Signal #2</option>
-                <option value="Signal 3">Signal #3</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">Public Advisory Notice</label>
-              <textarea
-                value={notice}
-                onChange={e => setNotice(e.target.value)}
-                rows={3}
-                className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-              />
-            </div>
-
-            <button type="submit" className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl">
-              Broadcast Weather Update
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* SUBTAB 4: ANNOUNCEMENTS */}
-      {activeAdminSubTab === 'announcements' && (
-        <div className="space-y-6">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <h2 className="text-lg font-extrabold text-white">Publish New Announcement</h2>
-
-            <form onSubmit={handleSaveAnnouncement} className="space-y-4">
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Title *</label>
-                  <input
-                    type="text"
-                    value={annTitle}
-                    onChange={e => setAnnTitle(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Priority</label>
-                  <select
-                    value={annPriority}
-                    onChange={e => setAnnPriority(e.target.value as any)}
-                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+            <div className="space-y-2 max-h-[560px] overflow-y-auto pr-1">
+              {filteredTriageReports.map(rep => {
+                const isSelected = rep.id === selectedReportId;
+                return (
+                  <div
+                    key={rep.id}
+                    onClick={() => {
+                      setSelectedReportId(rep.id);
+                      setStatusVal(rep.status);
+                      setOfficerVal(rep.assignedOfficer || 'Officer Ricardo Reyes');
+                      setRemarksVal(rep.adminRemarks || '');
+                      setEvidenceVal(rep.resolutionEvidence || '');
+                    }}
+                    className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
+                      isSelected
+                        ? 'bg-emerald-50 border-emerald-500 shadow-xs ring-2 ring-emerald-500/20'
+                        : 'bg-slate-50/60 border-slate-200 hover:bg-slate-50'
+                    }`}
                   >
-                    <option value="Normal">Normal</option>
-                    <option value="High">High</option>
-                    <option value="Critical">Critical</option>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-slate-400">#{rep.id}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                          {rep.severity}
+                        </span>
+                        <span className="font-bold text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                          {rep.status}
+                        </span>
+                      </div>
+                    </div>
+                    <h4 className="font-extrabold text-slate-900 mt-1">{rep.title}</h4>
+                    <p className="text-slate-500 text-[11px] line-clamp-1 mt-0.5">{rep.description}</p>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1.5 mt-1 border-t border-slate-200/60">
+                      <span>{rep.barangay}</span>
+                      <span>{new Date(rep.timestamp).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Dispatch Editor (1 col) */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+            <h3 className="font-black text-slate-900 text-base">CENRO Dispatch Action</h3>
+
+            {selectedReportToEdit ? (
+              <form onSubmit={handleTriageSubmit} className="space-y-4 text-xs">
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                  <span className="font-mono font-bold text-slate-400 text-[10px]">
+                    Editing Ticket #{selectedReportToEdit.id}
+                  </span>
+                  <p className="font-extrabold text-slate-900 text-sm leading-tight">
+                    {selectedReportToEdit.title}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Location: {selectedReportToEdit.barangay} ({selectedReportToEdit.latitude.toFixed(4)}, {selectedReportToEdit.longitude.toFixed(4)})
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Update Status</label>
+                  <select
+                    value={statusVal}
+                    onChange={e => setStatusVal(e.target.value as ReportStatus)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium text-slate-800 focus:bg-white"
+                  >
+                    <option value="Submitted">Submitted</option>
+                    <option value="Under Review">Under Review</option>
+                    <option value="Verified">Verified</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Closed">Closed</option>
                   </select>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Content *</label>
-                <textarea
-                  value={annContent}
-                  onChange={e => setAnnContent(e.target.value)}
-                  rows={3}
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                  required
-                />
-              </div>
-
-              <button type="submit" className="py-2.5 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl">
-                Publish Announcement
-              </button>
-            </form>
-          </div>
-
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <h2 className="text-lg font-extrabold text-white">Published Announcements List</h2>
-
-            <div className="space-y-3">
-              {announcements.map(a => (
-                <div key={a.id} className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-extrabold text-white">{a.title}</span>
-                      {a.hidden && <span className="text-[10px] bg-rose-950 text-rose-300 px-2 py-0.5 rounded-full">Hidden</span>}
-                    </div>
-                    <p className="text-xs text-slate-400 mt-1">{a.content}</p>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => toggleHideAnnouncement(a.id)}
-                      className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
-                      title={a.hidden ? 'Unhide' : 'Hide'}
-                    >
-                      {a.hidden ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-amber-400" />}
-                    </button>
-                    <button
-                      onClick={() => deleteAnnouncement(a.id)}
-                      className="p-2 rounded-lg bg-slate-800 hover:bg-rose-950 text-rose-400"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Assigned Field Officer</label>
+                  <input
+                    type="text"
+                    value={officerVal}
+                    onChange={e => setOfficerVal(e.target.value)}
+                    placeholder="e.g. Officer Ricardo Reyes"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-slate-800 focus:bg-white"
+                  />
                 </div>
-              ))}
-            </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Official Administrative Remarks *
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={remarksVal}
+                    onChange={e => setRemarksVal(e.target.value)}
+                    placeholder="Document validation observations, municipal equipment dispatched, or citations issued..."
+                    required
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:bg-white leading-relaxed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Resolution Evidence</label>
+                  <input
+                    type="text"
+                    value={evidenceVal}
+                    onChange={e => setEvidenceVal(e.target.value)}
+                    placeholder="e.g. 4 truckloads collected; drain unclogged"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-slate-800 focus:bg-white"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" /> Save Dispatch & Notify Citizen
+                </button>
+              </form>
+            ) : (
+              <p className="text-slate-400 text-xs">Select an incident from the left list to begin triage.</p>
+            )}
           </div>
         </div>
       )}
 
-      {/* SUBTAB 5: ACTIVITIES & PROOFS */}
-      {activeAdminSubTab === 'activities' && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
-            <button
-              onClick={() => setActSubTab('manage')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold ${actSubTab === 'manage' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}
-            >
-              Manage Activities
-            </button>
-            <button
-              onClick={() => setActSubTab('proofs')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold ${actSubTab === 'proofs' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}
-            >
-              Review Proofs Queue ({pendingParticipations.length})
-            </button>
+      {/* 3. CITIZEN KYC TAB */}
+      {activeAdminTab === 'kyc' && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div>
+            <h3 className="font-black text-slate-900 text-base">Citizen Government ID Verifications</h3>
+            <p className="text-xs text-slate-500">
+              Review citizen verification requests to unlock hazard reporting credentials
+            </p>
           </div>
-
-          {actSubTab === 'manage' ? (
-            <div className="space-y-6">
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-                <h2 className="text-lg font-extrabold text-white">Add New Community Activity</h2>
-
-                <form onSubmit={handleSaveActivity} className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1">Title *</label>
-                      <input
-                        type="text"
-                        value={actTitle}
-                        onChange={e => setActTitle(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1">Category</label>
-                      <select
-                        value={actCategory}
-                        onChange={e => setActCategory(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                      >
-                        <option value="Tree Planting">Tree Planting</option>
-                        <option value="River Cleanup">River Cleanup</option>
-                        <option value="Zero Waste Workshop">Zero Waste Workshop</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1">Date & Time *</label>
-                      <input
-                        type="text"
-                        value={actDate}
-                        onChange={e => setActDate(e.target.value)}
-                        placeholder="Saturday, Oct 24 • 7:00 AM"
-                        className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1">Location *</label>
-                      <input
-                        type="text"
-                        value={actLocation}
-                        onChange={e => setActLocation(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1">Points Awarded *</label>
-                      <input
-                        type="number"
-                        value={actPoints}
-                        onChange={e => setActPoints(Number(e.target.value))}
-                        className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">Description</label>
-                    <textarea
-                      value={actDescription}
-                      onChange={e => setActDescription(e.target.value)}
-                      rows={3}
-                      className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                    />
-                  </div>
-
-                  <button type="submit" className="py-2.5 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl">
-                    Publish Community Activity
-                  </button>
-                </form>
-              </div>
-
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-                <h2 className="text-lg font-extrabold text-white">Published Activities List</h2>
-
-                <div className="space-y-3">
-                  {activities.map(act => (
-                    <div key={act.id} className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex items-center justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-extrabold text-white">{act.title}</span>
-                          <span className="text-[10px] text-amber-400 font-bold">+{act.points} Pts</span>
-                          {act.hidden && <span className="text-[10px] bg-rose-950 text-rose-300 px-2 py-0.5 rounded-full">Hidden</span>}
-                        </div>
-                        <p className="text-xs text-slate-400 mt-1">{act.date} • {act.location}</p>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={() => toggleHideActivity(act.id)}
-                          className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
-                        >
-                          {act.hidden ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-amber-400" />}
-                        </button>
-                        <button
-                          onClick={() => deleteActivity(act.id)}
-                          className="p-2 rounded-lg bg-slate-800 hover:bg-rose-950 text-rose-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-              <h2 className="text-lg font-extrabold text-white">Citizen Participation Proof Verification Queue</h2>
-
-              {participations.length === 0 ? (
-                <div className="text-center py-8 text-xs text-slate-400">No participation proof submissions in queue.</div>
-              ) : (
-                <div className="space-y-4">
-                  {participations.map(p => (
-                    <div key={p.id} className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col sm:flex-row justify-between gap-4">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-extrabold text-white">{p.activityTitle}</span>
-                          <span className="text-xs font-extrabold text-amber-400">+{p.pointsAwarded} Pts</span>
-                        </div>
-                        <div className="text-xs text-slate-300 font-bold">{p.userName} ({p.userEmail})</div>
-                        {p.proofDescription && <p className="text-xs text-slate-400">{p.proofDescription}</p>}
-
-                        {p.status === 'Pending' ? (
-                          <div className="flex items-center gap-2 pt-2">
-                            <button
-                              onClick={() => reviewParticipationProof(p.id, 'Approved')}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg"
-                            >
-                              Approve & Grant +{p.pointsAwarded} Pts
-                            </button>
-                            <button
-                              onClick={() => reviewParticipationProof(p.id, 'Rejected')}
-                              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg"
-                            >
-                              Reject Proof
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="text-xs font-bold text-emerald-400">Status: {p.status}</div>
-                        )}
-                      </div>
-
-                      {p.proofImageUrl && (
-                        <img src={p.proofImageUrl} alt="Proof" className="w-28 h-28 object-cover rounded-xl border border-slate-700 shrink-0" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* SUBTAB 6: USERS */}
-      {activeAdminSubTab === 'users' && (
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-lg font-extrabold text-white">Citizen Roster & KYC Verification Queue</h2>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-800 text-slate-400 uppercase text-[10px]">
-                <tr>
-                  <th className="p-3">Citizen</th>
-                  <th className="p-3">Email</th>
-                  <th className="p-3">Barangay</th>
-                  <th className="p-3">KYC Status</th>
-                  <th className="p-3">Eco-Points</th>
-                  <th className="p-3">Action</th>
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px]">
+                  <th className="py-2.5 px-3">Citizen Name</th>
+                  <th className="py-2.5 px-3">Email & Contact</th>
+                  <th className="py-2.5 px-3">Barangay</th>
+                  <th className="py-2.5 px-3">ID Type & Number</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">Admin Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
-                {users.map(u => (
-                  <tr key={u.id}>
-                    <td className="p-3 font-bold text-white flex items-center gap-2">
-                      {u.avatarUrl || u.avatar ? (
-                        <img src={u.avatarUrl || u.avatar} alt={u.name} className="w-6 h-6 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] font-bold text-white">
-                          {u.name.charAt(0)}
-                        </div>
-                      )}
-                      <span>{u.name}</span>
+              <tbody className="divide-y divide-slate-100">
+                {allUsers.map(u => (
+                  <tr key={u.id} className="hover:bg-slate-50/80">
+                    <td className="py-3 px-3 font-bold text-slate-900">{u.name}</td>
+                    <td className="py-3 px-3 text-slate-500">{u.email}</td>
+                    <td className="py-3 px-3 text-slate-600">{u.barangay}</td>
+                    <td className="py-3 px-3">
+                      <span className="font-medium text-slate-700 block">
+                        {u.kycIdType || 'PhilSys / National ID'}
+                      </span>
+                      <span className="font-mono text-slate-400 text-[11px]">
+                        {u.kycIdNumber || 'ID-SUBMITTED-491'}
+                      </span>
                     </td>
-                    <td className="p-3">{u.email}</td>
-                    <td className="p-3">{u.barangay || 'Barangay Makilas'}</td>
-                    <td className="p-3 font-bold text-amber-400">{u.kycStatus}</td>
-                    <td className="p-3 font-extrabold text-emerald-400">{u.ecoPoints} Pts</td>
-                    <td className="p-3">
-                      <button
-                        onClick={() => toggleUserStatus(u.id)}
-                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-lg"
-                      >
-                        {u.status === 'Active' ? 'Suspend' : 'Activate'}
-                      </button>
+                    <td className="py-3 px-3">
+                      {u.isVerified ? (
+                        <span className="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-800">
+                          Verified ✓
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-amber-100 text-amber-800">
+                          Pending Approval
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-3">
+                      {!u.isVerified ? (
+                        <button
+                          onClick={() => approveKycUser(u.id)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1 rounded-lg text-xs shadow-xs"
+                        >
+                          Approve KYC
+                        </button>
+                      ) : (
+                        <span className="text-slate-400 text-[11px] italic">Verified Active</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -572,30 +475,168 @@ export const AdminScreen: React.FC = () => {
         </div>
       )}
 
-      {/* SUBTAB 7: SETTINGS & BACKUP */}
-      {activeAdminSubTab === 'settings' && (
-        <div className="max-w-md bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-lg font-extrabold text-white">Database Backup & Export</h2>
-          <p className="text-xs text-slate-400">Export system JSON / SQLite database backup snapshot.</p>
+      {/* 4. WEATHER & ADVISORIES TAB */}
+      {activeAdminTab === 'weather' && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs max-w-xl space-y-4">
+          <div>
+            <h3 className="font-black text-slate-900 text-base">Municipal Hazard Advisory Controller</h3>
+            <p className="text-xs text-slate-500">
+              Update live municipal heat index alerts and climate warning bulletins
+            </p>
+          </div>
 
-          <button
-            onClick={() => {
-              const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localStorage));
-              const downloadAnchor = document.createElement('a');
-              downloadAnchor.setAttribute("href", dataStr);
-              downloadAnchor.setAttribute("download", `climate_database_${Date.now()}.json`);
-              document.body.appendChild(downloadAnchor);
-              downloadAnchor.click();
-              downloadAnchor.remove();
-            }}
-            className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download Full System Backup (.json / .sqlite)</span>
-          </button>
+          <form onSubmit={handleWeatherSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Municipal Alert Level</label>
+              <select
+                value={weatherAlertLevel}
+                onChange={e => setWeatherAlertLevel(e.target.value as any)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-bold text-slate-900 focus:bg-white"
+              >
+                <option value="Normal">Normal (Green)</option>
+                <option value="Yellow">Yellow (Caution / Extreme Heat)</option>
+                <option value="Orange">Orange (High Risk)</option>
+                <option value="Red">Red (Emergency / Evacuation)</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Ambient Temperature (°C)</label>
+                <input
+                  type="number"
+                  value={weatherTemp}
+                  onChange={e => setWeatherTemp(Number(e.target.value))}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-mono font-bold"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Heat Index (°C)</label>
+                <input
+                  type="number"
+                  value={weatherHeatIndex}
+                  onChange={e => setWeatherHeatIndex(Number(e.target.value))}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-mono font-bold"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Official Advisory Bulletin</label>
+              <textarea
+                rows={3}
+                value={weatherAdvisory}
+                onChange={e => setWeatherAdvisory(e.target.value)}
+                required
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900 focus:bg-white leading-relaxed"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-xl shadow-sm transition-colors"
+            >
+              Broadcast Updated Advisory
+            </button>
+          </form>
         </div>
       )}
 
+      {/* 5. CITIZEN USERS & BONUS POINTS TAB */}
+      {activeAdminTab === 'users' && (
+        <div className="space-y-6">
+          {/* Grant Bonus Points */}
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 shadow-xs space-y-3">
+            <h4 className="font-extrabold text-sm text-emerald-950 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-amber-500" /> Award Eco-Points Commendation
+            </h4>
+            <form onSubmit={handleGrantBonus} className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Citizen</label>
+                <select
+                  value={bonusUserId}
+                  onChange={e => setBonusUserId(Number(e.target.value))}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-2 text-slate-800"
+                >
+                  {allUsers.map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.points} pts)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Points Amount</label>
+                <input
+                  type="number"
+                  value={bonusAmount}
+                  onChange={e => setBonusAmount(Number(e.target.value))}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-2 text-slate-800 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Reason / Commendation</label>
+                <input
+                  type="text"
+                  value={bonusReason}
+                  onChange={e => setBonusReason(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-2 text-slate-800"
+                />
+              </div>
+
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2 rounded-lg transition-colors shadow-xs"
+                >
+                  Award Points
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Citizens Table */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <h3 className="font-black text-slate-900 text-base">Registered Citizens Registry</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px]">
+                    <th className="py-2 px-3">Name</th>
+                    <th className="py-2 px-3">Role</th>
+                    <th className="py-2 px-3">Barangay</th>
+                    <th className="py-2 px-3">Address</th>
+                    <th className="py-2 px-3">Eco-Points</th>
+                    <th className="py-2 px-3">KYC Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {allUsers.map(u => (
+                    <tr key={u.id} className="hover:bg-slate-50/80">
+                      <td className="py-3 px-3 font-bold text-slate-900">{u.name}</td>
+                      <td className="py-3 px-3 text-slate-600">{u.role}</td>
+                      <td className="py-3 px-3 text-slate-600">{u.barangay}</td>
+                      <td className="py-3 px-3 text-slate-500">{u.address}</td>
+                      <td className="py-3 px-3 font-mono font-bold text-emerald-700">
+                        {u.points} pts
+                      </td>
+                      <td className="py-3 px-3">
+                        {u.isVerified ? (
+                          <span className="text-emerald-700 font-semibold">Verified ✓</span>
+                        ) : (
+                          <span className="text-amber-600 font-semibold">Pending</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

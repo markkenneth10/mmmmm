@@ -1,346 +1,667 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import confetti from 'canvas-confetti';
 import {
-  User, IncidentReport, WeatherAdvisory, Announcement,
-  CommunityActivity, ActivityParticipation, Article, QuizQuestion, NotificationItem
+  User,
+  Report,
+  ReportUpdate,
+  ClimateArticle,
+  Activity,
+  QuizQuestion,
+  PointsLog,
+  Notification,
+  WeatherData,
+  ReportSeverity,
+  ReportStatus
 } from '../types';
 import {
-  initialReports, initialWeather, initialAnnouncements,
-  initialActivities, initialArticles, initialQuizzes
+  initialUsers,
+  initialReports,
+  initialReportUpdates,
+  initialArticles,
+  initialActivities,
+  initialQuizzes,
+  initialPointsLogs,
+  initialNotifications,
+  initialWeatherData
 } from '../data/initialData';
 
 interface ClimateContextType {
   currentUser: User | null;
-  setCurrentUser: React.Dispatch<React.SetStateAction<User | null>>;
+  allUsers: User[];
+  reports: Report[];
+  reportUpdates: ReportUpdate[];
+  articles: ClimateArticle[];
+  activities: Activity[];
+  quizzes: QuizQuestion[];
+  pointsLogs: PointsLog[];
+  notifications: Notification[];
+  weather: WeatherData;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   
-  reports: IncidentReport[];
-  addReport: (reportData: Partial<IncidentReport>) => void;
-  updateReportStatus: (id: string, status: IncidentReport['status'], notes?: string) => void;
-  upvoteReport: (id: string) => void;
+  // Modals & Selections
+  selectedReport: Report | null;
+  setSelectedReport: (r: Report | null) => void;
+  selectedArticle: ClimateArticle | null;
+  setSelectedArticle: (a: ClimateArticle | null) => void;
+  selectedActivity: Activity | null;
+  setSelectedActivity: (act: Activity | null) => void;
+  showQuizModal: boolean;
+  setShowQuizModal: (show: boolean) => void;
+  showAuthModal: boolean;
+  authModalMode: 'login' | 'register';
+  openAuthModal: (mode?: 'login' | 'register') => void;
+  closeAuthModal: () => void;
+  showKycModal: boolean;
+  setShowKycModal: (show: boolean) => void;
+  showNotificationsModal: boolean;
+  setShowNotificationsModal: (show: boolean) => void;
+  
+  // Toast notifications
+  toastMessage: string | null;
+  showToast: (msg: string) => void;
 
-  weather: WeatherAdvisory;
-  updateWeather: (data: Partial<WeatherAdvisory>) => void;
-
-  announcements: Announcement[];
-  addAnnouncement: (annData: Partial<Announcement>) => void;
-  toggleHideAnnouncement: (id: string) => void;
-  deleteAnnouncement: (id: string) => void;
-
-  activities: CommunityActivity[];
-  addActivity: (actData: Partial<CommunityActivity>) => void;
-  toggleHideActivity: (id: string) => void;
-  deleteActivity: (id: string) => void;
-
-  participations: ActivityParticipation[];
-  submitParticipationProof: (data: Partial<ActivityParticipation>) => void;
-  reviewParticipationProof: (id: string, status: 'Approved' | 'Rejected', notes?: string) => void;
-
-  articles: Article[];
-  quizzes: QuizQuestion[];
-  users: User[];
-  updateUserKyc: (userId: string, kycData: Partial<User>) => void;
-  toggleUserStatus: (userId: string) => void;
-
-  notifications: NotificationItem[];
-  markNotificationRead: (id: string) => void;
-
-  // Modals Control
-  authModalOpen: boolean;
-  setAuthModalOpen: (open: boolean) => void;
-  selectedReportModal: IncidentReport | null;
-  setSelectedReportModal: (report: IncidentReport | null) => void;
-  selectedActivityModal: CommunityActivity | null;
-  setSelectedActivityModal: (act: CommunityActivity | null) => void;
-  selectedArticleModal: Article | null;
-  setSelectedArticleModal: (art: Article | null) => void;
-  quizModalOpen: boolean;
-  setQuizModalOpen: (open: boolean) => void;
-  kycModalOpen: boolean;
-  setKycModalOpen: (open: boolean) => void;
-  notificationsOpen: boolean;
-  setNotificationsOpen: (open: boolean) => void;
+  // Actions
+  loginCitizen: (email: string, pass: string) => boolean;
+  registerCitizen: (data: { name: string; email: string; phone: string; barangay: string; address: string; password?: string }) => void;
+  logout: () => void;
+  switchUser: (userId: number) => void;
+  submitKyc: (idType: string, idNumber: string) => void;
+  submitReport: (reportData: {
+    title: string;
+    category: string;
+    description: string;
+    photoUri?: string;
+    barangay: string;
+    severity: ReportSeverity;
+    latitude: number;
+    longitude: number;
+  }) => boolean;
+  updateReportStatus: (
+    reportId: number,
+    newStatus: ReportStatus,
+    remarks: string,
+    assignedOfficer?: string,
+    resolutionEvidence?: string
+  ) => void;
+  toggleActivityRegistration: (activityId: number) => void;
+  submitActivityProof: (activityId: number, note: string, points: number) => void;
+  completeQuiz: (score: number, total: number) => void;
+  markNotificationRead: (id: number) => void;
+  markAllNotificationsRead: () => void;
+  updateWeather: (data: Partial<WeatherData>) => void;
+  approveKycUser: (userId: number) => void;
+  awardPointsToUser: (userId: number, points: number, reason: string) => void;
 }
 
 const ClimateContext = createContext<ClimateContextType | undefined>(undefined);
 
-export const ClimateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('climate_user');
-    return saved ? JSON.parse(saved) : null;
+export const ClimateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Persistence state keys
+  const [users, setUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('climate_users');
+    return saved ? JSON.parse(saved) : initialUsers;
   });
 
-  const [activeTab, setActiveTab] = useState<string>('home');
+  const [currentUserId, setCurrentUserId] = useState<number | null>(() => {
+    const saved = localStorage.getItem('climate_logged_user_id');
+    return saved ? Number(saved) : 1; // Default to John Santos for immediate interactive experience
+  });
 
-  const [reports, setReports] = useState<IncidentReport[]>(() => {
+  const [reports, setReports] = useState<Report[]>(() => {
     const saved = localStorage.getItem('climate_reports');
     return saved ? JSON.parse(saved) : initialReports;
   });
 
-  const [weather, setWeather] = useState<WeatherAdvisory>(() => {
-    const saved = localStorage.getItem('climate_weather');
-    return saved ? JSON.parse(saved) : initialWeather;
+  const [reportUpdates, setReportUpdates] = useState<ReportUpdate[]>(() => {
+    const saved = localStorage.getItem('climate_report_updates');
+    return saved ? JSON.parse(saved) : initialReportUpdates;
   });
 
-  const [announcements, setAnnouncements] = useState<Announcement[]>(() => {
-    const saved = localStorage.getItem('climate_announcements');
-    return saved ? JSON.parse(saved) : initialAnnouncements;
-  });
+  const [articles] = useState<ClimateArticle[]>(initialArticles);
 
-  const [activities, setActivities] = useState<CommunityActivity[]>(() => {
+  const [activities, setActivities] = useState<Activity[]>(() => {
     const saved = localStorage.getItem('climate_activities');
     return saved ? JSON.parse(saved) : initialActivities;
   });
 
-  const [participations, setParticipations] = useState<ActivityParticipation[]>(() => {
-    const saved = localStorage.getItem('climate_participations');
-    return saved ? JSON.parse(saved) : [];
+  const [quizzes] = useState<QuizQuestion[]>(initialQuizzes);
+
+  const [pointsLogs, setPointsLogs] = useState<PointsLog[]>(() => {
+    const saved = localStorage.getItem('climate_points_logs');
+    return saved ? JSON.parse(saved) : initialPointsLogs;
   });
 
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('climate_users');
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 'USER-101',
-        name: 'Juan Santos',
-        fullName: 'Juan Santos',
-        email: 'juan@example.com',
-        role: 'citizen',
-        status: 'Active',
-        ecoPoints: 120,
-        kycStatus: 'verified',
-        barangay: 'Barangay Makilas'
-      }
-    ];
+  const [notifications, setNotifications] = useState<Notification[]>(() => {
+    const saved = localStorage.getItem('climate_notifications');
+    return saved ? JSON.parse(saved) : initialNotifications;
   });
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'NOTIF-1',
-      title: 'Yellow Rainfall Advisory',
-      message: 'Scattered thunderstorms forecasted for Metro Verde coastal barangays.',
-      time: '10m ago',
-      read: false,
-      type: 'weather'
-    },
-    {
-      id: 'NOTIF-2',
-      title: 'Report Update: REP-1089',
-      message: 'CENRO Quick Response Team B dispatched to inspect drainage canal.',
-      time: '1h ago',
-      read: false,
-      type: 'incident'
-    }
-  ]);
+  const [weather, setWeather] = useState<WeatherData>(() => {
+    const saved = localStorage.getItem('climate_weather');
+    return saved ? JSON.parse(saved) : initialWeatherData;
+  });
 
-  // Modals state
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [selectedReportModal, setSelectedReportModal] = useState<IncidentReport | null>(null);
-  const [selectedActivityModal, setSelectedActivityModal] = useState<CommunityActivity | null>(null);
-  const [selectedArticleModal, setSelectedArticleModal] = useState<Article | null>(null);
-  const [quizModalOpen, setQuizModalOpen] = useState(false);
-  const [kycModalOpen, setKycModalOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('Home');
+
+  // Modal controls
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<ClimateArticle | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [showQuizModal, setShowQuizModal] = useState<boolean>(false);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+  const [showKycModal, setShowKycModal] = useState<boolean>(false);
+  const [showNotificationsModal, setShowNotificationsModal] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Sync state to LocalStorage
+  useEffect(() => {
+    localStorage.setItem('climate_users', JSON.stringify(users));
+  }, [users]);
 
   useEffect(() => {
-    localStorage.setItem('climate_user', JSON.stringify(currentUser));
-  }, [currentUser]);
+    if (currentUserId !== null) {
+      localStorage.setItem('climate_logged_user_id', String(currentUserId));
+    } else {
+      localStorage.removeItem('climate_logged_user_id');
+    }
+  }, [currentUserId]);
 
   useEffect(() => {
     localStorage.setItem('climate_reports', JSON.stringify(reports));
   }, [reports]);
 
   useEffect(() => {
-    localStorage.setItem('climate_weather', JSON.stringify(weather));
-  }, [weather]);
-
-  useEffect(() => {
-    localStorage.setItem('climate_announcements', JSON.stringify(announcements));
-  }, [announcements]);
+    localStorage.setItem('climate_report_updates', JSON.stringify(reportUpdates));
+  }, [reportUpdates]);
 
   useEffect(() => {
     localStorage.setItem('climate_activities', JSON.stringify(activities));
   }, [activities]);
 
   useEffect(() => {
-    localStorage.setItem('climate_participations', JSON.stringify(participations));
-  }, [participations]);
+    localStorage.setItem('climate_points_logs', JSON.stringify(pointsLogs));
+  }, [pointsLogs]);
 
   useEffect(() => {
-    localStorage.setItem('climate_users', JSON.stringify(users));
-  }, [users]);
+    localStorage.setItem('climate_notifications', JSON.stringify(notifications));
+  }, [notifications]);
 
-  // Actions
-  const addReport = (reportData: Partial<IncidentReport>) => {
-    const newReport: IncidentReport = {
-      id: `REP-${Math.floor(1000 + Math.random() * 9000)}`,
-      userId: currentUser?.id,
-      reporterName: currentUser ? (currentUser.fullName || currentUser.name) : 'Citizen',
-      reporterPhone: currentUser?.phone || '',
-      title: reportData.title || 'Environmental Hazard',
-      category: reportData.category || 'General Hazard',
-      severity: reportData.severity || 'Moderate',
-      description: reportData.description || '',
-      barangay: reportData.barangay || 'Barangay Makilas',
-      locationText: reportData.locationText || '',
-      latitude: reportData.latitude || 14.5995,
-      longitude: reportData.longitude || 120.9842,
-      photoUrl: reportData.photoUrl || '',
+  useEffect(() => {
+    localStorage.setItem('climate_weather', JSON.stringify(weather));
+  }, [weather]);
+
+  const currentUser = users.find(u => u.id === currentUserId) || null;
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(prev => (prev === msg ? null : prev));
+    }, 4500);
+  };
+
+  const openAuthModal = (mode: 'login' | 'register' = 'login') => {
+    setAuthModalMode(mode);
+    setShowAuthModal(true);
+  };
+
+  const closeAuthModal = () => {
+    setShowAuthModal(false);
+  };
+
+  const loginCitizen = (email: string, pass: string): boolean => {
+    const found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (found) {
+      if (found.password && found.password !== pass) {
+        showToast('Invalid password. Please try again.');
+        return false;
+      }
+      setCurrentUserId(found.id);
+      closeAuthModal();
+      showToast(`Welcome back, ${found.name}!`);
+      return true;
+    }
+    showToast('No citizen account found with this email.');
+    return false;
+  };
+
+  const registerCitizen = (data: {
+    name: string;
+    email: string;
+    phone: string;
+    barangay: string;
+    address: string;
+    password?: string;
+  }) => {
+    const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+    const colors = ['#10B981', '#3B82F6', '#6366F1', '#EC4899', '#F59E0B', '#14B8A6'];
+    const chosenColor = colors[Math.floor(Math.random() * colors.length)];
+
+    const newUser: User = {
+      id: newId,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      barangay: data.barangay,
+      municipality: 'Metro Verde',
+      address: data.address,
+      password: data.password || 'password123',
+      role: 'Citizen',
+      points: 50,
+      isVerified: false,
+      kycStatus: 'unverified',
+      avatarColorHex: chosenColor
+    };
+
+    setUsers(prev => [...prev, newUser]);
+    setCurrentUserId(newId);
+
+    // Initial points log
+    const newLog: PointsLog = {
+      id: Date.now(),
+      userId: newId,
+      action: 'Account Registration Welcome Bonus',
+      points: 50,
+      timestamp: Date.now()
+    };
+    setPointsLogs(prev => [newLog, ...prev]);
+
+    closeAuthModal();
+    showToast(`Account created! Welcome, ${newUser.name} (+50 pts). Complete KYC to report.`);
+    confetti({ particleCount: 60, spread: 60 });
+  };
+
+  const logout = () => {
+    setCurrentUserId(null);
+    showToast('Signed out of citizen account.');
+  };
+
+  const switchUser = (userId: number) => {
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      setCurrentUserId(userId);
+      showToast(`Switched active profile to ${user.name} (${user.role})`);
+    }
+  };
+
+  const submitKyc = (idType: string, idNumber: string) => {
+    if (!currentUser) {
+      showToast('Please sign in first to submit KYC.');
+      return;
+    }
+
+    setUsers(prev =>
+      prev.map(u => {
+        if (u.id === currentUser.id) {
+          return {
+            ...u,
+            isVerified: true,
+            kycStatus: 'verified',
+            kycIdType: idType,
+            kycIdNumber: idNumber,
+            points: u.points + 25
+          };
+        }
+        return u;
+      })
+    );
+
+    const log: PointsLog = {
+      id: Date.now(),
+      userId: currentUser.id,
+      action: `Government ID Verification (${idType})`,
+      points: 25,
+      timestamp: Date.now()
+    };
+    setPointsLogs(prev => [log, ...prev]);
+
+    setShowKycModal(false);
+    showToast('Identity Verified! Environmental incident reporting unlocked (+25 pts).');
+    confetti({ particleCount: 75, spread: 70 });
+  };
+
+  const submitReport = (reportData: {
+    title: string;
+    category: string;
+    description: string;
+    photoUri?: string;
+    barangay: string;
+    severity: ReportSeverity;
+    latitude: number;
+    longitude: number;
+  }): boolean => {
+    if (!currentUser) {
+      showToast('Please sign in or create an account to submit reports.');
+      openAuthModal('login');
+      return false;
+    }
+
+    if (!currentUser.isVerified || currentUser.kycStatus !== 'verified') {
+      showToast('Government ID verification (KYC) required before submitting reports.');
+      setShowKycModal(true);
+      return false;
+    }
+
+    const newReportId = reports.length > 0 ? Math.max(...reports.map(r => r.id)) + 1 : 101;
+
+    const newReport: Report = {
+      id: newReportId,
+      userId: currentUser.id,
+      authorName: currentUser.name,
+      title: reportData.title,
+      category: reportData.category,
+      categoryIcon: 'Flag',
+      description: reportData.description,
+      photoUri: reportData.photoUri || '/assets/climate_hero_banner.jpg',
+      latitude: reportData.latitude,
+      longitude: reportData.longitude,
+      barangay: reportData.barangay,
+      municipality: 'Metro Verde',
+      province: 'Eco Province',
+      severity: reportData.severity,
       status: 'Submitted',
-      upvotes: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+      timestamp: Date.now()
+    };
+
+    const initialUpdate: ReportUpdate = {
+      id: Date.now(),
+      reportId: newReportId,
+      status: 'Submitted',
+      remarks: 'Report lodged by citizen with geotagged location coordinates.',
+      updatedBy: currentUser.name,
+      timestamp: Date.now()
     };
 
     setReports(prev => [newReport, ...prev]);
+    setReportUpdates(prev => [initialUpdate, ...prev]);
 
-    if (currentUser) {
-      setCurrentUser(prev => prev ? { ...prev, ecoPoints: prev.ecoPoints + 25 } : null);
-    }
-  };
+    // Award +10 points to reporter
+    setUsers(prev =>
+      prev.map(u => (u.id === currentUser.id ? { ...u, points: u.points + 10 } : u))
+    );
 
-  const updateReportStatus = (id: string, status: IncidentReport['status'], notes?: string) => {
-    setReports(prev => prev.map(r => r.id === id ? {
-      ...r,
-      status,
-      inspectionNotes: notes !== undefined ? notes : r.inspectionNotes,
-      updatedAt: Date.now()
-    } : r));
-  };
-
-  const upvoteReport = (id: string) => {
-    setReports(prev => prev.map(r => r.id === id ? { ...r, upvotes: r.upvotes + 1 } : r));
-  };
-
-  const updateWeather = (data: Partial<WeatherAdvisory>) => {
-    setWeather(prev => ({ ...prev, ...data, updatedAt: Date.now() }));
-  };
-
-  const addAnnouncement = (annData: Partial<Announcement>) => {
-    const newAnn: Announcement = {
-      id: `ANN-${Date.now().toString().slice(-4)}`,
-      title: annData.title || 'Public Notice',
-      category: annData.category || 'Advisory',
-      priority: annData.priority || 'Normal',
-      content: annData.content || '',
-      imageUrl: annData.imageUrl,
-      hidden: false,
-      author: 'CENRO Administration',
+    const log: PointsLog = {
+      id: Date.now() + 1,
+      userId: currentUser.id,
+      action: `Lodged environmental report #${newReportId} (${reportData.category})`,
+      points: 10,
       timestamp: Date.now()
     };
-    setAnnouncements(prev => [newAnn, ...prev]);
+    setPointsLogs(prev => [log, ...prev]);
+
+    showToast('Report submitted successfully! +10 Climate Points earned.');
+    confetti({ particleCount: 50, spread: 60 });
+    return true;
   };
 
-  const toggleHideAnnouncement = (id: string) => {
-    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, hidden: !a.hidden } : a));
-  };
+  const updateReportStatus = (
+    reportId: number,
+    newStatus: ReportStatus,
+    remarks: string,
+    assignedOfficer?: string,
+    resolutionEvidence?: string
+  ) => {
+    const updaterName = currentUser?.name || 'CENRO Environmental Command';
 
-  const deleteAnnouncement = (id: string) => {
-    setAnnouncements(prev => prev.filter(a => a.id !== id));
-  };
-
-  const addActivity = (actData: Partial<CommunityActivity>) => {
-    const newAct: CommunityActivity = {
-      id: `ACT-${Date.now().toString().slice(-4)}`,
-      title: actData.title || 'Community Movement',
-      category: actData.category || 'Tree Planting',
-      date: actData.date || 'TBA',
-      location: actData.location || 'Metro Verde',
-      description: actData.description || '',
-      organizer: actData.organizer || 'LGU CENRO',
-      points: Number(actData.points) || 100,
-      registered: 0,
-      max: Number(actData.max) || 100,
-      hidden: false,
-      imageUrl: actData.imageUrl
-    };
-    setActivities(prev => [newAct, ...prev]);
-  };
-
-  const toggleHideActivity = (id: string) => {
-    setActivities(prev => prev.map(a => a.id === id ? { ...a, hidden: !a.hidden } : a));
-  };
-
-  const deleteActivity = (id: string) => {
-    setActivities(prev => prev.filter(a => a.id !== id));
-  };
-
-  const submitParticipationProof = (data: Partial<ActivityParticipation>) => {
-    const newPart: ActivityParticipation = {
-      id: `PART-${Date.now().toString().slice(-6)}`,
-      activityId: data.activityId || '',
-      activityTitle: data.activityTitle || 'Community Drive',
-      userId: currentUser?.id || 'GUEST',
-      userName: currentUser ? (currentUser.fullName || currentUser.name) : 'Citizen',
-      userEmail: currentUser?.email || '',
-      proofImageUrl: data.proofImageUrl || '',
-      proofDescription: data.proofDescription || '',
-      status: 'Pending',
-      pointsAwarded: data.pointsAwarded || 100,
-      submittedAt: Date.now()
-    };
-    setParticipations(prev => [newPart, ...prev]);
-  };
-
-  const reviewParticipationProof = (id: string, status: 'Approved' | 'Rejected', notes?: string) => {
-    setParticipations(prev => prev.map(p => {
-      if (p.id === id) {
-        if (status === 'Approved' && p.status !== 'Approved') {
-          // Award points to user
-          setUsers(uList => uList.map(u => (u.id === p.userId || u.email === p.userEmail) ? { ...u, ecoPoints: u.ecoPoints + p.pointsAwarded } : u));
-          if (currentUser && (currentUser.id === p.userId || currentUser.email === p.userEmail)) {
-            setCurrentUser(u => u ? { ...u, ecoPoints: u.ecoPoints + p.pointsAwarded } : null);
-          }
+    setReports(prev =>
+      prev.map(r => {
+        if (r.id === reportId) {
+          return {
+            ...r,
+            status: newStatus,
+            adminRemarks: remarks,
+            assignedOfficer: assignedOfficer !== undefined ? assignedOfficer : r.assignedOfficer,
+            resolutionEvidence: resolutionEvidence !== undefined ? resolutionEvidence : r.resolutionEvidence
+          };
         }
-        return { ...p, status, reviewNotes: notes };
+        return r;
+      })
+    );
+
+    const newUpdate: ReportUpdate = {
+      id: Date.now(),
+      reportId,
+      status: newStatus,
+      remarks,
+      updatedBy: updaterName,
+      timestamp: Date.now()
+    };
+
+    setReportUpdates(prev => [newUpdate, ...prev]);
+
+    // Update selected report if open
+    setSelectedReport(prev => {
+      if (prev && prev.id === reportId) {
+        return {
+          ...prev,
+          status: newStatus,
+          adminRemarks: remarks,
+          assignedOfficer: assignedOfficer !== undefined ? assignedOfficer : prev.assignedOfficer,
+          resolutionEvidence: resolutionEvidence !== undefined ? resolutionEvidence : prev.resolutionEvidence
+        };
       }
-      return p;
-    }));
-  };
+      return prev;
+    });
 
-  const updateUserKyc = (userId: string, kycData: Partial<User>) => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...kycData } : u));
-    if (currentUser && currentUser.id === userId) {
-      setCurrentUser(prev => prev ? { ...prev, ...kycData } : null);
+    // Notify author
+    const targetReport = reports.find(r => r.id === reportId);
+    if (targetReport) {
+      const notif: Notification = {
+        id: Date.now() + 2,
+        userId: targetReport.userId,
+        title: `Report #${reportId} Status: ${newStatus}`,
+        message: remarks || `Your report regarding "${targetReport.title}" has been updated to ${newStatus}.`,
+        type: 'Report',
+        isRead: false,
+        timestamp: Date.now()
+      };
+      setNotifications(prev => [notif, ...prev]);
     }
+
+    showToast(`Report #${reportId} updated to ${newStatus}`);
   };
 
-  const toggleUserStatus = (userId: string) => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: u.status === 'Active' ? 'Suspended' : 'Active' } : u));
+  const toggleActivityRegistration = (activityId: number) => {
+    if (!currentUser) {
+      showToast('Please sign in to register for community climate activities.');
+      openAuthModal('login');
+      return;
+    }
+
+    setActivities(prev =>
+      prev.map(act => {
+        if (act.id === activityId) {
+          const nextRegistered = !act.isRegistered;
+          const updatedCount = nextRegistered
+            ? act.currentParticipants + 1
+            : Math.max(0, act.currentParticipants - 1);
+
+          showToast(
+            nextRegistered
+              ? `Registered for "${act.title}"! We look forward to seeing you there.`
+              : `Registration cancelled for "${act.title}".`
+          );
+
+          if (nextRegistered) {
+            confetti({ particleCount: 40, spread: 50 });
+          }
+
+          return {
+            ...act,
+            isRegistered: nextRegistered,
+            currentParticipants: updatedCount
+          };
+        }
+        return act;
+      })
+    );
   };
 
-  const markNotificationRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  const submitActivityProof = (activityId: number, note: string, points: number) => {
+    if (!currentUser) return;
+
+    setActivities(prev =>
+      prev.map(act => {
+        if (act.id === activityId) {
+          return {
+            ...act,
+            isCompleted: true,
+            proofSubmitted: true,
+            proofNote: note
+          };
+        }
+        return act;
+      })
+    );
+
+    // Award points
+    setUsers(prev =>
+      prev.map(u => (u.id === currentUser.id ? { ...u, points: u.points + points } : u))
+    );
+
+    const log: PointsLog = {
+      id: Date.now(),
+      userId: currentUser.id,
+      action: `Participated in community activity (+${points} pts)`,
+      points,
+      timestamp: Date.now()
+    };
+    setPointsLogs(prev => [log, ...prev]);
+
+    setSelectedActivity(null);
+    showToast(`Proof verified! +${points} Climate Points awarded to your profile.`);
+    confetti({ particleCount: 80, spread: 80 });
+  };
+
+  const completeQuiz = (score: number, total: number) => {
+    if (!currentUser) return;
+
+    const reward = 10;
+    setUsers(prev =>
+      prev.map(u => (u.id === currentUser.id ? { ...u, points: u.points + reward } : u))
+    );
+
+    const log: PointsLog = {
+      id: Date.now(),
+      userId: currentUser.id,
+      action: `Completed Climate Awareness Quiz (${score}/${total})`,
+      points: reward,
+      timestamp: Date.now()
+    };
+    setPointsLogs(prev => [log, ...prev]);
+
+    showToast(`Quiz Complete! Scored ${score}/${total}. Earned +${reward} Climate Points!`);
+    confetti({ particleCount: 90, spread: 90 });
+  };
+
+  const markNotificationRead = (id: number) => {
+    setNotifications(prev =>
+      prev.map(n => (n.id === id ? { ...n, isRead: true } : n))
+    );
+  };
+
+  const markAllNotificationsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    showToast('All notifications marked as read.');
+  };
+
+  const updateWeather = (data: Partial<WeatherData>) => {
+    setWeather(prev => ({ ...prev, ...data }));
+    showToast('Municipal weather telemetry & advisories updated.');
+  };
+
+  const approveKycUser = (userId: number) => {
+    setUsers(prev =>
+      prev.map(u => {
+        if (u.id === userId) {
+          return {
+            ...u,
+            isVerified: true,
+            kycStatus: 'verified',
+            points: u.points + 25
+          };
+        }
+        return u;
+      })
+    );
+    showToast('Citizen KYC approved and verified.');
+  };
+
+  const awardPointsToUser = (userId: number, points: number, reason: string) => {
+    setUsers(prev =>
+      prev.map(u => (u.id === userId ? { ...u, points: u.points + points } : u))
+    );
+    const log: PointsLog = {
+      id: Date.now(),
+      userId,
+      action: reason,
+      points,
+      timestamp: Date.now()
+    };
+    setPointsLogs(prev => [log, ...prev]);
+    showToast(`Awarded ${points} points to citizen.`);
   };
 
   return (
-    <ClimateContext.Provider value={{
-      currentUser, setCurrentUser,
-      activeTab, setActiveTab,
-      reports, addReport, updateReportStatus, upvoteReport,
-      weather, updateWeather,
-      announcements, addAnnouncement, toggleHideAnnouncement, deleteAnnouncement,
-      activities, addActivity, toggleHideActivity, deleteActivity,
-      participations, submitParticipationProof, reviewParticipationProof,
-      articles: initialArticles,
-      quizzes: initialQuizzes,
-      users, updateUserKyc, toggleUserStatus,
-      notifications, markNotificationRead,
-      authModalOpen, setAuthModalOpen,
-      selectedReportModal, setSelectedReportModal,
-      selectedActivityModal, setSelectedActivityModal,
-      selectedArticleModal, setSelectedArticleModal,
-      quizModalOpen, setQuizModalOpen,
-      kycModalOpen, setKycModalOpen,
-      notificationsOpen, setNotificationsOpen
-    }}>
+    <ClimateContext.Provider
+      value={{
+        currentUser,
+        allUsers: users,
+        reports,
+        reportUpdates,
+        articles,
+        activities,
+        quizzes,
+        pointsLogs,
+        notifications,
+        weather,
+        activeTab,
+        setActiveTab,
+        selectedReport,
+        setSelectedReport,
+        selectedArticle,
+        setSelectedArticle,
+        selectedActivity,
+        setSelectedActivity,
+        showQuizModal,
+        setShowQuizModal,
+        showAuthModal,
+        authModalMode,
+        openAuthModal,
+        closeAuthModal,
+        showKycModal,
+        setShowKycModal,
+        showNotificationsModal,
+        setShowNotificationsModal,
+        toastMessage,
+        showToast,
+        loginCitizen,
+        registerCitizen,
+        logout,
+        switchUser,
+        submitKyc,
+        submitReport,
+        updateReportStatus,
+        toggleActivityRegistration,
+        submitActivityProof,
+        completeQuiz,
+        markNotificationRead,
+        markAllNotificationsRead,
+        updateWeather,
+        approveKycUser,
+        awardPointsToUser
+      }}
+    >
       {children}
     </ClimateContext.Provider>
   );
 };
 
 export const useClimate = () => {
-  const ctx = useContext(ClimateContext);
-  if (!ctx) throw new Error('useClimate must be used within ClimateProvider');
-  return ctx;
+  const context = useContext(ClimateContext);
+  if (!context) {
+    throw new Error('useClimate must be used within a ClimateProvider');
+  }
+  return context;
 };

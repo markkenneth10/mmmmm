@@ -1,313 +1,439 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  AlertTriangle, X, RefreshCw, Sun, CloudRain,
-  Clock, RotateCw, CheckCircle2, ChevronRight,
-  Shield, Calendar, MapPin, ArrowRight
+  SunMedium,
+  AlertTriangle,
+  MapPin,
+  BookOpen,
+  Award,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  TrendingUp,
+  Users,
+  CheckCircle2,
+  Calendar,
+  Clock,
+  ChevronRight,
+  Flame,
+  FileText
 } from 'lucide-react';
 import { useClimate } from '../context/ClimateContext';
 
 export const HomeScreen: React.FC = () => {
   const {
-    weather, reports, activities,
-    setActiveTab, setSelectedReportModal, setSelectedActivityModal,
-    currentUser
+    weather,
+    reports,
+    activities,
+    articles,
+    setActiveTab,
+    setSelectedReport,
+    setSelectedActivity,
+    setSelectedArticle,
+    setShowQuizModal,
+    currentUser,
+    openAuthModal,
+    setShowKycModal
   } = useClimate();
 
-  const [advisoryDismissed, setAdvisoryDismissed] = useState(false);
+  const activeHazardsCount = reports.filter(r => r.status !== 'Resolved' && r.status !== 'Closed').length;
+  const criticalCount = reports.filter(r => r.severity === 'Critical' && r.status !== 'Resolved').length;
+  const resolvedCount = reports.filter(r => r.status === 'Resolved').length;
+  const resolutionRate = reports.length > 0 ? Math.round((resolvedCount / reports.length) * 100) : 0;
 
-  // Statistics calculation for user or public community mode
-  const userReports = currentUser
-    ? reports.filter(r => r.userId === currentUser.id || r.reporterName === currentUser.name)
-    : reports;
+  const handleStartReport = () => {
+    if (!currentUser) {
+      openAuthModal('login');
+      return;
+    }
+    if (!currentUser.isVerified || currentUser.kycStatus !== 'verified') {
+      setActiveTab('Report');
+      setShowKycModal(true);
+      return;
+    }
+    setActiveTab('Report');
+  };
 
-  const awaitingTriage = reports.filter(r => r.status === 'Submitted').length;
-  const dispatched = reports.filter(r => r.status === 'In Inspection' || r.status === 'Action In Progress').length;
-  const remediated = reports.filter(r => r.status === 'Resolved').length;
+  const getSeverityBadge = (sev: string) => {
+    switch (sev) {
+      case 'Critical':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'High':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'Moderate':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default:
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    }
+  };
+
+  const getStatusBadge = (st: string) => {
+    switch (st) {
+      case 'Resolved':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-300';
+      case 'In Progress':
+        return 'bg-blue-50 text-blue-700 border-blue-300';
+      case 'Verified':
+        return 'bg-purple-50 text-purple-700 border-purple-300';
+      case 'Under Review':
+        return 'bg-amber-50 text-amber-700 border-amber-300';
+      default:
+        return 'bg-slate-100 text-slate-700 border-slate-300';
+    }
+  };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 pb-28">
-
-      {/* 1. Emergency PAGASA Advisory Banner */}
-      {!advisoryDismissed && (
-        <div className="bg-[#fff1f2] border border-[#fecdd3] text-[#9f1239] rounded-2xl p-3.5 shadow-sm flex items-center justify-between gap-3 animate-fadeIn">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-              <AlertTriangle className="w-4 h-4" />
+    <div className="space-y-6 pb-12">
+      {/* 1. Official Weather & Climate Alert Hero Card */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-emerald-900 via-emerald-800 to-green-900 text-white shadow-xl p-6 sm:p-8">
+        <div className="absolute -right-12 -top-12 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-xl">
+            <div className="inline-flex items-center gap-2 bg-emerald-700/60 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-emerald-200 border border-emerald-500/40">
+              <SunMedium className="w-4 h-4 text-amber-300" />
+              <span>PAGASA & CENRO Environmental Bulletin</span>
             </div>
-            <div className="text-xs sm:text-sm leading-snug">
-              <span className="font-extrabold text-rose-950">Emergency PAGASA Advisory:</span>{' '}
-              <span className="text-rose-900 font-medium">
-                Low Pressure Area approaching Eastern Seaboard. Heavy precipitation expected.
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={() => setAdvisoryDismissed(true)}
-            className="text-rose-400 hover:text-rose-700 p-1 shrink-0"
-            title="Dismiss Advisory"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* 2. TODAY'S CLIMATE STATUS Card */}
-      <div className="bg-[#15803d] border border-[#22c55e]/50 rounded-3xl p-6 text-white shadow-xl space-y-5">
-        
-        {/* Top Card Header */}
-        <div className="flex items-center justify-between">
-          <span className="bg-[#166534] border border-[#22c55e]/40 text-emerald-100 text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider shadow-sm">
-            TODAY'S CLIMATE STATUS
-          </span>
-
-          <button
-            onClick={() => window.location.reload()}
-            className="text-emerald-100 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Live Telemetry</span>
-          </button>
-        </div>
-
-        {/* Temperature & Conditions Row */}
-        <div className="flex items-center gap-4">
-          {/* Weather Icon (Sun with dashed ray styling) */}
-          <div className="relative shrink-0">
-            <Sun className="w-14 h-14 text-white stroke-[1.8]" />
-          </div>
-
-          <div className="space-y-0.5">
-            <div className="text-5xl font-black tracking-tight text-white leading-none">
-              {weather.temperature}°C
-            </div>
-            <div className="text-sm font-bold text-white mt-1">
-              {weather.condition}
-            </div>
-            <div className="text-xs text-emerald-100 font-medium">
-              Feels like {weather.heatIndex - 2}°C
-            </div>
-          </div>
-        </div>
-
-        {/* 3 Metric Cards Grid */}
-        <div className="grid grid-cols-3 gap-2.5">
-          {/* Metric 1: Heat Index */}
-          <div className="bg-[#166534]/70 border border-[#22c55e]/30 rounded-2xl p-3 text-center space-y-0.5">
-            <div className="text-[11px] text-emerald-100 font-medium">Heat Index</div>
-            <div className="text-base sm:text-lg font-black text-white">{weather.heatIndex}°C</div>
-            <div className="text-[10px] text-emerald-200 font-bold">(High)</div>
-          </div>
-
-          {/* Metric 2: Air Quality */}
-          <div className="bg-[#166534]/70 border border-[#22c55e]/30 rounded-2xl p-3 text-center space-y-0.5">
-            <div className="text-[11px] text-emerald-100 font-medium">Air Quality</div>
-            <div className="text-xs sm:text-sm font-black text-white leading-tight">Moderate (AQI 68)</div>
-            <div className="text-[10px] text-emerald-200 font-bold">Moderate</div>
-          </div>
-
-          {/* Metric 3: Rain Risk */}
-          <div className="bg-[#166534]/70 border border-[#22c55e]/30 rounded-2xl p-3 text-center space-y-0.5">
-            <div className="text-[11px] text-emerald-100 font-medium">Rain Risk</div>
-            <div className="text-base sm:text-lg font-black text-white">45%</div>
-            <div className="text-[10px] text-emerald-200 font-bold">Possible</div>
-          </div>
-        </div>
-
-        {/* Yellow Alert Bottom Notice Bar */}
-        <div className="bg-[#054b2b] border border-[#0d6940] rounded-2xl p-3.5 space-y-1.5 shadow-inner">
-          <div>
-            <span className="bg-[#f59e0b] text-[#1e293b] font-black text-[11px] px-2.5 py-0.5 rounded-full inline-block shadow-sm">
-              PAGASA Status: Yellow Alert
-            </span>
-          </div>
-          <p className="text-xs text-emerald-100 font-medium leading-relaxed">
-            {weather.advisoryNotice || 'PAGASA Advisory: Low Pressure Area approaching Eastern Seaboard. Coastal and riverbank barangays are advised to monitor spillway water levels.'} &gt;
-          </p>
-        </div>
-
-      </div>
-
-      {/* 3. MY CITIZEN ACTIVITY & REPORTS Card */}
-      <div className="bg-white rounded-3xl p-6 text-slate-800 shadow-xl border border-slate-100 space-y-4">
-        
-        {/* Card Header with Mode Badge */}
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-tight">
-            MY CITIZEN ACTIVITY & REPORTS
-          </h2>
-          <span className="bg-[#1e293b] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shrink-0">
-            PUBLIC COMMUNITY MODE
-          </span>
-        </div>
-
-        {/* 2x2 Grid of 4 Stat Boxes */}
-        <div className="grid grid-cols-2 gap-3">
-          
-          {/* Box 1: Filed by Me */}
-          <div
-            onClick={() => setActiveTab('track')}
-            className="bg-[#f8fafc] border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between hover:border-rose-300 transition-all cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                <AlertTriangle className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
-                FILED BY ME
-              </span>
-            </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900 leading-none mb-1">
-                {currentUser ? userReports.length : 0}
-              </div>
-              <div className="text-xs font-bold text-slate-700">My Submissions</div>
-              <div className="text-[10px] font-semibold text-emerald-600">Metro Verde Municipality</div>
-            </div>
-          </div>
-
-          {/* Box 2: Awaiting Triage */}
-          <div
-            onClick={() => setActiveTab('track')}
-            className="bg-[#f8fafc] border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between hover:border-amber-300 transition-all cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
-                <Clock className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider">
-                AWAITING TRIAGE
-              </span>
-            </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900 leading-none mb-1">
-                {awaitingTriage}
-              </div>
-              <div className="text-xs font-bold text-slate-700">Pending Review</div>
-              <div className="text-[10px] font-semibold text-emerald-600">Under CENRO intake</div>
-            </div>
-          </div>
-
-          {/* Box 3: Dispatched */}
-          <div
-            onClick={() => setActiveTab('track')}
-            className="bg-[#f8fafc] border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between hover:border-sky-300 transition-all cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">
-                <RotateCw className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] font-extrabold text-sky-600 uppercase tracking-wider">
-                DISPATCHED
-              </span>
-            </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900 leading-none mb-1">
-                {dispatched}
-              </div>
-              <div className="text-xs font-bold text-slate-700">In Progress</div>
-              <div className="text-[10px] font-semibold text-emerald-600">Field unit deployed</div>
-            </div>
-          </div>
-
-          {/* Box 4: Remediated */}
-          <div
-            onClick={() => setActiveTab('track')}
-            className="bg-[#f8fafc] border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between hover:border-emerald-300 transition-all cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-wider">
-                REMEDIATED
-              </span>
-            </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900 leading-none mb-1">
-                {remediated}
-              </div>
-              <div className="text-xs font-bold text-slate-700">Resolved Incidents</div>
-              <div className="text-[10px] font-semibold text-emerald-600">Remediated & Closed</div>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* 4. REPORT AN ENVIRONMENTAL INCIDENT Card */}
-      <div className="bg-[#0d6f42] border border-[#168551] rounded-3xl p-6 text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-5">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white shrink-0 shadow-md">
-            <AlertTriangle className="w-6 h-6 stroke-[2.2]" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight">
-              REPORT AN ENVIRONMENTAL INCIDENT
-            </h3>
-            <p className="text-xs text-emerald-100 leading-relaxed max-w-md">
-              See flooding, illegal dumping, pollution or another environmental problem? Report it to the municipality and help make our community safer and cleaner.
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
+              Metro Verde Climate Action Portal
+            </h1>
+            <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+              Empowering citizens to report hazards, track municipal triage lifecycles, and build a climate-resilient future together.
             </p>
+            <div className="pt-1 flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleStartReport}
+                className="bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-extrabold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+              >
+                <AlertTriangle className="w-4 h-4" /> Report Environmental Problem
+              </button>
+              <button
+                onClick={() => setShowQuizModal(true)}
+                className="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm border border-white/20 backdrop-blur-sm transition-all flex items-center gap-2"
+              >
+                <Award className="w-4 h-4 text-amber-300" /> Take Climate Quiz (+10 pts)
+              </button>
+            </div>
+          </div>
+
+          {/* Weather Widget */}
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-5 shrink-0 min-w-[240px] space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider">
+                Current Conditions
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-amber-400 text-amber-950">
+                {weather.alertLevel} Alert
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-black">{weather.temp}°C</span>
+              <span className="text-xs text-emerald-200">
+                Heat Index: <span className="font-bold text-amber-300">{weather.heatIndex}°C</span>
+              </span>
+            </div>
+            <p className="text-xs text-emerald-100/90 leading-snug">{weather.advisoryText}</p>
+            <div className="pt-2 border-t border-white/10 grid grid-cols-3 gap-2 text-center text-[10px]">
+              <div>
+                <span className="text-emerald-300 block">Humidity</span>
+                <span className="font-bold text-white">{weather.humidity}%</span>
+              </div>
+              <div>
+                <span className="text-emerald-300 block">Wind</span>
+                <span className="font-bold text-white">{weather.windSpeed} km/h</span>
+              </div>
+              <div>
+                <span className="text-emerald-300 block">AQI</span>
+                <span className="font-bold text-white">{weather.airQualityIndex} (Good)</span>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* 2. Quick Action Hub (4 Cards) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <button
+          onClick={handleStartReport}
+          className="bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+        >
+          <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-sm text-slate-900">Report Incident</h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">Submit geotagged hazard photos</p>
+          </div>
+          <div className="mt-3 flex items-center text-xs font-bold text-red-600">
+            <span>File ticket</span>
+            <ChevronRight className="w-3.5 h-3.5 ml-1" />
+          </div>
+        </button>
 
         <button
-          onClick={() => setActiveTab('report')}
-          className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white text-[#065f46] hover:bg-emerald-50 font-black text-xs uppercase tracking-wider shrink-0 shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+          onClick={() => setActiveTab('Map')}
+          className="bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
         >
-          <span>Report Hazard Now</span>
-          <ArrowRight className="w-4 h-4" />
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <MapPin className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-sm text-slate-900">Interactive GIS Map</h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">Live municipal incident pins</p>
+          </div>
+          <div className="mt-3 flex items-center text-xs font-bold text-emerald-700">
+            <span>Explore sectors</span>
+            <ChevronRight className="w-3.5 h-3.5 ml-1" />
+          </div>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('Learn')}
+          className="bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+        >
+          <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-sm text-slate-900">Verified Knowledge</h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">Expert guides & action tips</p>
+          </div>
+          <div className="mt-3 flex items-center text-xs font-bold text-blue-700">
+            <span>Browse articles</span>
+            <ChevronRight className="w-3.5 h-3.5 ml-1" />
+          </div>
+        </button>
+
+        <button
+          onClick={() => setShowQuizModal(true)}
+          className="bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+        >
+          <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <Award className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-sm text-slate-900">Climate Action Quiz</h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">Test knowledge & earn points</p>
+          </div>
+          <div className="mt-3 flex items-center text-xs font-bold text-purple-700">
+            <span>Start quiz</span>
+            <ChevronRight className="w-3.5 h-3.5 ml-1" />
+          </div>
         </button>
       </div>
 
-      {/* 5. Community Climate Action Movements Preview */}
-      <div className="bg-white rounded-3xl p-6 text-slate-800 shadow-xl border border-slate-100 space-y-4">
+      {/* 3. Municipal Telemetry Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-emerald-600">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Citizen Reports</p>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-2xl font-black text-slate-900">{reports.length}</span>
+            <span className="text-xs font-bold text-emerald-600">{resolutionRate}% resolved</span>
+          </div>
+          <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${resolutionRate}%` }} />
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-red-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Critical Hazards Active</p>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-2xl font-black text-red-600">{criticalCount}</span>
+            <span className="text-xs text-slate-500">{activeHazardsCount} active tickets</span>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-2">Requires CENRO field dispatch</p>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-blue-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Community Eco-Points</p>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-2xl font-black text-blue-600">
+              {currentUser ? currentUser.points : 290}
+            </span>
+            <span className="text-xs font-bold text-emerald-600">+10 per report</span>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-2">Redeemable for saplings & seeds</p>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-amber-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Hazard Advisory Level</p>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-2xl font-black text-amber-600">{weather.alertLevel} Alert</span>
+            <span className="text-xs text-slate-500">Heat index 38°C</span>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-2">Active across Metro Verde</p>
+        </div>
+      </div>
+
+      {/* 4. Priority Urgent Incident Reports */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-black text-slate-900">Community Climate Movements</h3>
-            <p className="text-xs text-slate-500">Participate and upload proof to claim municipal Eco-Points.</p>
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+              Recent Environmental Incident Reports
+            </h2>
+            <p className="text-xs text-slate-500">
+              Real-time community reports undergoing validation and municipal mitigation
+            </p>
           </div>
           <button
-            onClick={() => setActiveTab('learn')}
-            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
+            onClick={() => setActiveTab('Report')}
+            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
           >
             <span>View All</span>
-            <ChevronRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="space-y-3">
-          {activities.filter(a => !a.hidden).slice(0, 2).map(act => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {reports.slice(0, 4).map(report => (
             <div
-              key={act.id}
-              onClick={() => setSelectedActivityModal(act)}
-              className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 hover:border-emerald-300 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              key={report.id}
+              onClick={() => setSelectedReport(report)}
+              className="p-4 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-slate-50/70 transition-all cursor-pointer space-y-2.5 flex flex-col justify-between"
             >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                    +{act.points} Eco-Points
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold text-slate-400 font-mono">
+                    #{report.id}
                   </span>
-                  <span className="text-xs font-bold text-slate-500">{act.category}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${getSeverityBadge(
+                        report.severity
+                      )}`}
+                    >
+                      {report.severity}
+                    </span>
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${getStatusBadge(
+                        report.status
+                      )}`}
+                    >
+                      {report.status}
+                    </span>
+                  </div>
                 </div>
-                <h4 className="text-sm font-extrabold text-slate-900">{act.title}</h4>
-                <div className="text-[11px] text-slate-500">📍 {act.location} • 📅 {act.date}</div>
+                <h4 className="font-extrabold text-sm text-slate-900 mt-1 line-clamp-1">
+                  {report.title}
+                </h4>
+                <p className="text-xs text-slate-500 line-clamp-2 mt-1">
+                  {report.description}
+                </p>
               </div>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedActivityModal(act);
-                }}
-                className="px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl shrink-0 shadow-sm"
-              >
-                Join & Submit Proof
-              </button>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-emerald-600" />
+                  {report.barangay}
+                </span>
+                <span>{new Date(report.timestamp).toLocaleDateString()}</span>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
+      {/* 5. Community Climate Activities & Volunteer Drives */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+              Upcoming Community Restoration Activities
+            </h2>
+            <p className="text-xs text-slate-500">
+              Join local mangrove planting, beach cleanups, and earn certified eco-rewards
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {activities.map(act => (
+            <div
+              key={act.id}
+              onClick={() => setSelectedActivity(act)}
+              className="p-4 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-slate-50/50 transition-all cursor-pointer flex flex-col justify-between space-y-3"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md">
+                    {act.category}
+                  </span>
+                  <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-500" /> +{act.rewardPoints} pts
+                  </span>
+                </div>
+                <h4 className="font-extrabold text-sm text-slate-900 mt-2">{act.title}</h4>
+                <p className="text-xs text-slate-600 line-clamp-2 mt-1">{act.description}</p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-emerald-600" /> {act.dateText}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" /> {act.timeText}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-slate-600">{act.currentParticipants} volunteers joined</span>
+                  <span
+                    className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+                      act.isRegistered ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {act.isRegistered ? 'Confirmed ✓' : 'Register →'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 6. Featured Climate Articles */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+              Verified Climate Intelligence
+            </h2>
+            <p className="text-xs text-slate-500">
+              Science-backed educational briefs for households and schools
+            </p>
+          </div>
+          <button
+            onClick={() => setActiveTab('Learn')}
+            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+          >
+            <span>All Articles</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          {articles.slice(0, 3).map(art => (
+            <div
+              key={art.id}
+              onClick={() => setSelectedArticle(art)}
+              className="p-4 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-slate-50/70 transition-all cursor-pointer flex flex-col justify-between"
+            >
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                  {art.category}
+                </span>
+                <h4 className="font-extrabold text-sm text-slate-900 mt-2 line-clamp-2">
+                  {art.title}
+                </h4>
+                <p className="text-xs text-slate-500 line-clamp-2 mt-1">{art.summary}</p>
+              </div>
+              <div className="mt-3 flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+                <span className="text-slate-400 text-[11px]">{art.readTimeMinutes} min read</span>
+                <span className="font-bold text-emerald-700 hover:underline">Read Guide &rarr;</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
