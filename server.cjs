@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const crypto = require('crypto');
+const database = require('./db.cjs');
 
 const supabaseClient = {
   saveUserToSupabase: async () => ({ success: false }),
@@ -303,6 +304,10 @@ function saveAdminsToDisk() {
     const dataStr = JSON.stringify(adminStore, null, 2);
     try { fs.writeFileSync(ADMINS_FILE, dataStr, 'utf8'); } catch (_) {}
     try { fs.writeFileSync(TMP_ADMINS_FILE, dataStr, 'utf8'); } catch (_) {}
+    if (database && database.Admins) {
+      adminStore.forEach(a => { if (a && a.id) database.Admins.upsert(a); });
+      database.persistToDisk();
+    }
   } catch (err) {
     console.warn('Could not save admins to disk:', err.message);
   }
@@ -335,15 +340,11 @@ const TMP_USERS_FILE = path.join('/tmp', 'climate_users_store.json');
 function saveUsersToDisk() {
   try {
     const dataStr = JSON.stringify(userStore, null, 2);
-    try {
-      fs.writeFileSync(USERS_FILE, dataStr, 'utf8');
-    } catch (err1) {
-      console.warn('Could not write users to USERS_FILE:', err1.message);
-    }
-    try {
-      fs.writeFileSync(TMP_USERS_FILE, dataStr, 'utf8');
-    } catch (err2) {
-      console.warn('Could not write users to TMP_USERS_FILE:', err2.message);
+    try { fs.writeFileSync(USERS_FILE, dataStr, 'utf8'); } catch (_) {}
+    try { fs.writeFileSync(TMP_USERS_FILE, dataStr, 'utf8'); } catch (_) {}
+    if (database && database.Users) {
+      userStore.forEach(u => { if (u && u.id) database.Users.upsert(u); });
+      database.persistToDisk();
     }
   } catch (err) {
     console.warn('Could not save users to disk:', err.message);
@@ -450,12 +451,15 @@ const TMP_CONFIG_FILE = path.join('/tmp', 'climate_website_config.json');
 function saveConfigToDisk() {
   try {
     const jsonStr = JSON.stringify(websiteConfig, null, 2);
-    try {
-      fs.writeFileSync(CONFIG_FILE, jsonStr, 'utf8');
-    } catch (_) {}
-    try {
-      fs.writeFileSync(TMP_CONFIG_FILE, jsonStr, 'utf8');
-    } catch (_) {}
+    try { fs.writeFileSync(CONFIG_FILE, jsonStr, 'utf8'); } catch (_) {}
+    try { fs.writeFileSync(TMP_CONFIG_FILE, jsonStr, 'utf8'); } catch (_) {}
+    if (database && database.Config) {
+      database.Config.set('main_config', websiteConfig);
+      if (Array.isArray(websiteConfig.emergencyHotlines)) {
+        database.Hotlines.saveAll(websiteConfig.emergencyHotlines);
+      }
+      database.persistToDisk();
+    }
   } catch (err) {
     console.warn('Could not save website config to disk:', err.message);
   }
@@ -519,6 +523,10 @@ function saveWeatherToDisk() {
     const jsonStr = JSON.stringify(weatherAdvisory, null, 2);
     try { fs.writeFileSync(WEATHER_FILE, jsonStr, 'utf8'); } catch (_) {}
     try { fs.writeFileSync(TMP_WEATHER_FILE, jsonStr, 'utf8'); } catch (_) {}
+    if (database && database.Weather) {
+      database.Weather.set(weatherAdvisory);
+      database.persistToDisk();
+    }
   } catch (err) {
     console.warn('Could not save weather to disk:', err.message);
   }
@@ -552,6 +560,10 @@ function saveAnnouncementsToDisk() {
     const jsonStr = JSON.stringify(announcementsStore, null, 2);
     try { fs.writeFileSync(ANNOUNCEMENTS_FILE, jsonStr, 'utf8'); } catch (_) {}
     try { fs.writeFileSync(TMP_ANNOUNCEMENTS_FILE, jsonStr, 'utf8'); } catch (_) {}
+    if (database && database.Announcements) {
+      announcementsStore.forEach(a => { if (a && a.id) database.Announcements.upsert(a); });
+      database.persistToDisk();
+    }
   } catch (err) {
     console.warn('Could not save announcements to disk:', err.message);
   }
@@ -585,6 +597,10 @@ function saveUserGuidesToDisk() {
     const jsonStr = JSON.stringify(userGuidesStore, null, 2);
     try { fs.writeFileSync(GUIDES_FILE, jsonStr, 'utf8'); } catch (_) {}
     try { fs.writeFileSync(TMP_GUIDES_FILE, jsonStr, 'utf8'); } catch (_) {}
+    if (database && database.UserGuides) {
+      userGuidesStore.forEach(g => { if (g && g.id) database.UserGuides.upsert(g); });
+      database.persistToDisk();
+    }
   } catch (err) {
     console.warn('Could not save guides to disk:', err.message);
   }
@@ -650,6 +666,10 @@ function saveReportsToDisk() {
     const dataStr = JSON.stringify(reportsStore, null, 2);
     try { fs.writeFileSync(REPORTS_FILE, dataStr, 'utf8'); } catch (_) {}
     try { fs.writeFileSync(TMP_REPORTS_FILE, dataStr, 'utf8'); } catch (_) {}
+    if (database && database.Reports) {
+      reportsStore.forEach(r => { if (r && r.id) database.Reports.upsert(r); });
+      database.persistToDisk();
+    }
   } catch (err) {
     console.warn('Could not save reports to disk:', err.message);
   }
@@ -2132,6 +2152,85 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    
+    // ------------------------------------------
+    // SQLite Relational Database Management API
+    // ------------------------------------------
+    if (pathname === '/api/admin/database/status' && req.method === 'GET') {
+      const session = getAdminSession(req);
+      if (!session || !isAdminRole(session.role)) {
+        return sendJson(401, { error: 'Unauthorized: Active administrative session required' });
+      }
+      let dbSize = 0;
+      try {
+        if (fs.existsSync(database.DB_FILE)) {
+          dbSize = fs.statSync(database.DB_FILE).size;
+        }
+      } catch (_) {}
+      const tables = [
+        { name: 'admins', count: database.Admins.getAll().length, desc: 'Administrative staff and access credentials' },
+        { name: 'users', count: database.Users.getAll().length, desc: 'Registered citizens and KYC verification accounts' },
+        { name: 'reports', count: database.Reports.getAll().length, desc: 'Civic environmental hazard and incident reports' },
+        { name: 'emergency_hotlines', count: database.Hotlines.getAll().length, desc: '24/7 Municipal Emergency & Rescue hotlines' },
+        { name: 'announcements', count: database.Announcements.getAll().length, desc: 'Official warnings, advisories, and municipal drives' },
+        { name: 'user_guides', count: database.UserGuides.getAll().length, desc: 'Step-by-step reporting protocols and guidelines' },
+        { name: 'activities', count: database.Activities.getAll().length, desc: 'Community restoration and cleanup events' },
+        { name: 'admin_sessions', count: database.Sessions.getAll().length, desc: 'Active secure administrative login sessions' },
+        { name: 'media_uploads', count: database.Media.getAll().length, desc: 'Uploaded graphic badges, seals, and proofs' }
+      ];
+      const totalRecords = tables.reduce((acc, t) => acc + t.count, 0);
+      return sendJson(200, {
+        engine: 'SQLite 3 (sql.js WASM Relational Database)',
+        status: 'Healthy & Active',
+        databaseFile: database.DB_FILE,
+        sizeBytes: dbSize,
+        sizeFormatted: (dbSize / 1024).toFixed(2) + ' KB',
+        totalRecords,
+        tables,
+        lastPersisted: Date.now()
+      });
+    }
+
+    if (pathname === '/api/admin/database/download' && req.method === 'GET') {
+      const session = getAdminSession(req);
+      if (!session || session.role !== 'super_admin') {
+        return sendJson(403, { error: 'Forbidden: Super Admin access required for database export' });
+      }
+      database.persistToDisk();
+      if (fs.existsSync(database.DB_FILE)) {
+        const data = fs.readFileSync(database.DB_FILE);
+        res.writeHead(200, {
+          'Content-Type': 'application/vnd.sqlite3',
+          'Content-Disposition': 'attachment; filename="climate_database_backup_' + Date.now() + '.sqlite"',
+          'Content-Length': data.length
+        });
+        return res.end(data);
+      }
+      return sendJson(404, { error: 'Database file not found' });
+    }
+
+    if (pathname === '/api/admin/database/sync' && req.method === 'POST') {
+      const session = getAdminSession(req);
+      if (!session || !isAdminRole(session.role)) {
+        return sendJson(401, { error: 'Unauthorized: Active administrative session required' });
+      }
+      saveAdminsToDisk();
+      saveUsersToDisk();
+      saveReportsToDisk();
+      saveConfigToDisk();
+      saveWeatherToDisk();
+      saveAnnouncementsToDisk();
+      saveUserGuidesToDisk();
+      saveActivitiesToDisk();
+      saveMediaBackupToDisk();
+      database.persistToDisk();
+      return sendJson(200, {
+        success: true,
+        message: 'All records and files successfully synchronized and committed to SQLite database!',
+        timestamp: Date.now()
+      });
+    }
+
     // ------------------------------------------
     // Supabase Cloud Database Management API
     // ------------------------------------------
@@ -2375,7 +2474,26 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Server] ClimateAction Full-Stack Server listening on port ${PORT}`);
-  console.log(`[Admin] Session-based Administrative Console active at /admin`);
-});
+(async function startServer() {
+  try {
+    await database.initDatabase();
+    database.migrateFromJsonFiles({
+      admins: adminStore,
+      users: userStore,
+      reports: reportsStore,
+      config: websiteConfig,
+      weather: weatherAdvisory,
+      announcements: announcementsStore,
+      guides: userGuidesStore,
+      activities: activitiesStore
+    });
+    console.log(`[Database] SQLite 3 Relational Database Engine active (${database.DB_FILE})`);
+  } catch (dbErr) {
+    console.error('[Database] Initialization warning:', dbErr.message);
+  }
+
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Server] ClimateAction Full-Stack Server listening on port ${PORT}`);
+    console.log(`[Admin] Session-based Administrative Console active at /admin`);
+  });
+})();

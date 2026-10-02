@@ -343,6 +343,7 @@ function switchAdminTab(tabName) {
  if (tabName === 'subadmins' && currentAdmin && currentAdmin.role === 'super_admin') loadSubAdminsData();
  if (tabName === 'settings' && currentAdmin && currentAdmin.role === 'super_admin') {
  loadSuperAdminSettings();
+ loadDatabaseStatus();
  loadSupabaseStatus();
  }
 }
@@ -2489,3 +2490,116 @@ async function triggerBackgroundUpload() {
   };
   input.click();
 }
+
+// ==========================================
+// SQLITE RELATIONAL DATABASE MANAGEMENT
+// ==========================================
+async function loadDatabaseStatus() {
+  const pill = document.getElementById('sqlite-status-pill');
+  const engineEl = document.getElementById('sqlite-engine-name');
+  const totalEl = document.getElementById('sqlite-total-records');
+  const sizeEl = document.getElementById('sqlite-file-size');
+  const tbody = document.getElementById('sqlite-tables-tbody');
+
+  try {
+    const res = await adminFetch('/api/admin/database/status');
+    const data = await res.json();
+    if (res.ok && data.tables) {
+      if (pill) {
+        pill.textContent = 'Active & Synced';
+        pill.style.background = 'var(--primary-tint)';
+        pill.style.color = 'var(--primary-dark)';
+      }
+      if (engineEl) engineEl.textContent = data.engine || 'SQLite 3 (WASM)';
+      if (totalEl) totalEl.textContent = Number(data.totalRecords || 0).toLocaleString();
+      if (sizeEl) sizeEl.textContent = 'Size: ' + (data.sizeFormatted || '0 KB');
+
+      if (tbody && Array.isArray(data.tables)) {
+        tbody.innerHTML = data.tables.map(t => `
+          <tr>
+            <td style="padding: 0.65rem 0.85rem; font-weight: 700; color: var(--primary-dark); font-family: monospace;">${escapeHtml(t.name)}</td>
+            <td style="padding: 0.65rem 0.85rem; color: var(--text-muted);">${escapeHtml(t.desc)}</td>
+            <td style="padding: 0.65rem 0.85rem; text-align: right; font-weight: 800; color: var(--text-main);">${Number(t.count || 0).toLocaleString()}</td>
+          </tr>
+        `).join('');
+      }
+    }
+  } catch (err) {
+    if (pill) {
+      pill.textContent = 'Active (Local Storage)';
+      pill.style.background = '#FEF3C7';
+      pill.style.color = '#B45309';
+    }
+  }
+}
+
+async function downloadDatabaseBackup() {
+  const msg = document.getElementById('sqlite-action-msg');
+  if (msg) {
+    msg.style.display = 'block';
+    msg.style.background = 'var(--primary-tint)';
+    msg.style.color = 'var(--primary-dark)';
+    msg.textContent = 'Preparing SQLite binary database download...';
+  }
+  try {
+    const res = await adminFetch('/api/admin/database/download');
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to export SQLite database');
+    }
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `climate_database_backup_${Date.now()}.sqlite`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+
+    if (msg) {
+      msg.style.background = '#D1FAE5';
+      msg.style.color = '#065F46';
+      msg.textContent = 'SQLite database file (.sqlite) successfully downloaded!';
+      setTimeout(() => { msg.style.display = 'none'; }, 4000);
+    }
+  } catch (err) {
+    if (msg) {
+      msg.style.background = '#FEE2E2';
+      msg.style.color = '#991B1B';
+      msg.textContent = 'Error: ' + err.message;
+    }
+  }
+}
+
+async function triggerDatabaseSync() {
+  const msg = document.getElementById('sqlite-action-msg');
+  if (msg) {
+    msg.style.display = 'block';
+    msg.style.background = 'var(--primary-tint)';
+    msg.style.color = 'var(--primary-dark)';
+    msg.textContent = 'Synchronizing all records into SQLite database...';
+  }
+  try {
+    const res = await adminFetch('/api/admin/database/sync', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (msg) {
+        msg.style.background = '#D1FAE5';
+        msg.style.color = '#065F46';
+        msg.textContent = data.message || 'Database synchronized!';
+        setTimeout(() => { msg.style.display = 'none'; }, 4000);
+      }
+      loadDatabaseStatus();
+    } else {
+      throw new Error(data.error || 'Sync failed');
+    }
+  } catch (err) {
+    if (msg) {
+      msg.style.background = '#FEE2E2';
+      msg.style.color = '#991B1B';
+      msg.textContent = 'Sync error: ' + err.message;
+    }
+  }
+}
+
