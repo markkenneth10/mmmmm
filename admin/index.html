@@ -472,85 +472,6 @@
     </div>
   </div>
 
-  <!-- 4. Official Municipal Footer Strip & Copyright Notice -->
-  <div class="admin-card">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-      <div>
-        <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
-          4. Official Municipal Footer Strip & Copyright Notice
-        </h3>
-        <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.45; max-width: 720px;">
-          Customize the official green bottom strip displayed across the citizen portal. Edit the municipal copyright notice, jurisdictional entity, or civic portal tagline.
-        </p>
-      </div>
-      <button type="button" class="btn-admin-outline" onclick="resetFooterStripToDefault()" style="font-size: 0.78rem; padding: 0.4rem 0.85rem; font-weight: 700;">
-        Reset to Default
-      </button>
-    </div>
-
-    <!-- Quick Presets -->
-    <div style="margin-bottom: 1.25rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem;">
-      <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; display: block; margin-bottom: 0.5rem;">
-        Attribution Presets:
-      </span>
-      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <button type="button" class="btn-admin-outline" onclick="setFooterPreset('metro_verde')" style="font-size: 0.75rem; padding: 0.3rem 0.65rem;">
-          Metro Verde Default
-        </button>
-        <button type="button" class="btn-admin-outline" onclick="setFooterPreset('cenro')" style="font-size: 0.75rem; padding: 0.3rem 0.65rem;">
-          CENRO Environmental Office
-        </button>
-        <button type="button" class="btn-admin-outline" onclick="setFooterPreset('lgu_resilience')" style="font-size: 0.75rem; padding: 0.3rem 0.65rem;">
-          Climate Resilience Taskforce
-        </button>
-      </div>
-    </div>
-
-    <!-- Inputs Grid (2 Columns) -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
-      <div>
-        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">
-          Footer Copyright & Legal Attribution Text
-        </label>
-        <input type="text" id="cms-footer-text" class="admin-input" 
-          placeholder="e.g. © 2026 Climate Action Reporting & Information System • City Government of Metro Verde." 
-          required 
-          oninput="updateFooterStripPreview()">
-        <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.35rem;">
-          Primary attribution displayed on the bottom green bar.
-        </p>
-      </div>
-
-      <div>
-        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">
-          Footer Tagline / Civic Badge (Right Side)
-        </label>
-        <input type="text" id="cms-footer-tagline" class="admin-input" 
-          placeholder="e.g. Official Municipal Environmental Portal" 
-          required 
-          oninput="updateFooterStripPreview()">
-        <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.35rem;">
-          Right-aligned official tagline or civic status indicator.
-        </p>
-      </div>
-    </div>
-
-    <!-- Live Preview Box -->
-    <div style="margin-top: 0.5rem;">
-      <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.45rem;">
-        Live Strip Preview (Exact Visual Match)
-      </label>
-      <div id="admin-footer-strip-preview" style="width: 100%; background: #064E3B; color: #ECFDF5; padding: 1.25rem 1.5rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; font-size: 0.82rem; font-weight: 600; box-shadow: 0 4px 14px rgba(6, 78, 59, 0.25);">
-        <div id="admin-footer-preview-text">
-          © 2026 Climate Action Reporting & Information System • City Government of Metro Verde.
-        </div>
-        <div id="admin-footer-preview-tagline" style="font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; color: #4ADE80; font-size: 0.78rem;">
-          Official Municipal Environmental Portal
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div style="margin-top: 1.25rem; margin-bottom: 2rem;">
     <button type="submit" class="btn-admin-primary" style="width: 100%; padding: 1rem; font-size: 1.05rem; justify-content: center; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
       Save & Publish All Website Content Changes
@@ -558,11 +479,11 @@
   </div>
 </form>
 
- <!-- 5. Media Library & Uploaded Website Assets -->
+ <!-- 4. Media Library & Uploaded Website Assets -->
  <div class="admin-card" style="margin-top: 1.5rem;">
  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
  <div>
- <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);">5. Media Library & Published Website Images</h3>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);">Media Library & Published Website Images</h3>
  <p style="font-size: 0.78rem; color: var(--text-muted);">Uploaded logos, banners, circular illustrations, and educational guide diagrams</p>
  </div>
  <button type="button" onclick="loadMediaGallery()" class="btn-admin-outline" style="font-size:0.75rem; padding:0.35rem 0.75rem;">

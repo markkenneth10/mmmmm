@@ -442,10 +442,6 @@ let websiteConfig = {
     { stage: "Stage 3", title: "Inter-Agency Remediation", desc: "Culvert clearance, waste extraction, or environmental citations." }
   ],
 
-  // Footer Municipal Strip & Copyright
-  footerText: "© 2026 Climate Action Reporting & Information System • City Government of Metro Verde.",
-  footerTagline: "Official Municipal Environmental Portal",
-
   updatedAt: Date.now()
 };
 
@@ -500,14 +496,6 @@ function loadConfigFromDisk() {
       { id: "hotline-denr", name: "DENR Environmental Hotline", number: websiteConfig.denrHotline || "#911-DENR", note: "Enforcement & Violations", icon: "", category: "denr" },
       { id: "hotline-health", name: "City Health & Heat Helpline", number: websiteConfig.healthHotline || "(02) 8999-CLIMATE", note: "Medical & Climate Health", icon: "", category: "health" }
     ];
-  }
-
-  // Ensure footerText and footerTagline are valid
-  if (!websiteConfig.footerText) {
-    websiteConfig.footerText = "© 2026 Climate Action Reporting & Information System • City Government of Metro Verde.";
-  }
-  if (!websiteConfig.footerTagline) {
-    websiteConfig.footerTagline = "Official Municipal Environmental Portal";
   }
 }
 loadConfigFromDisk();
@@ -2625,23 +2613,9 @@ const server = http.createServer(async (req, res) => {
           res.end('Internal Server Error');
           return;
         }
-        if (ext === '.html') {
+        if (ext === '.html' && websiteConfig.logoImageUrl) {
           let htmlStr = content.toString('utf8');
-          if (websiteConfig.logoImageUrl) {
-            htmlStr = htmlStr.replace(/href="\/favicon\.ico"/g, `href="${websiteConfig.logoImageUrl}"`);
-          }
-          if (websiteConfig.footerText) {
-            htmlStr = htmlStr.replace(
-              /<div id="cms-display-footer-bottom-text">[\s\S]*?<\/div>/,
-              `<div id="cms-display-footer-bottom-text">\n  ${websiteConfig.footerText}\n  </div>`
-            );
-          }
-          if (websiteConfig.footerTagline) {
-            htmlStr = htmlStr.replace(
-              /<div id="cms-display-footer-bottom-tagline"[\s\S]*?>[\s\S]*?<\/div>/,
-              `<div id="cms-display-footer-bottom-tagline" style="font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; color: #4ADE80;">\n  ${websiteConfig.footerTagline}\n  </div>`
-            );
-          }
+          htmlStr = htmlStr.replace(/href="\/favicon\.ico"/g, `href="${websiteConfig.logoImageUrl}"`);
           const htmlBuf = Buffer.from(htmlStr, 'utf8');
           res.writeHead(200, {
             'Content-Type': contentType,

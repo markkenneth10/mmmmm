@@ -1271,17 +1271,6 @@ async function loadCMSData() {
  document.getElementById('cms-why-created').value = config.whyCreated || '';
  document.getElementById('cms-who-created').value = config.whoCreated || '';
  document.getElementById('cms-partners').value = config.contactPartners || '';
-
- // Official Municipal Footer Strip (Bottom Banner & Copyright)
- const footerTextEl = document.getElementById('cms-footer-text');
- if (footerTextEl) {
-   footerTextEl.value = config.footerText || '© 2026 Climate Action Reporting & Information System • City Government of Metro Verde.';
- }
- const footerTaglineEl = document.getElementById('cms-footer-tagline');
- if (footerTaglineEl) {
-   footerTaglineEl.value = config.footerTagline || 'Official Municipal Environmental Portal';
- }
- updateFooterStripPreview();
  } catch (e) {
  console.error('Failed to load CMS data:', e);
  }
@@ -1335,10 +1324,6 @@ async function handleSaveCMS(e) {
     whoCreated: document.getElementById('cms-who-created').value.trim(),
     contactPartners: document.getElementById('cms-partners').value.trim(),
     enableNatureAnimations: document.getElementById('cms-enable-animation').checked,
-
-    // Official Municipal Footer Strip & Legal Copyright
-    footerText: document.getElementById('cms-footer-text') ? document.getElementById('cms-footer-text').value.trim() : '',
-    footerTagline: document.getElementById('cms-footer-tagline') ? document.getElementById('cms-footer-tagline').value.trim() : '',
 
     climateInformation: [],
     responseProtocol: []
@@ -1398,58 +1383,9 @@ async function handleSaveCMS(e) {
  alert('Failed to save website configuration.');
  }
  } catch (err) {
- alert('Network error saving CMS configuration.');
- }
-}
-
-// Helpers for Municipal Footer Strip & Copyright Editor
-function updateFooterStripPreview() {
-  const textInput = document.getElementById('cms-footer-text');
-  const taglineInput = document.getElementById('cms-footer-tagline');
-  const previewText = document.getElementById('admin-footer-preview-text');
-  const previewTagline = document.getElementById('admin-footer-preview-tagline');
-
-  if (previewText && textInput) {
-    previewText.textContent = textInput.value.trim() || '© 2026 Climate Action Reporting & Information System • City Government of Metro Verde.';
-  }
-  if (previewTagline && taglineInput) {
-    previewTagline.textContent = taglineInput.value.trim() || 'Official Municipal Environmental Portal';
+  alert('Network error saving CMS configuration.');
   }
 }
-
-function resetFooterStripToDefault() {
-  const textInput = document.getElementById('cms-footer-text');
-  const taglineInput = document.getElementById('cms-footer-tagline');
-  if (textInput) {
-    textInput.value = '© 2026 Climate Action Reporting & Information System • City Government of Metro Verde.';
-  }
-  if (taglineInput) {
-    taglineInput.value = 'Official Municipal Environmental Portal';
-  }
-  updateFooterStripPreview();
-}
-
-function setFooterPreset(presetKey) {
-  const textInput = document.getElementById('cms-footer-text');
-  const taglineInput = document.getElementById('cms-footer-tagline');
-  if (!textInput || !taglineInput) return;
-
-  if (presetKey === 'metro_verde') {
-    textInput.value = '© 2026 Climate Action Reporting & Information System • City Government of Metro Verde.';
-    taglineInput.value = 'Official Municipal Environmental Portal';
-  } else if (presetKey === 'cenro') {
-    textInput.value = '© 2026 City Environment and Natural Resources Office (CENRO) • Metro Verde.';
-    taglineInput.value = 'Ecological Solid Waste & Environmental Enforcement';
-  } else if (presetKey === 'lgu_resilience') {
-    textInput.value = '© 2026 Climate Resilience Taskforce • City Government of Metro Verde.';
-    taglineInput.value = 'Municipal Disaster & Climate Gateway';
-  }
-  updateFooterStripPreview();
-}
-
-window.updateFooterStripPreview = updateFooterStripPreview;
-window.resetFooterStripToDefault = resetFooterStripToDefault;
-window.setFooterPreset = setFooterPreset;
 
 // 4. Weather & Climate Advisory
 async function loadWeatherData() {
