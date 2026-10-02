@@ -30,6 +30,10 @@ function persistToDisk() {
     const buffer = Buffer.from(data);
     fs.writeFileSync(DB_FILE, buffer);
     try { fs.writeFileSync(TMP_DB_FILE, buffer); } catch (_) {}
+    try {
+      const permBackup = path.join(DB_BACKUP_DIR, 'climate_database_permanent_backup.sqlite');
+      fs.writeFileSync(permBackup, buffer);
+    } catch (_) {}
   } catch (err) {
     console.error('[Database] Failed to persist SQLite database to disk:', err.message);
   }
@@ -57,6 +61,14 @@ async function initDatabase() {
     try {
       fileBuffer = fs.readFileSync(TMP_DB_FILE);
       console.log('[Database] Restored SQLite database from tmp backup', TMP_DB_FILE);
+    } catch (_) {}
+  }
+
+  const permBackup = path.join(DB_BACKUP_DIR, 'climate_database_permanent_backup.sqlite');
+  if (!fileBuffer && fs.existsSync(permBackup)) {
+    try {
+      fileBuffer = fs.readFileSync(permBackup);
+      console.log('[Database] Restored SQLite database from permanent backup', permBackup);
     } catch (_) {}
   }
 

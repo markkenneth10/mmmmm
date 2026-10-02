@@ -1383,8 +1383,8 @@ async function handleSaveCMS(e) {
  alert('Failed to save website configuration.');
  }
  } catch (err) {
- alert('Network error saving CMS configuration.');
- }
+  alert('Network error saving CMS configuration.');
+  }
 }
 
 // 4. Weather & Climate Advisory

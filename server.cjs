@@ -613,12 +613,50 @@ function loadUserGuidesFromDisk() {
     else if (fs.existsSync(TMP_GUIDES_FILE)) raw = fs.readFileSync(TMP_GUIDES_FILE, 'utf8');
     if (raw) {
       const saved = JSON.parse(raw);
-      if (Array.isArray(saved)) {
+      if (Array.isArray(saved) && saved.length > 0) {
         userGuidesStore = saved;
+        return;
       }
     }
   } catch (err) {
     console.warn('Could not load guides from disk:', err.message);
+  }
+
+  // Provide initial practical environmental guides if empty
+  if (userGuidesStore.length === 0) {
+    userGuidesStore = [
+      {
+        id: 'guide-1',
+        title: 'How to File an Environmental Incident Report',
+        category: 'Reporting Protocol',
+        icon: '📸',
+        summary: 'Step-by-step instructions for documenting and submitting hazardous ecological violations with photographic evidence and GPS accuracy.',
+        content: '1. Ensure your personal safety before taking photos.\n2. Tap "File Incident" and select the appropriate hazard classification.\n3. Take clear photos showing the scale and street context.\n4. Pin the exact location on the interactive GIS map.\n5. Submit with verified PhilSys or Government ID to earn +10 Eco-Points.',
+        imageUrl: '/assets/climate_hero_banner.jpg',
+        createdAt: Date.now() - 86400000 * 2
+      },
+      {
+        id: 'guide-2',
+        title: 'Household Waste Segregation & Composting Protocol',
+        category: 'Waste Management',
+        icon: '♻️',
+        summary: 'Compliance steps under Republic Act 9003 for biodegradable, recyclable, and residual household sorting.',
+        content: '1. Keep separate bins for Biodegradable, Recyclable, and Residual waste.\n2. Rinse food containers and dry plastics before storing in the recycling bin.\n3. Turn organic kitchen scraps into compost using a small backyard bin or bokashi bucket.\n4. Take e-waste and batteries to barangay designated recovery bins.',
+        imageUrl: '/assets/climate_change_thumb_1789457800658.jpg',
+        createdAt: Date.now() - 86400000 * 5
+      },
+      {
+        id: 'guide-3',
+        title: 'Typhoon & Heavy Storm Flash Flood Protocol',
+        category: 'Emergency Preparedness',
+        icon: '🌊',
+        summary: 'Official CENRO & CDRRMO emergency steps when heavy rainfall triggers localized flood warnings.',
+        content: '1. Monitor live PAGASA rainfall advisories and city alert levels on the dashboard.\n2. Move appliances and documents to upper levels when flood waters begin rising.\n3. Unplug electrical appliances from wall outlets.\n4. Call the 24/7 CDRRMO Emergency Hotline (02) 8888-RESCUE if water reaches knee-level.',
+        imageUrl: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=600&q=80',
+        createdAt: Date.now() - 86400000 * 7
+      }
+    ];
+    saveUserGuidesToDisk();
   }
 }
 loadUserGuidesFromDisk();
@@ -1769,6 +1807,142 @@ const server = http.createServer(async (req, res) => {
       saveReportsToDisk();
       supabaseClient.saveReportToSupabase(newRep).catch(() => {});
       return sendJson(201, { success: true, report: newRep });
+    }
+
+    // ------------------------------------------
+    // User Guides & Practical Environmental Instructions API
+    // ------------------------------------------
+    if ((pathname === '/api/user-guides' || pathname === '/api/admin/user-guides') && req.method === 'GET') {
+      if (userGuidesStore.length === 0 && database && database.UserGuides) {
+        const dbGuides = database.UserGuides.getAll();
+        if (dbGuides && dbGuides.length > 0) userGuidesStore = dbGuides;
+      }
+      return sendJson(200, { success: true, guides: userGuidesStore });
+    }
+
+    if ((pathname === '/api/user-guides' || pathname === '/api/admin/user-guides') && req.method === 'POST') {
+      const session = getAdminSession(req);
+      if (!session || !isAdminRole(session.role)) {
+        return sendJson(401, { error: 'Unauthorized: Administrative credentials required' });
+      }
+      const body = await parseBody(req);
+      if (!body.title || !body.content) {
+        return sendJson(400, { error: 'Title and content are required' });
+      }
+      const newGuide = {
+        id: body.id || ('guide_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
+        title: (body.title || '').trim(),
+        category: body.category || 'Reporting Protocol',
+        icon: body.icon || '📖',
+        summary: (body.summary || '').trim(),
+        content: (body.content || '').trim(),
+        imageUrl: body.imageUrl || body.image_url || '',
+        createdAt: Date.now()
+      };
+      userGuidesStore.unshift(newGuide);
+      saveUserGuidesToDisk();
+      return sendJson(201, { success: true, guide: newGuide });
+    }
+
+    if ((pathname.startsWith('/api/user-guides/') || pathname.startsWith('/api/admin/user-guides/')) && req.method === 'PUT') {
+      const session = getAdminSession(req);
+      if (!session || !isAdminRole(session.role)) {
+        return sendJson(401, { error: 'Unauthorized' });
+      }
+      const parts = pathname.split('/');
+      const guideId = parts[parts.length - 1];
+      const body = await parseBody(req);
+      const idx = userGuidesStore.findIndex(g => String(g.id) === String(guideId));
+      if (idx !== -1) {
+        userGuidesStore[idx] = { ...userGuidesStore[idx], ...body, id: guideId };
+        saveUserGuidesToDisk();
+        return sendJson(200, { success: true, guide: userGuidesStore[idx] });
+      }
+      return sendJson(404, { error: 'Guide not found' });
+    }
+
+    if ((pathname.startsWith('/api/user-guides/') || pathname.startsWith('/api/admin/user-guides/')) && req.method === 'DELETE') {
+      const session = getAdminSession(req);
+      if (!session || !isAdminRole(session.role)) {
+        return sendJson(401, { error: 'Unauthorized' });
+      }
+      const parts = pathname.split('/');
+      const guideId = parts[parts.length - 1];
+      userGuidesStore = userGuidesStore.filter(g => String(g.id) !== String(guideId));
+      saveUserGuidesToDisk();
+      if (database && database.UserGuides) {
+        database.UserGuides.delete(guideId);
+      }
+      return sendJson(200, { success: true, message: 'Guide deleted successfully' });
+    }
+
+    // ------------------------------------------
+    // Verified Climate Knowledge Articles API
+    // ------------------------------------------
+    if (pathname === '/api/articles' && req.method === 'GET') {
+      const climateArticles = [
+        {
+          id: 1,
+          title: 'Mitigating Urban Heat Islands Through Green Canopies',
+          category: 'Climate Change',
+          icon: 'ThermometerSun',
+          summary: 'How dense tree canopies reduce asphalt heat absorption and lower neighborhood temperatures by up to 4°C.',
+          image: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=600&q=80',
+          readTime: '4 min read'
+        },
+        {
+          id: 2,
+          title: 'Zero-Waste Household Strategies & Composting',
+          category: 'Waste Management',
+          icon: 'Recycle',
+          summary: 'A practical guide to diverting 70% of municipal solid waste away from landfills through source segregation under RA 9003.',
+          image: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80',
+          readTime: '5 min read'
+        },
+        {
+          id: 3,
+          title: 'Community Flood Resilience & Stormwater Management',
+          category: 'Disaster Preparedness',
+          icon: 'Droplets',
+          summary: 'Practical measures communities can take to prepare for extreme typhoons and flash flooding events.',
+          image: 'https://images.unsplash.com/photo-1618083707368-b3823daa2726?auto=format&fit=crop&w=600&q=80',
+          readTime: '6 min read'
+        },
+        {
+          id: 4,
+          title: 'Native Tree Species for Carbon Sequestration',
+          category: 'Tree Planting',
+          icon: 'Trees',
+          summary: 'Why planting indigenous species like Narra, Molave, and Mangroves outperforms monoculture plantations.',
+          image: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=600&q=80',
+          readTime: '4 min read'
+        },
+        {
+          id: 5,
+          title: 'Rooftop Solar & Energy Efficiency for Households',
+          category: 'Renewable Energy',
+          icon: 'SunMedium',
+          summary: 'Decentralized clean energy reduces dependence on coal-fired power grids while saving up to 60% on electric bills.',
+          image: '/assets/climate_hero_banner.jpg',
+          readTime: '4 min read'
+        },
+        {
+          id: 6,
+          title: 'Mangrove Conservation: Coastlines Under Protection',
+          category: 'Coastal Protection',
+          icon: 'ShieldAlert',
+          summary: 'Mangrove forests store up to 5 times more carbon per hectare than terrestrial tropical rainforests.',
+          image: '/assets/climate_change_thumb_1789457800658.jpg',
+          readTime: '5 min read'
+        }
+      ];
+      return sendJson(200, { success: true, articles: climateArticles });
+    }
+
+    // Public Supabase Connection Status Alias
+    if (pathname === '/api/supabase/status' && req.method === 'GET') {
+      const status = supabaseClient.getStatus ? supabaseClient.getStatus() : { configured: false, connected: false };
+      return sendJson(200, { success: true, status });
     }
 
     // ------------------------------------------
