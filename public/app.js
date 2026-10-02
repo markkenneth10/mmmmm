@@ -1381,14 +1381,14 @@ function renderCitizenEmergencyHotlines(c) {
   let hotlines = c.emergencyHotlines;
   if (!Array.isArray(hotlines) || hotlines.length === 0) {
     hotlines = [];
-    if (c.emergencyHotline) hotlines.push({ name: 'Municipal Disaster Rescue', number: c.emergencyHotline, note: '24/7 Rapid Response', icon: '🚨' });
-    if (c.denrHotline) hotlines.push({ name: 'DENR Environmental Protection', number: c.denrHotline, note: 'Violations & Enforcement', icon: '🌿' });
-    if (c.healthHotline) hotlines.push({ name: 'City Health & Heat Helpline', number: c.healthHotline, note: 'Medical & Climate Health', icon: '🏥' });
+    if (c.emergencyHotline) hotlines.push({ name: 'Municipal Disaster Rescue', number: c.emergencyHotline, note: '24/7 Rapid Response', icon: '' });
+    if (c.denrHotline) hotlines.push({ name: 'DENR Environmental Protection', number: c.denrHotline, note: 'Violations & Enforcement', icon: '' });
+    if (c.healthHotline) hotlines.push({ name: 'City Health & Heat Helpline', number: c.healthHotline, note: 'Medical & Climate Health', icon: '' });
     if (hotlines.length === 0) {
       hotlines = [
-        { name: 'Municipal Disaster Rescue', number: '(02) 8888-ECO', note: '24/7 Rapid Response', icon: '🚨' },
-        { name: 'DENR Environmental Protection', number: '#911-DENR', note: 'Violations & Enforcement', icon: '🌿' },
-        { name: 'City Health & Heat Helpline', number: '(02) 8999-CLIMATE', note: 'Medical & Climate Health', icon: '🏥' }
+        { name: 'Municipal Disaster Rescue', number: '(02) 8888-ECO', note: '24/7 Rapid Response', icon: '' },
+        { name: 'DENR Environmental Protection', number: '#911-DENR', note: 'Violations & Enforcement', icon: '' },
+        { name: 'City Health & Heat Helpline', number: '(02) 8999-CLIMATE', note: 'Medical & Climate Health', icon: '' }
       ];
     }
   }
@@ -1398,7 +1398,7 @@ function renderCitizenEmergencyHotlines(c) {
   if (drawerContainer) {
     drawerContainer.innerHTML = hotlines.map(h => `
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 0.78rem;">
-        <span style="color: var(--text-muted); display:flex; align-items:center; gap:0.25rem;"><span>${h.icon || '📞'}</span> ${escapeHtml(h.name)}:</span>
+        <span style="color: var(--text-muted); display:flex; align-items:center; gap:0.35rem;"><strong>${escapeHtml(h.name)}</strong>:</span>
         <a href="tel:${escapeHtml((h.number || '').replace(/[^0-9+#*]/g, ''))}" style="color: #4ADE80; font-weight: 800; text-decoration: none;">${escapeHtml(h.number)}</a>
       </div>
     `).join('');
@@ -1410,7 +1410,7 @@ function renderCitizenEmergencyHotlines(c) {
     protocolContainer.innerHTML = hotlines.map(h => `
       <div class="protocol-hotline-item">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:0.25rem;">
-          <div class="protocol-hotline-label">${h.icon ? h.icon + ' ' : ''}${escapeHtml(h.name)}</div>
+          <div class="protocol-hotline-label">${escapeHtml(h.name)}</div>
           ${h.note ? `<span style="font-size:0.6rem; background:rgba(34,197,94,0.15); color:#166534; padding:0.08rem 0.3rem; border-radius:4px; font-weight:700; white-space:nowrap;">${escapeHtml(h.note)}</span>` : ''}
         </div>
         <a href="tel:${escapeHtml((h.number || '').replace(/[^0-9+#*]/g, ''))}" class="protocol-hotline-number" style="display:block; text-decoration:none; margin-top:0.2rem;">${escapeHtml(h.number)}</a>
@@ -1424,7 +1424,7 @@ function renderCitizenEmergencyHotlines(c) {
     footerContainer.innerHTML = hotlines.map(h => `
       <div style="margin-bottom: 0.5rem; padding-bottom: 0.45rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
         <div style="font-size: 0.76rem; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
-          <span>${h.icon ? h.icon + ' ' : ''}${escapeHtml(h.name)}</span>
+          <span>${escapeHtml(h.name)}</span>
           ${h.note ? `<span style="font-size: 0.65rem; color: #86EFAC;">${escapeHtml(h.note)}</span>` : ''}
         </div>
         <div style="margin-top: 0.15rem;">

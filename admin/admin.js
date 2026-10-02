@@ -224,14 +224,14 @@ function showAdminWorkspace() {
  const badge = document.getElementById('admin-role-badge');
  if (badge) {
  if (currentAdmin.role === 'super_admin') {
- badge.textContent = ' SUPER ADMIN';
+ badge.textContent = 'SUPER ADMIN';
  badge.className = 'admin-badge-super';
  const subNav = document.getElementById('nav-subadmins');
  if (subNav) subNav.style.display = 'flex';
  const setNav = document.getElementById('nav-settings');
  if (setNav) setNav.style.display = 'flex';
  } else {
- badge.textContent = '️ SUB-ADMIN';
+ badge.textContent = 'SUB-ADMIN';
  badge.className = 'admin-badge-sub';
  // Sub-admins cannot see super admin settings or manage sub-admins
  const subNav = document.getElementById('nav-subadmins');
@@ -428,7 +428,7 @@ function renderQuickTriageTable() {
  <td style="font-size:0.8rem;">${r.assignedTo || 'Unassigned'}</td>
  <td>
  <button onclick="openAdminTriageModal('${r.id}')" class="btn-admin-primary" style="padding:0.35rem 0.75rem; font-size:0.75rem;">
- Triage ️
+ Triage
  </button>
  </td>
  </tr>
@@ -965,7 +965,7 @@ async function loadMediaGallery() {
  Copy Link
  </button>
  <button type="button" onclick="deleteMediaAsset('${item.filename}')" class="btn-admin-danger" style="font-size:0.7rem; padding:0.25rem 0.45rem;">
- ️
+ 
  </button>
  </div>
  </div>
@@ -999,15 +999,15 @@ async function deleteMediaAsset(filename) {
 // 3. Website CMS & Branding (Dynamic Hotlines & Municipal Content)
 let adminHotlinesList = [];
 
-const HOTLINE_ICON_OPTIONS = [
-  { value: '🚨', label: '🚨 Disaster & Rescue (CDRRMO / Emergency)', category: 'rescue' },
-  { value: '🌿', label: '🌿 Environmental Protection (DENR / CENRO)', category: 'denr' },
-  { value: '🏥', label: '🏥 Health & Heat Helpline (DOH / City Health)', category: 'health' },
-  { value: '🚒', label: '🚒 Fire Department (BFP)', category: 'fire' },
-  { value: '👮', label: '👮 Police Assistance (PNP)', category: 'police' },
-  { value: '🌊', label: '🌊 Coast Guard & Water Search (PCG)', category: 'water' },
-  { value: '🚑', label: '🚑 Medical Ambulance Dispatch', category: 'ambulance' },
-  { value: '📞', label: '📞 General Municipal Helpline', category: 'general' }
+const HOTLINE_CATEGORY_OPTIONS = [
+  { value: 'rescue', label: 'Disaster & Rescue (CDRRMO / Emergency)', category: 'rescue' },
+  { value: 'denr', label: 'Environmental Protection (DENR / CENRO)', category: 'denr' },
+  { value: 'health', label: 'Health & Heat Helpline (DOH / City Health)', category: 'health' },
+  { value: 'fire', label: 'Fire Department (BFP)', category: 'fire' },
+  { value: 'police', label: 'Police Assistance (PNP)', category: 'police' },
+  { value: 'water', label: 'Coast Guard & Water Search (PCG)', category: 'water' },
+  { value: 'ambulance', label: 'Medical Ambulance Dispatch', category: 'ambulance' },
+  { value: 'general', label: 'General Municipal Helpline', category: 'general' }
 ];
 
 function renderAdminHotlinesUI() {
@@ -1016,49 +1016,49 @@ function renderAdminHotlinesUI() {
 
   if (adminHotlinesList.length === 0) {
     container.innerHTML = `
-      <div style="background: rgba(255,255,255,0.03); border: 1px dashed var(--border); border-radius: 8px; padding: 1.25rem; text-align: center; color: var(--text-muted);">
-        <p style="margin-bottom: 0.75rem; font-size: 0.85rem;">No emergency hotlines currently configured.</p>
-        <button type="button" class="btn-admin-primary" onclick="addNewHotlineRow()" style="font-size: 0.8rem; padding: 0.4rem 0.85rem;">➕ Add First Emergency Hotline</button>
+      <div style="background: var(--surface-alt); border: 1.5px dashed var(--border); border-radius: 10px; padding: 1.5rem; text-align: center; color: var(--text-muted);">
+        <p style="margin-bottom: 0.75rem; font-size: 0.88rem; font-weight: 600; color: var(--text-main);">No emergency hotlines currently configured.</p>
+        <button type="button" class="btn-admin-primary" onclick="addNewHotlineRow()" style="font-size: 0.82rem; padding: 0.5rem 1rem;">Add First Emergency Hotline</button>
       </div>
     `;
     return;
   }
 
   container.innerHTML = adminHotlinesList.map((item, idx) => `
-    <div class="admin-hotline-card" data-index="${idx}" style="background: #172033; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; position: relative;">
+    <div class="admin-hotline-card" data-index="${idx}" style="background: #FFFFFF; border: 1.5px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-radius: 12px; padding: 1.25rem; position: relative;">
       <!-- Card Header: Index Badge & Reordering / Delete -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; border-bottom: 1px solid var(--border); padding-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <span style="font-size: 1.25rem;">${item.icon || '📞'}</span>
-          <strong style="font-size: 0.85rem; color: #38bdf8;">Hotline #${idx + 1}: ${escapeHtml(item.name || 'Emergency Contact')}</strong>
-          ${item.note ? `<span style="font-size: 0.68rem; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 0.1rem 0.45rem; border-radius: 4px; font-weight: 700;">${escapeHtml(item.note)}</span>` : ''}
+          <span class="status-pill status-verified" style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase;">HOTLINE #${idx + 1}</span>
+          <strong style="font-size: 0.92rem; color: var(--text-main);">${escapeHtml(item.name || 'Emergency Contact')}</strong>
+          ${item.note ? `<span style="font-size: 0.72rem; background: var(--primary-tint); color: var(--primary-dark); padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700;">${escapeHtml(item.note)}</span>` : ''}
         </div>
         <div style="display: flex; align-items: center; gap: 0.35rem;">
-          <button type="button" class="btn-admin-outline" onclick="moveHotlineRow(${idx}, -1)" ${idx === 0 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Move Up" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">▲</button>
-          <button type="button" class="btn-admin-outline" onclick="moveHotlineRow(${idx}, 1)" ${idx === adminHotlinesList.length - 1 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Move Down" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">▼</button>
-          <button type="button" class="btn-admin-danger" onclick="deleteHotlineRow(${idx})" title="Delete Hotline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; margin-left: 0.25rem;">🗑️ Delete</button>
+          <button type="button" class="btn-admin-outline" onclick="moveHotlineRow(${idx}, -1)" ${idx === 0 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Move Up" style="padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 700;">Move Up</button>
+          <button type="button" class="btn-admin-outline" onclick="moveHotlineRow(${idx}, 1)" ${idx === adminHotlinesList.length - 1 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Move Down" style="padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 700;">Move Down</button>
+          <button type="button" class="btn-admin-danger" onclick="deleteHotlineRow(${idx})" title="Delete Hotline" style="padding: 0.3rem 0.75rem; font-size: 0.75rem; margin-left: 0.25rem;">Delete</button>
         </div>
       </div>
 
       <!-- Card Inputs Grid -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
         <div>
-          <label style="display:block; font-size:0.75rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-muted);">Agency / Hotline Name</label>
-          <input type="text" class="admin-input" value="${escapeHtml(item.name || '')}" oninput="updateHotlineField(${idx}, 'name', this.value)" placeholder="e.g. Municipal Disaster Rescue" required style="font-size:0.85rem; padding:0.5rem 0.75rem;">
+          <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.35rem; color:var(--text-main);">Agency / Service Name</label>
+          <input type="text" class="admin-input" value="${escapeHtml(item.name || '')}" oninput="updateHotlineField(${idx}, 'name', this.value)" placeholder="e.g. Municipal Disaster Rescue" required style="font-size:0.85rem; padding:0.6rem 0.85rem;">
         </div>
         <div>
-          <label style="display:block; font-size:0.75rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-muted);">Hotline / Contact Number</label>
-          <input type="text" class="admin-input" value="${escapeHtml(item.number || '')}" oninput="updateHotlineField(${idx}, 'number', this.value)" placeholder="e.g. (02) 8888-ECO or #911-DENR" required style="font-size:0.85rem; padding:0.5rem 0.75rem; font-weight:700; color:#34d399;">
+          <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.35rem; color:var(--text-main);">Hotline / Contact Number</label>
+          <input type="text" class="admin-input" value="${escapeHtml(item.number || '')}" oninput="updateHotlineField(${idx}, 'number', this.value)" placeholder="e.g. (02) 8888-ECO or 911" required style="font-size:0.85rem; padding:0.6rem 0.85rem; font-weight:800; color:var(--primary-dark);">
         </div>
         <div>
-          <label style="display:block; font-size:0.75rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-muted);">Availability / Note</label>
-          <input type="text" class="admin-input" value="${escapeHtml(item.note || '')}" oninput="updateHotlineField(${idx}, 'note', this.value)" placeholder="e.g. 24/7 Rapid Response, Toll-Free" style="font-size:0.85rem; padding:0.5rem 0.75rem;">
+          <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.35rem; color:var(--text-main);">Availability / Schedule Note</label>
+          <input type="text" class="admin-input" value="${escapeHtml(item.note || '')}" oninput="updateHotlineField(${idx}, 'note', this.value)" placeholder="e.g. 24/7 Rapid Response, Toll-Free" style="font-size:0.85rem; padding:0.6rem 0.85rem;">
         </div>
         <div>
-          <label style="display:block; font-size:0.75rem; font-weight:700; margin-bottom:0.3rem; color:var(--text-muted);">Service Icon & Category</label>
-          <select class="admin-input" onchange="updateHotlineCategory(${idx}, this.value)" style="font-size:0.85rem; padding:0.5rem 0.75rem;">
-            ${HOTLINE_ICON_OPTIONS.map(opt => `
-              <option value="${opt.value}" ${item.icon === opt.value ? 'selected' : ''}>${opt.label}</option>
+          <label style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:0.35rem; color:var(--text-main);">Service Category</label>
+          <select class="admin-select" onchange="updateHotlineCategory(${idx}, this.value)" style="font-size:0.85rem; padding:0.6rem 0.85rem;">
+            ${HOTLINE_CATEGORY_OPTIONS.map(opt => `
+              <option value="${opt.category}" ${item.category === opt.category ? 'selected' : ''}>${opt.label}</option>
             `).join('')}
           </select>
         </div>
@@ -1084,7 +1084,7 @@ function addNewHotlineRow(initialData) {
     name: 'Municipal Emergency Service',
     number: '',
     note: '24/7 Rapid Response',
-    icon: '🚨',
+    icon: '',
     category: 'rescue'
   };
   adminHotlinesList.push(newHotline);
@@ -1130,13 +1130,10 @@ function updateHotlineField(index, field, value) {
   }
 }
 
-function updateHotlineCategory(index, iconValue) {
+function updateHotlineCategory(index, categoryValue) {
   if (adminHotlinesList[index]) {
-    adminHotlinesList[index].icon = iconValue;
-    const match = HOTLINE_ICON_OPTIONS.find(opt => opt.value === iconValue);
-    if (match) {
-      adminHotlinesList[index].category = match.category;
-    }
+    adminHotlinesList[index].category = categoryValue;
+    adminHotlinesList[index].icon = '';
     renderAdminHotlinesUI();
   }
 }
@@ -1162,9 +1159,9 @@ async function loadCMSData() {
     adminHotlinesList = JSON.parse(JSON.stringify(config.emergencyHotlines));
   } else {
     adminHotlinesList = [
-      { id: 'hotline-rescue', name: 'Municipal Disaster Rescue', number: config.emergencyHotline || '(02) 8888-ECO', note: '24/7 Rapid Response', icon: '🚨', category: 'rescue' },
-      { id: 'hotline-denr', name: 'DENR Environmental Hotline', number: config.denrHotline || '#911-DENR', note: 'Enforcement & Violations', icon: '🌿', category: 'denr' },
-      { id: 'hotline-health', name: 'City Health & Heat Helpline', number: config.healthHotline || '(02) 8999-CLIMATE', note: 'Medical & Climate Health', icon: '🏥', category: 'health' }
+      { id: 'hotline-rescue', name: 'Municipal Disaster Rescue', number: config.emergencyHotline || '(02) 8888-ECO', note: '24/7 Rapid Response', icon: '', category: 'rescue' },
+      { id: 'hotline-denr', name: 'DENR Environmental Hotline', number: config.denrHotline || '#911-DENR', note: 'Enforcement & Violations', icon: '', category: 'denr' },
+      { id: 'hotline-health', name: 'City Health & Heat Helpline', number: config.healthHotline || '(02) 8999-CLIMATE', note: 'Medical & Climate Health', icon: '', category: 'health' }
     ];
   }
   renderAdminHotlinesUI();
@@ -1291,7 +1288,7 @@ async function handleSaveCMS(e) {
       name: (h.name || '').trim(),
       number: (h.number || '').trim(),
       note: (h.note || '').trim(),
-      icon: h.icon || '📞',
+      icon: '',
       category: h.category || 'general'
     }));
 
@@ -1707,16 +1704,16 @@ function renderKycCards() {
  const isRejected = status === 'rejected';
 
  let badgeColor = '#64748B';
- let badgeText = ' Unverified';
+ let badgeText = 'Unverified';
  if (isPending) {
- badgeColor = '#EF4444';
- badgeText = ' Pending Admin Review';
+ badgeColor = '#DC2626';
+ badgeText = 'Pending Review';
  } else if (isVerified) {
- badgeColor = '#10B981';
- badgeText = '️ Verified Citizen';
+ badgeColor = '#059669';
+ badgeText = 'Verified Citizen';
  } else if (isRejected) {
- badgeColor = '#F59E0B';
- badgeText = ' Rejected';
+ badgeColor = '#D97706';
+ badgeText = 'Rejected';
  }
 
  const frontImg = item.kycFrontImage || '';
@@ -1725,49 +1722,49 @@ function renderKycCards() {
 
  const submitDate = item.kycSubmittedAt ? new Date(item.kycSubmittedAt).toLocaleDateString() : 'N/A';
 
- return `
- <div class="admin-card" style="border-top: 4px solid ${badgeColor}; display: flex; flex-direction: column; justify-content: space-between;">
+  return `
+ <div class="admin-card" style="border-top: 4px solid ${badgeColor}; display: flex; flex-direction: column; justify-content: space-between; background: #FFFFFF;">
  <div>
  <!-- Header -->
  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
  <div>
- <h4 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0;">${escapeHtml(item.name)}</h4>
- <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem;">
+ <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin: 0;">${escapeHtml(item.name)}</h4>
+ <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
  ${escapeHtml(item.email)} • ${escapeHtml(item.phone || 'N/A')}
  </div>
- <div style="font-size: 0.78rem; color: #34d399; margin-top: 0.15rem;">
+ <div style="font-size: 0.78rem; color: var(--primary-dark); font-weight: 700; margin-top: 0.15rem;">
  ${escapeHtml(item.barangay || 'Metro Verde')}
  </div>
  </div>
- <span style="background: ${badgeColor}; color: #fff; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700;">
+ <span style="background: ${badgeColor}; color: #FFFFFF; padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.72rem; font-weight: 800;">
  ${badgeText}
  </span>
  </div>
 
  <!-- Document Info -->
- <div style="background: #07130b; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #1c4228; font-size: 0.82rem;">
- <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
- <span style="color: #94a3b8;">Document Type:</span>
- <strong style="color: #60a5fa;">${escapeHtml(item.kycIdType || 'Not specified')}</strong>
+ <div style="background: var(--surface-alt); padding: 0.85rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border); font-size: 0.82rem;">
+ <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+ <span style="color: var(--text-muted); font-weight: 600;">Document Type:</span>
+ <strong style="color: var(--primary-dark); font-weight: 800;">${escapeHtml(item.kycIdType || 'Not specified')}</strong>
  </div>
- <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
- <span style="color: #94a3b8;">ID / Document #:</span>
- <strong style="color: #fcd34d; font-family: monospace;">${escapeHtml(item.kycIdNumber || 'N/A')}</strong>
+ <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+ <span style="color: var(--text-muted); font-weight: 600;">ID / Document #:</span>
+ <strong style="color: var(--text-main); font-family: monospace; font-weight: 800;">${escapeHtml(item.kycIdNumber || 'N/A')}</strong>
  </div>
  <div style="display: flex; justify-content: space-between;">
- <span style="color: #94a3b8;">Submitted Date:</span>
- <span style="color: #cbd5e1;">${submitDate}</span>
+ <span style="color: var(--text-muted); font-weight: 600;">Submitted Date:</span>
+ <span style="color: var(--text-main); font-weight: 600;">${submitDate}</span>
  </div>
  ${item.kycRejectReason ? `
- <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #1c4228; color: #f87171; font-size: 0.78rem;">
- ️ <strong>Rejection Reason:</strong> ${escapeHtml(item.kycRejectReason)}
+ <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border); color: var(--red-dark); font-size: 0.78rem;">
+ <strong>Rejection Reason:</strong> ${escapeHtml(item.kycRejectReason)}
  </div>
  ` : ''}
  </div>
 
  <!-- Document Image Thumbnails with Zoom trigger -->
  <div style="margin-bottom: 1rem;">
- <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.4rem;">
+ <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem;">
  Attached Proof Documents (Click to Enlarge):
  </div>
  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
@@ -2035,7 +2032,7 @@ async function handleCreateSubAdmin(e) {
  if (res.ok) {
  document.getElementById('create-subadmin-form').reset();
  loadSubAdminsData();
- alert(`️ Sub-admin account provisioned for ${newSub.name} with customized permission limits!`);
+ alert(`Sub-admin account provisioned for ${newSub.name} with customized permission limits.`);
  } else {
  alert(data.error || 'Failed to create sub-admin.');
  }
@@ -2297,7 +2294,7 @@ async function triggerSupabaseAutoConnect() {
  if (resMsg) {
  resMsg.style.background = '#7f1d1d';
  resMsg.style.color = '#fecaca';
- resMsg.textContent = '️ Auto-connection warning: ' + (data.message || data.error || 'Failed to auto-connect');
+ resMsg.textContent = ' Auto-connection warning: ' + (data.message || data.error || 'Failed to auto-connect');
  }
  loadSupabaseStatus();
  }
@@ -2359,7 +2356,7 @@ async function handleSaveSupabaseConfig(e) {
  resMsg.style.display = 'block';
  resMsg.style.background = '#7f1d1d';
  resMsg.style.color = '#fecaca';
- resMsg.textContent = '️ ' + (data.error || 'Failed to save and connect');
+ resMsg.textContent = ' ' + (data.error || 'Failed to save and connect');
  }
  }
  } catch (err) {
@@ -2449,7 +2446,7 @@ async function triggerSupabaseSync() {
  } else {
  resMsg.style.background = '#7f1d1d';
  resMsg.style.color = '#fecaca';
- resMsg.textContent = '️ Sync error: ' + (data.error || 'Could not sync');
+ resMsg.textContent = ' Sync error: ' + (data.error || 'Could not sync');
  }
  }
  } catch (err) {

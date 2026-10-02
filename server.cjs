@@ -409,9 +409,9 @@ let websiteConfig = {
   denrHotline: "#911-DENR",
   healthHotline: "(02) 8999-CLIMATE",
   emergencyHotlines: [
-    { id: "hotline-rescue", name: "Municipal Disaster Rescue", number: "(02) 8888-ECO", note: "24/7 Rapid Response", icon: "🚨", category: "rescue" },
-    { id: "hotline-denr", name: "DENR Environmental Hotline", number: "#911-DENR", note: "Enforcement & Violations", icon: "🌿", category: "denr" },
-    { id: "hotline-health", name: "City Health & Heat Helpline", number: "(02) 8999-CLIMATE", note: "Medical & Climate Health", icon: "🏥", category: "health" }
+    { id: "hotline-rescue", name: "Municipal Disaster Rescue", number: "(02) 8888-ECO", note: "24/7 Rapid Response", icon: "", category: "rescue" },
+    { id: "hotline-denr", name: "DENR Environmental Hotline", number: "#911-DENR", note: "Enforcement & Violations", icon: "", category: "denr" },
+    { id: "hotline-health", name: "City Health & Heat Helpline", number: "(02) 8999-CLIMATE", note: "Medical & Climate Health", icon: "", category: "health" }
   ],
 
   // Website Information CMS
@@ -488,9 +488,9 @@ function loadConfigFromDisk() {
   // Ensure emergencyHotlines is valid
   if (!Array.isArray(websiteConfig.emergencyHotlines) || websiteConfig.emergencyHotlines.length === 0) {
     websiteConfig.emergencyHotlines = [
-      { id: "hotline-rescue", name: "Municipal Disaster Rescue", number: websiteConfig.emergencyHotline || "(02) 8888-ECO", note: "24/7 Rapid Response", icon: "🚨", category: "rescue" },
-      { id: "hotline-denr", name: "DENR Environmental Hotline", number: websiteConfig.denrHotline || "#911-DENR", note: "Enforcement & Violations", icon: "🌿", category: "denr" },
-      { id: "hotline-health", name: "City Health & Heat Helpline", number: websiteConfig.healthHotline || "(02) 8999-CLIMATE", note: "Medical & Climate Health", icon: "🏥", category: "health" }
+      { id: "hotline-rescue", name: "Municipal Disaster Rescue", number: websiteConfig.emergencyHotline || "(02) 8888-ECO", note: "24/7 Rapid Response", icon: "", category: "rescue" },
+      { id: "hotline-denr", name: "DENR Environmental Hotline", number: websiteConfig.denrHotline || "#911-DENR", note: "Enforcement & Violations", icon: "", category: "denr" },
+      { id: "hotline-health", name: "City Health & Heat Helpline", number: websiteConfig.healthHotline || "(02) 8999-CLIMATE", note: "Medical & Climate Health", icon: "", category: "health" }
     ];
   }
 }
@@ -759,7 +759,7 @@ async function syncWithSupabase() {
         }
       }
     } else {
-      console.log('ℹ️ Supabase not yet connected:', status.error || 'Awaiting project credentials');
+      console.log('Supabase not yet connected:', status.error || 'Awaiting project credentials');
     }
   } catch (err) {
     console.warn('Supabase sync background warning:', err.message);

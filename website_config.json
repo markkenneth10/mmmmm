@@ -15,7 +15,7 @@
       "name": "Municipal Disaster Rescue",
       "number": "(02) 8888-ECO",
       "note": "24/7 Rapid Response",
-      "icon": "🚨",
+      "icon": "",
       "category": "rescue"
     },
     {
@@ -23,7 +23,7 @@
       "name": "DENR Environmental Hotline",
       "number": "#911-DENR",
       "note": "Enforcement & Violations",
-      "icon": "🌿",
+      "icon": "",
       "category": "denr"
     },
     {
@@ -31,7 +31,7 @@
       "name": "City Health & Heat Helpline",
       "number": "(02) 8999-CLIMATE",
       "note": "Medical & Climate Health",
-      "icon": "🏥",
+      "icon": "",
       "category": "health"
     }
   ],

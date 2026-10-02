@@ -21,25 +21,23 @@
  <div id="admin-auth-view" class="admin-login-wrap">
  <div class="admin-login-card">
  <div style="text-align: center; margin-bottom: 1.75rem;">
- <div id="admin-auth-logo" style="width: 64px; height: 64px; margin: 0 auto 1rem; background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 0 20px rgba(16,185,129,0.3); overflow: hidden;">
- ️
- </div>
- <h2 style="font-size: 1.45rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem;">Administrative Console</h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">LGU CENRO & Environmental Protection Directorate</p>
+ <div id="admin-auth-logo" style="width: 64px; height: 64px; margin: 0 auto 1rem; background: linear-gradient(135deg, #16a765, #0b4d2b); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(11,77,43,0.25); color: #FFFFFF;"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+ <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.35rem;">Administrative Console</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">LGU CENRO & Environmental Protection Directorate</p>
  </div>
 
  <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
  <div style="margin-bottom: 1rem;">
- <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.4rem;">Official Administrative Email</label>
+ <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">Official Administrative Email</label>
  <input type="email" id="admin-email-input" class="admin-input" placeholder="Enter official admin email" required autocomplete="username">
  </div>
 
  <div style="margin-bottom: 1.25rem;">
- <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.4rem;">Password</label>
+ <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">Password</label>
  <input type="password" id="admin-password-input" class="admin-input" placeholder="••••••••" required>
  </div>
 
- <div id="admin-login-error" style="display: none; background: #7f1d1d; color: #fecaca; padding: 0.65rem; border-radius: 6px; font-size: 0.82rem; margin-bottom: 1rem;"></div>
+ <div id="admin-login-error" style="display: none; background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 8px; font-size: 0.84rem; font-weight: 600; border: 1px solid #fecaca; margin-bottom: 1rem;"></div>
 
  <button type="submit" class="btn-admin-primary" style="width: 100%; padding: 0.85rem; font-size: 0.92rem; background: var(--primary);">
  Sign In to Administrative Console →
@@ -122,7 +120,7 @@
  Citizen KYC Verifications <span id="admin-kyc-pending-pill" class="admin-badge-pill" style="display:none; background: #EF4444; color: #fff; margin-left: auto; font-size: 0.68rem; padding: 0.15rem 0.45rem;">0</span>
  </button>
  <button class="admin-nav-item" onclick="switchAdminTab('users')">Citizen Users & Analytics</button>
- <button class="admin-nav-item" id="nav-subadmins" onclick="switchAdminTab('subadmins')">️ Sub-Admin Management</button>
+ <button class="admin-nav-item" id="nav-subadmins" onclick="switchAdminTab('subadmins')">Sub-Admin Management</button>
  <button class="admin-nav-item" id="nav-settings" onclick="switchAdminTab('settings')">Super Admin Settings</button>
 
  <div class="admin-nav-category" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">Citizen Portal & Session</div>
@@ -141,42 +139,42 @@
  <section id="tab-overview" class="admin-section">
  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
  <div>
- <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Operational Command Center</h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">Real-time municipal telemetry across Metro Verde sectors</p>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Operational Command Center</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Real-time municipal telemetry across Metro Verde sectors</p>
  </div>
- <button onclick="refreshAllAdminData()" class="btn-admin-outline" style="font-size: 0.8rem;"> Refresh Telemetry</button>
+ <button onclick="refreshAllAdminData()" class="btn-admin-outline" style="font-size: 0.8rem;">Refresh Telemetry</button>
  </div>
 
  <!-- KPI Cards -->
  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
  <div class="admin-card" style="border-left: 4px solid #10b981;">
- <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Total Citizen Reports</div>
+ <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Total Citizen Reports</div>
  <div style="font-size: 2rem; font-weight: 800; color: #fff; margin: 0.3rem 0;" id="kpi-admin-total-reports">0</div>
  <div style="font-size: 0.75rem; color: #34d399;" id="kpi-admin-resolution-rate">Resolution: 0%</div>
  </div>
 
  <div class="admin-card" style="border-left: 4px solid #ef4444;">
- <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Critical Hazards Active</div>
+ <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Critical Hazards Active</div>
  <div style="font-size: 2rem; font-weight: 800; color: #f87171; margin: 0.3rem 0;" id="kpi-admin-critical-reports">0</div>
- <div style="font-size: 0.75rem; color: #94a3b8;">Immediate CENRO dispatch required</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted);">Immediate CENRO dispatch required</div>
  </div>
 
  <div class="admin-card" style="border-left: 4px solid #0284c7;">
- <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Registered Citizens</div>
+ <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Registered Citizens</div>
  <div style="font-size: 2rem; font-weight: 800; color: #38bdf8; margin: 0.3rem 0;" id="kpi-admin-total-users">0</div>
- <div style="font-size: 0.75rem; color: #94a3b8;" id="kpi-admin-active-today">Active today: 0 users</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted);" id="kpi-admin-active-today">Active today: 0 users</div>
  </div>
 
  <div class="admin-card" style="border-left: 4px solid #f59e0b;">
- <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Current Weather Alert</div>
+ <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Current Weather Alert</div>
  <div style="font-size: 2rem; font-weight: 800; color: #fbbf24; margin: 0.3rem 0;" id="kpi-admin-weather-alert">Yellow</div>
- <div style="font-size: 0.75rem; color: #94a3b8;" id="kpi-admin-temp">32°C (Heat Index 38°C)</div>
+ <div style="font-size: 0.75rem; color: var(--text-muted);" id="kpi-admin-temp">32°C (Heat Index 38°C)</div>
  </div>
  </div>
 
  <!-- Quick Actions & Urgent Tickets -->
  <div class="admin-card">
- <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1rem;"> Priority Urgent Reports (Awaiting Resolution)</h3>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Priority Urgent Reports (Awaiting Resolution)</h3>
  <div class="admin-table-container">
  <table class="admin-table">
  <thead>
@@ -201,8 +199,8 @@
  <!-- TAB 2: INCIDENT TRIAGE & DISPATCH -->
  <section id="tab-triage" class="admin-section" style="display: none;">
  <div style="margin-bottom: 1.5rem;">
- <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">LGU Environmental Incident Dispatch</h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">Review citizen submissions, assign enforcement teams, and publish field inspection updates</p>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>LGU Environmental Incident Dispatch</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Review citizen submissions, assign enforcement teams, and publish field inspection updates</p>
  </div>
 
  <div class="admin-card">
@@ -231,15 +229,15 @@
  <!-- TAB 3: WEBSITE CMS & BRANDING (ADMIN EDITS ALL WEBSITE INFO) -->
  <section id="tab-cms" class="admin-section" style="display: none;">
  <div style="margin-bottom: 1.5rem;">
- <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Website Content Management & Branding (CMS)</h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">Modify website name, logo, institutional information, climate change & awareness guides displayed to citizens</p>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Website Content Management & Branding (CMS)</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Modify website name, logo, institutional information, climate change & awareness guides displayed to citizens</p>
  </div>
 
  <form id="admin-cms-form" onsubmit="handleSaveCMS(event)">
   <!-- 1. Identity & Official Branding (File Logo Upload & Identity) -->
   <div class="admin-card">
-    <h3 style="font-size: 1.15rem; font-weight: 800; color: #34d399; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-      <span>🏛️</span> 1. Website Identity, Official Logo & Hotlines
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+      1. Website Identity, Official Logo & Hotlines
     </h3>
     
     <!-- Website Name & Subtitle (2 Columns) -->
@@ -259,14 +257,14 @@
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
         <div>
           <label style="display:block; font-size:0.92rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
-            <span>📞</span> Municipal Emergency & Environmental Hotlines
+            Municipal Emergency & Environmental Hotlines
           </label>
           <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem; max-width: 680px; line-height: 1.45;">
             Edit existing hotlines or click <strong>Add Emergency Hotline</strong> to add new municipal dispatch numbers (e.g. MDRRMO, PNP Police, BFP Fire, Red Cross, Ambulance). All modifications are saved and updated live across the citizen web portal.
           </p>
         </div>
         <button type="button" class="btn-admin-primary" onclick="addNewHotlineRow()" style="font-size:0.82rem; padding:0.45rem 0.95rem; display:inline-flex; align-items:center; gap:0.4rem; cursor:pointer;">
-          <span>➕</span> Add Emergency Hotline
+          + Add Emergency Hotline
         </button>
       </div>
 
@@ -286,13 +284,13 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
         <div>
           <label style="font-size:0.88rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
-            <span>🎨</span> Official Website Logo & Brand Icon
+            Official Website Logo & Brand Icon
           </label>
           <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Upload a graphic image file or choose an official civic emoji</p>
         </div>
         <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn-admin-outline" id="btn-mode-image-logo" onclick="setLogoMode('image')" style="font-size:0.78rem; padding:0.4rem 0.85rem; border-color: var(--primary-light); color: var(--primary-dark); font-weight:700;">🖼️ Uploaded Image Logo</button>
-          <button type="button" class="btn-admin-outline" id="btn-mode-emoji-logo" onclick="setLogoMode('emoji')" style="font-size:0.78rem; padding:0.4rem 0.85rem;">🔤 Use Emoji / Symbol</button>
+          <button type="button" class="btn-admin-outline" id="btn-mode-image-logo" onclick="setLogoMode('image')" style="font-size:0.78rem; padding:0.4rem 0.85rem; border-color: var(--primary-light); color: var(--primary-dark); font-weight:700;">Uploaded Image Logo</button>
+          <button type="button" class="btn-admin-outline" id="btn-mode-emoji-logo" onclick="setLogoMode('emoji')" style="font-size:0.78rem; padding:0.4rem 0.85rem;">Use Text / Symbol</button>
         </div>
       </div>
       
@@ -332,14 +330,14 @@
 
       <!-- EMOJI / TEXT PANEL -->
       <div id="cms-logo-emoji-panel" style="display:none; margin-top: 0.75rem; padding-top: 0.85rem; border-top: 1px solid var(--border);">
-        <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--text-main); margin-bottom:0.35rem;">Emoji or Character Symbol</label>
+        <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--text-main); margin-bottom:0.35rem;">Brand Monogram / Text Symbol</label>
         <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap: wrap;">
-          <input type="text" id="cms-website-logo" class="admin-input" style="max-width:140px; font-size:1.25rem; text-align:center;" placeholder="🌿">
+          <input type="text" id="cms-website-logo" class="admin-input" style="max-width:140px; font-size:1.25rem; text-align:center;" placeholder="CA">
           <span style="font-size:0.75rem; color:var(--text-muted);">Presets: </span>
-          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('🌿')" style="font-size:0.8rem; padding:0.25rem 0.5rem;">🌿</button>
-          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('🌱')" style="font-size:0.8rem; padding:0.25rem 0.5rem;">🌱</button>
-          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('🌍')" style="font-size:0.8rem; padding:0.25rem 0.5rem;">🌍</button>
-          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('🏛️')" style="font-size:0.8rem; padding:0.25rem 0.5rem;">🏛️</button>
+          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('CA')" style="font-size:0.8rem; padding:0.25rem 0.5rem; font-weight:700;">CA</button>
+          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('MV')" style="font-size:0.8rem; padding:0.25rem 0.5rem; font-weight:700;">MV</button>
+          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('ECO')" style="font-size:0.8rem; padding:0.25rem 0.5rem; font-weight:700;">ECO</button>
+          <button type="button" class="btn-admin-outline" onclick="setLogoEmoji('LGU')" style="font-size:0.8rem; padding:0.25rem 0.5rem; font-weight:700;">LGU</button>
         </div>
       </div>
     </div>
@@ -350,7 +348,7 @@
       <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
           <label style="font-size:0.88rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:0.5rem; margin-bottom: 0.4rem;">
-            <span>✨</span> Animated Background Imagery
+            Animated Background Imagery
           </label>
           <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.85rem; line-height: 1.4;">
             Enable smooth atmospheric nature animations on the citizen web portal.
@@ -394,7 +392,7 @@
         <!-- About System Graphic -->
         <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
           <label style="font-size:0.82rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:0.4rem;">
-            🏛️ Municipal System & Governance Graphic (Optional)
+            Municipal System & Governance Graphic (Optional)
           </label>
           <input type="hidden" id="cms-about-image-url" value="">
           <div id="cms-about-preview-box" style="height: 75px; background: #FFFFFF; border: 1px dashed var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 0.5rem;">
@@ -417,28 +415,28 @@
 
   <!-- 2. Important Educational & Awareness Information -->
   <div class="admin-card">
-    <h3 style="font-size: 1.15rem; font-weight: 800; color: #34d399; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-      <span>🌿</span> 2. Climate Change, Action & Awareness Guides
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+      2. Climate Change, Action & Awareness Guides
     </h3>
     
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
       <div>
-        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">🌡️ Climate Change Information (Local Impacts & Science)</label>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Climate Change Information (Local Impacts & Science)</label>
         <textarea id="cms-climate-change" class="admin-textarea" rows="4" required></textarea>
       </div>
 
       <div>
-        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">🌱 Climate Action Directives (What Citizens Can Do)</label>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Climate Action Directives (What Citizens Can Do)</label>
         <textarea id="cms-climate-action" class="admin-textarea" rows="4" required></textarea>
       </div>
 
       <div>
-        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">⚖️ Climate Awareness & Environmental Laws (RA 9003, RA 8749, PD 705)</label>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Climate Awareness & Environmental Laws (RA 9003, RA 8749, PD 705)</label>
         <textarea id="cms-climate-awareness" class="admin-textarea" rows="4" required></textarea>
       </div>
 
       <div>
-        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">📋 About Climate Reporting Protocols & Response Rules</label>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">About Climate Reporting Protocols & Response Rules</label>
         <textarea id="cms-reporting-guide" class="admin-textarea" rows="4" required></textarea>
       </div>
     </div>
@@ -446,28 +444,28 @@
 
   <!-- 3. Website Information (About, Why Created, Who Created) -->
   <div class="admin-card">
-    <h3 style="font-size: 1.15rem; font-weight: 800; color: #34d399; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-      <span>📖</span> 3. Website Information & Authorship
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+      3. Website Information & Authorship
     </h3>
     
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
       <div>
-        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">ℹ️ About This Website</label>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">About This Website</label>
         <textarea id="cms-about-website" class="admin-textarea" rows="4" required></textarea>
       </div>
 
       <div>
-        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">🎯 Why This System Was Created (Objectives & Purpose)</label>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Why This System Was Created (Objectives & Purpose)</label>
         <textarea id="cms-why-created" class="admin-textarea" rows="4" required></textarea>
       </div>
 
       <div>
-        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">👨‍💻 Who Created This Website (Authors & Leadership)</label>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Who Created This Website (Authors & Leadership)</label>
         <textarea id="cms-who-created" class="admin-textarea" rows="3" required></textarea>
       </div>
 
       <div>
-        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">🤝 Municipal Partners & Institutional Endorsements</label>
+        <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:0.45rem;">Municipal Partners & Institutional Endorsements</label>
         <textarea id="cms-partners" class="admin-textarea" rows="3" required></textarea>
       </div>
     </div>
@@ -475,7 +473,7 @@
 
   <div style="margin-top: 1.25rem; margin-bottom: 2rem;">
     <button type="submit" class="btn-admin-primary" style="width: 100%; padding: 1rem; font-size: 1.05rem; justify-content: center; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
-      💾 Save & Publish All Website Content Changes
+      Save & Publish All Website Content Changes
     </button>
   </div>
 </form>
@@ -484,8 +482,8 @@
  <div class="admin-card" style="margin-top: 1.5rem;">
  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
  <div>
- <h3 style="font-size: 1.1rem; font-weight: 700; color: #34d399;">️ Media Library & Published Website Images</h3>
- <p style="font-size: 0.78rem; color: #94a3b8;">Uploaded logos, banners, circular illustrations, and educational guide diagrams</p>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);">Media Library & Published Website Images</h3>
+ <p style="font-size: 0.78rem; color: var(--text-muted);">Uploaded logos, banners, circular illustrations, and educational guide diagrams</p>
  </div>
  <button type="button" onclick="loadMediaGallery()" class="btn-admin-outline" style="font-size:0.75rem; padding:0.35rem 0.75rem;">
  Refresh Media
@@ -501,8 +499,8 @@
  <!-- TAB 4: WEATHER & CLIMATE ADVISORY CONTROL -->
  <section id="tab-weather" class="admin-section" style="display: none;">
  <div style="margin-bottom: 1.5rem;">
- <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Climate Advisory & Live Weather Condition Control</h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">Update weather telemetry, PAGASA alert level, AQI, and emergency climate advisories shown on citizen app</p>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Climate Advisory & Live Weather Condition Control</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Update weather telemetry, PAGASA alert level, AQI, and emergency climate advisories shown on citizen app</p>
  </div>
 
  <form id="admin-weather-form" onsubmit="handleSaveWeather(event)">
@@ -540,12 +538,12 @@
  </div>
 
  <div style="margin-bottom: 1.5rem;">
- <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;"> Live Municipal Climate Advisory Broadcast Notice</label>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Live Municipal Climate Advisory Broadcast Notice</label>
  <textarea id="weather-advisory-notice" class="admin-textarea" rows="3" required></textarea>
  </div>
 
  <div style="margin-bottom: 1.5rem;">
- <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;"> Recommended Citizen Safety Action</label>
+ <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Recommended Citizen Safety Action</label>
  <input type="text" id="weather-safety-tip" class="admin-input" required>
  </div>
 
@@ -559,13 +557,13 @@
  <!-- TAB 5: ANNOUNCEMENTS & NOTIFICATIONS -->
  <section id="tab-announcements" class="admin-section" style="display: none;">
  <div style="margin-bottom: 1.5rem;">
- <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Admin Announcements & Citizen Notification Broadcast</h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">Publish official warnings, municipal drives, and send notifications to all citizen users</p>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Admin Announcements & Citizen Notification Broadcast</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Publish official warnings, municipal drives, and send notifications to all citizen users</p>
  </div>
 
  <!-- Create Announcement -->
  <div class="admin-card">
- <h3 style="font-size: 1.1rem; font-weight: 700; color: #34d399; margin-bottom: 1rem;"> Create New Announcement</h3>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Create New Announcement</h3>
  <form id="admin-announcement-form" onsubmit="handleCreateAnnouncement(event)">
  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
  <div>
@@ -597,9 +595,9 @@
  </div>
 
  <!-- Attach Announcement Image / Poster / Advisory Infographic -->
- <div style="margin-bottom: 1.25rem; background: #09160d; border: 1px solid #1c4228; border-radius: 8px; padding: 0.85rem;">
+ <div style="margin-bottom: 1.25rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem;">
  <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem; color: #fff;">
- ️ Attach Announcement Image / Official Banner (Optional)
+ Attach Announcement Image / Official Banner (Optional)
  </label>
  <input type="hidden" id="ann-image-url" value="">
  <input type="file" id="ann-image-file" accept="image/*" style="display:none;" onchange="handleAnnouncementImageSelect(event)">
@@ -628,7 +626,7 @@
 
  <!-- Existing Announcements List -->
  <div class="admin-card">
- <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1rem;">Published Announcements</h3>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Published Announcements</h3>
  <div id="admin-announcements-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
  <!-- Rendered by JS -->
  </div>
@@ -639,10 +637,10 @@
  <section id="tab-kyc" class="admin-section" style="display: none;">
  <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
  <div>
- <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
- <span></span> Citizen Identity Verification (KYC) Queue
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+ Citizen Identity Verification (KYC) Queue
  </h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">
+ <p style="font-size: 0.85rem; color: var(--text-muted);">
  Verify government IDs, validate submitted documents, and grant authorized incident reporting credentials to citizens.
  </p>
  </div>
@@ -678,9 +676,9 @@
  <!-- Filter Pills -->
  <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
  <button class="btn-admin-outline active" id="btn-filter-kyc-all" onclick="filterKycSubmissions('all')">All Submissions</button>
- <button class="btn-admin-outline" id="btn-filter-kyc-pending" onclick="filterKycSubmissions('pending')"> Pending Review</button>
- <button class="btn-admin-outline" id="btn-filter-kyc-verified" onclick="filterKycSubmissions('verified')">️ Verified</button>
- <button class="btn-admin-outline" id="btn-filter-kyc-rejected" onclick="filterKycSubmissions('rejected')"> Rejected</button>
+ <button class="btn-admin-outline" id="btn-filter-kyc-pending" onclick="filterKycSubmissions('pending')">Pending Review</button>
+ <button class="btn-admin-outline" id="btn-filter-kyc-verified" onclick="filterKycSubmissions('verified')">Verified</button>
+ <button class="btn-admin-outline" id="btn-filter-kyc-rejected" onclick="filterKycSubmissions('rejected')">Rejected</button>
  </div>
 
  <!-- Submissions Container -->
@@ -692,13 +690,13 @@
  <!-- TAB 6: CITIZEN USERS & ANALYTICS -->
  <section id="tab-users" class="admin-section" style="display: none;">
  <div style="margin-bottom: 1.5rem;">
- <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Citizen Users & Engagement Analytics</h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">Monitor active platform usage, registered citizen profiles, and verify user integrity</p>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Citizen Users & Engagement Analytics</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Monitor active platform usage, registered citizen profiles, and verify user integrity</p>
  </div>
 
  <div class="admin-card">
  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
- <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Registered Citizen Accounts</h3>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);">Registered Citizen Accounts</h3>
  <div style="font-size: 0.85rem; color: #34d399;" id="admin-user-count-badge">Total Users: 0</div>
  </div>
 
@@ -729,12 +727,12 @@
  <!-- TAB 7: USER GUIDES MANAGER -->
  <section id="tab-guides" class="admin-section" style="display: none;">
  <div style="margin-bottom: 1.5rem;">
- <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Citizen User Guides Management</h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">Create, update, and manage official step-by-step citizen guides displayed on the website</p>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Citizen User Guides Management</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Create, update, and manage official step-by-step citizen guides displayed on the website</p>
  </div>
 
  <div class="admin-card">
- <h3 style="font-size: 1.1rem; font-weight: 700; color: #34d399; margin-bottom: 1rem;"> Add New Citizen Guide</h3>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Add New Citizen Guide</h3>
  <form id="admin-guide-form" onsubmit="handleCreateGuide(event)">
  <div class="admin-guide-header-grid" style="display: grid; gap: 1rem; margin-bottom: 1rem;">
  <div>
@@ -767,9 +765,9 @@
  </div>
 
  <!-- Attach Guide Diagram / Infographic / Photo -->
- <div style="margin-bottom: 1.25rem; background: #09160d; border: 1px solid #1c4228; border-radius: 8px; padding: 0.85rem;">
+ <div style="margin-bottom: 1.25rem; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem;">
  <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem; color: #fff;">
- ️ Attach Guide Diagram / Step-by-Step Graphic (Optional)
+ Attach Guide Diagram / Step-by-Step Graphic (Optional)
  </label>
  <input type="hidden" id="guide-image-url" value="">
  <input type="file" id="guide-image-file" accept="image/*" style="display:none;" onchange="handleGuideImageSelect(event)">
@@ -797,7 +795,7 @@
  </div>
 
  <div class="admin-card">
- <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1rem;">Active Guides on User Website</h3>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Active Guides on User Website</h3>
  <div id="admin-guides-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
  <!-- Rendered by JS -->
  </div>
@@ -807,13 +805,13 @@
  <!-- TAB 8: SUB-ADMIN MANAGEMENT (SUPER ADMIN ONLY) -->
  <section id="tab-subadmins" class="admin-section" style="display: none;">
  <div style="margin-bottom: 1.5rem;">
- <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Sub-Admin Delegation & Granular Access Control</h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">Create municipal sub-admin accounts and customize permissions to limit their administrative access</p>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Sub-Admin Delegation & Granular Access Control</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Create municipal sub-admin accounts and customize permissions to limit their administrative access</p>
  </div>
 
  <!-- Create Sub-Admin Form -->
  <div class="admin-card">
- <h3 style="font-size: 1.1rem; font-weight: 700; color: #34d399; margin-bottom: 1rem;">️ Create New Sub-Admin Account</h3>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Create New Sub-Admin Account</h3>
  <form id="create-subadmin-form" onsubmit="handleCreateSubAdmin(event)">
  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
  <div>
@@ -834,8 +832,8 @@
  </div>
  </div>
 
- <div style="background: #09160d; border: 1px solid #1c4228; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem;">
- <label style="display:block; font-size:0.85rem; font-weight:700; color: #a7f3d0; margin-bottom:0.75rem;">Limit Sub-Admin Permissions & Access Scope:</label>
+ <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem;">
+ <label style="display:block; font-size:0.85rem; font-weight:700; color: var(--primary-dark); margin-bottom:0.75rem;">Limit Sub-Admin Permissions & Access Scope:</label>
  
  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem;">
  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
@@ -862,14 +860,14 @@
  </div>
 
  <button type="submit" class="btn-admin-primary">
- ️ Provision Sub-Admin Account
+ Provision Sub-Admin Account
  </button>
  </form>
  </div>
 
  <!-- Existing Sub-Admins Table -->
  <div class="admin-card">
- <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1rem;">Active Sub-Admins</h3>
+ <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem;">Active Sub-Admins</h3>
  <div class="admin-table-container">
  <table class="admin-table">
  <thead>
@@ -893,8 +891,8 @@
  <!-- TAB 9: SUPER ADMIN SETTINGS (CHANGE CREDENTIALS) -->
  <section id="tab-settings" class="admin-section" style="display: none;">
  <div style="margin-bottom: 1.5rem;">
- <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Super Admin Security & Credentials Settings</h2>
- <p style="font-size: 0.85rem; color: #94a3b8;">Change Super Admin email, password, and system administrator identity</p>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">>Super Admin Security & Credentials Settings</h2>
+ <p style="font-size: 0.85rem; color: var(--text-muted);">Change Super Admin email, password, and system administrator identity</p>
  </div>
 
  <div class="admin-card" style="max-width: 620px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
@@ -913,7 +911,7 @@
  </div>
 
  <div class="admin-card" style="max-width: 620px;">
- <div style="background: #162f1e; border: 1px solid #276749; border-radius: 8px; padding: 0.85rem; margin-bottom: 1.5rem; font-size: 0.82rem; color: #d1fae5;">
+ <div style="background: var(--primary-tint); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; margin-bottom: 1.5rem; font-size: 0.82rem; color: var(--primary-dark);">
  <strong>Super Administrator Identity & Access Governance</strong><br>
  Authorized Email: <strong id="settings-current-email-badge">markkennethulgasan@gmail.com</strong> • Full Root Privileges
  </div>
@@ -957,7 +955,7 @@
  </div>
  </div>
 
- <div id="settings-success-msg" style="display: none; background: #065f46; color: #d1fae5; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem;"></div>
+ <div id="settings-success-msg" style="display: none; background: #065f46; color: var(--primary-dark); padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem;"></div>
  <div id="settings-error-msg" style="display: none; background: #7f1d1d; color: #fecaca; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem;"></div>
 
  <button type="submit" class="btn-admin-primary" style="width: 100%;">
@@ -988,7 +986,7 @@
  <!-- 1. Database Card -->
  <div style="background: #05140A; border: 1px solid #163820; border-radius: 8px; padding: 0.85rem;">
  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
- <span style="font-size: 0.8rem; font-weight: 700; color: #E2E8F0;">️ PostgreSQL Database</span>
+ <span style="font-size: 0.8rem; font-weight: 700; color: #E2E8F0;">PostgreSQL Database</span>
  <span id="supabase-db-badge" style="font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px; background: #1E293B; color: #94A3B8;">Checking</span>
  </div>
  <div id="supabase-db-details" style="font-size: 0.72rem; color: #94A3B8; line-height: 1.4;">
@@ -999,7 +997,7 @@
  <!-- 2. Storage Card -->
  <div style="background: #05140A; border: 1px solid #163820; border-radius: 8px; padding: 0.85rem;">
  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
- <span style="font-size: 0.8rem; font-weight: 700; color: #E2E8F0;"> Cloud Storage</span>
+ <span style="font-size: 0.8rem; font-weight: 700; color: #E2E8F0;">Cloud Storage</span>
  <span id="supabase-storage-badge" style="font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px; background: #1E293B; color: #94A3B8;">Checking</span>
  </div>
  <div id="supabase-storage-details" style="font-size: 0.72rem; color: #94A3B8; line-height: 1.4;">
@@ -1010,7 +1008,7 @@
  <!-- 3. Account / Users Card -->
  <div style="background: #05140A; border: 1px solid #163820; border-radius: 8px; padding: 0.85rem;">
  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
- <span style="font-size: 0.8rem; font-weight: 700; color: #E2E8F0;"> User Accounts</span>
+ <span style="font-size: 0.8rem; font-weight: 700; color: #E2E8F0;">User Accounts</span>
  <span id="supabase-users-badge" style="font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px; background: #1E293B; color: #94A3B8;">Checking</span>
  </div>
  <div id="supabase-users-details" style="font-size: 0.72rem; color: #94A3B8; line-height: 1.4;">
@@ -1059,7 +1057,7 @@
  <!-- SQL Schema Setup Section -->
  <div style="margin-top: 1.5rem; background: #05140A; border: 1px dashed #163820; border-radius: 8px; padding: 1rem;">
  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
- <span style="font-size: 0.82rem; font-weight: 700; color: #34D399;"> Supabase Schema & Storage Policies Script</span>
+ <span style="font-size: 0.82rem; font-weight: 700; color: #34D399;">Supabase Schema & Storage Policies Script</span>
  <button type="button" class="btn-admin-outline" id="btn-copy-supabase-sql" onclick="copySupabaseSchema()" style="font-size: 0.72rem; padding: 0.3rem 0.7rem;">
  Copy Complete SQL Script
  </button>
@@ -1076,44 +1074,45 @@
  </div>
 
  <!-- Admin Footer Navigation Bar with Relocated Hamburger Menu -->
- <nav class="admin-footer-navbar" id="admin-footer-navbar" aria-label="Admin Navigation Footer">
- <button type="button" class="admin-footer-nav-item active" data-tab="overview" onclick="switchAdminTab('overview')">
- <span class="admin-footer-icon"></span>
- <span class="admin-footer-label">Overview</span>
- </button>
- <button type="button" class="admin-footer-nav-item" data-tab="triage" onclick="switchAdminTab('triage')">
- <span class="admin-footer-icon"></span>
- <span class="admin-footer-label">Tickets</span>
- </button>
- <button type="button" class="admin-footer-nav-item" data-tab="kyc" onclick="switchAdminTab('kyc')">
- <span class="admin-footer-icon">️</span>
- <span class="admin-footer-label">KYC</span>
- </button>
- <button type="button" class="admin-footer-nav-item" data-tab="users" onclick="switchAdminTab('users')">
- <span class="admin-footer-icon"></span>
- <span class="admin-footer-label">Users</span>
- </button>
- <button type="button" class="admin-footer-nav-item" data-tab="settings" onclick="switchAdminTab('settings')">
- <span class="admin-footer-icon">️</span>
- <span class="admin-footer-label">Settings</span>
- </button>
- <button type="button" class="admin-footer-nav-item admin-footer-hamburger-btn" onclick="toggleAdminMobileSidebar()" aria-label="Open Full Navigation Drawer">
- <span class="admin-footer-icon" style="font-size: 1.3rem; font-weight: 900;"></span>
- <span class="admin-footer-label">Menu</span>
- </button>
- </nav>
+   <!-- Admin Footer Navigation Bar with Relocated Hamburger Menu -->
+  <nav class="admin-footer-navbar" id="admin-footer-navbar" aria-label="Admin Navigation Footer">
+    <button type="button" class="admin-footer-nav-item active" data-tab="overview" onclick="switchAdminTab('overview')">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+      <span class="admin-footer-label">Overview</span>
+    </button>
+    <button type="button" class="admin-footer-nav-item" data-tab="triage" onclick="switchAdminTab('triage')">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+      <span class="admin-footer-label">Tickets</span>
+    </button>
+    <button type="button" class="admin-footer-nav-item" data-tab="kyc" onclick="switchAdminTab('kyc')">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+      <span class="admin-footer-label">KYC</span>
+    </button>
+    <button type="button" class="admin-footer-nav-item" data-tab="users" onclick="switchAdminTab('users')">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+      <span class="admin-footer-label">Users</span>
+    </button>
+    <button type="button" class="admin-footer-nav-item" data-tab="settings" onclick="switchAdminTab('settings')">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      <span class="admin-footer-label">Settings</span>
+    </button>
+    <button type="button" class="admin-footer-nav-item admin-footer-hamburger-btn" onclick="toggleAdminMobileSidebar()" aria-label="Open Full Navigation Drawer">
+      <span class="admin-footer-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>
+      <span class="admin-footer-label">Menu</span>
+    </button>
+  </nav>
  </div>
 
  <!-- Incident Status Update Modal -->
  <div class="modal-overlay" id="admin-triage-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; padding: 1rem;">
- <div style="background: #0f2316; border: 1px solid #1c4228; border-radius: 16px; padding: 1.5rem; max-width: 540px; width: 100%; color: #fff; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch;">
- <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #1c4228; padding-bottom: 0.75rem;">
- <h3 style="font-size: 1.15rem; font-weight: 800; color: #34d399;">Update Incident Ticket</h3>
- <button onclick="closeAdminTriageModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+ <div style="background: #FFFFFF; border: 1px solid var(--border); box-shadow: var(--shadow-lg); border-radius: 16px; padding: 1.5rem; max-width: 540px; width: 100%; color: #fff; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark);">Update Incident Ticket</h3>
+ <button onclick="closeAdminTriageModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
  </div>
 
  <div id="triage-modal-ticket-id" style="font-weight: 800; font-size: 0.9rem; color: #38bdf8; margin-bottom: 0.5rem;"></div>
- <div id="triage-modal-title" style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 1.25rem;"></div>
+ <div id="triage-modal-title" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;"></div>
 
  <div style="margin-bottom: 1rem;">
  <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.4rem;">Status Transition</label>
@@ -1146,13 +1145,13 @@
 
  <!-- KYC Document Zoom & Inspection Modal -->
  <div class="modal-overlay" id="admin-kyc-zoom-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 210; align-items: center; justify-content: center; padding: 1rem;">
- <div style="background: #0f2316; border: 1px solid #1c4228; border-radius: 16px; padding: 1.5rem; max-width: 720px; width: 100%; color: #fff; max-height: 92vh; overflow-y: auto;">
- <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #1c4228; padding-bottom: 0.75rem;">
+ <div style="background: #FFFFFF; border: 1px solid var(--border); box-shadow: var(--shadow-lg); border-radius: 16px; padding: 1.5rem; max-width: 720px; width: 100%; color: #fff; max-height: 92vh; overflow-y: auto;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
  <div>
- <h3 style="font-size: 1.15rem; font-weight: 800; color: #34d399;" id="kyc-zoom-modal-title">Verification Document Inspection</h3>
- <div style="font-size: 0.78rem; color: #94a3b8;" id="kyc-zoom-modal-sub"></div>
+ <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark);" id="kyc-zoom-modal-title">Verification Document Inspection</h3>
+ <div style="font-size: 0.78rem; color: var(--text-muted);" id="kyc-zoom-modal-sub"></div>
  </div>
- <button onclick="closeAdminKycZoomModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.6rem; cursor: pointer;">&times;</button>
+ <button onclick="closeAdminKycZoomModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer;">&times;</button>
  </div>
 
  <div style="text-align: center; margin-bottom: 1.25rem;">
