@@ -1157,6 +1157,7 @@ async function loadCMSData() {
  // Form inputs
  document.getElementById('cms-website-name').value = config.websiteName || '';
  document.getElementById('cms-website-subtitle').value = config.websiteSubtitle || '';
+ document.getElementById('cms-footer-copyright').value = config.footerCopyrightText || '© 2026 Climate Action Reporting & Information System • City Government of Metro Verde.';
  document.getElementById('cms-website-logo').value = config.websiteLogo || '';
 
   // Populate dynamic hotlines
@@ -1304,6 +1305,7 @@ async function handleSaveCMS(e) {
   const updates = {
     websiteName: document.getElementById('cms-website-name').value.trim(),
     websiteSubtitle: document.getElementById('cms-website-subtitle').value.trim(),
+    footerCopyrightText: document.getElementById('cms-footer-copyright').value.trim(),
     websiteLogo: document.getElementById('cms-website-logo').value.trim(),
     logoType: logoTypeVal,
     logoImageUrl: logoUrlVal,

@@ -1340,6 +1340,10 @@ function applyConfigUI(c) {
  const el = document.getElementById('cms-display-contact-partners');
  if (el) el.textContent = c.contactPartners;
  }
+ if (c.footerCopyrightText) {
+ const footerBottomDiv = document.querySelector('.footer-bottom-strip > div > div');
+ if (footerBottomDiv) footerBottomDiv.textContent = c.footerCopyrightText;
+ }
 
   // Emergency Hotlines (Dynamic municipal list with real-time sync)
   renderCitizenEmergencyHotlines(c);
