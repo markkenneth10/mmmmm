@@ -83,7 +83,13 @@ export const ReportScreen: React.FC = () => {
     }
     if (categoryFilter && r.category !== categoryFilter) return false;
     if (severityFilter && r.severity !== severityFilter) return false;
-    if (statusFilter && r.status !== statusFilter) return false;
+    if (statusFilter) {
+      if (statusFilter === 'Pending') {
+        if (!['Submitted', 'Under Review', 'Verified', 'Pending'].includes(r.status)) return false;
+      } else if (statusFilter !== 'All') {
+        if (r.status !== statusFilter) return false;
+      }
+    }
     if (barangayFilter && r.barangay !== barangayFilter) return false;
     return true;
   });
@@ -434,10 +440,8 @@ export const ReportScreen: React.FC = () => {
                 onChange={e => setStatusFilter(e.target.value)}
                 className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 font-medium"
               >
-                <option value="">All Statuses</option>
-                <option value="Submitted">Submitted</option>
-                <option value="Under Review">Under Review</option>
-                <option value="Verified">Verified</option>
+                <option value="">All</option>
+                <option value="Pending">Pending</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Resolved">Resolved</option>
               </select>

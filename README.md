@@ -1,48 +1,31 @@
 # Climate Action — Mobile & Web Climate Action Reporting and Information System
 
-A civic environmental reporting and ecological governance application rewritten as a modern React application with TypeScript, Vite, Tailwind CSS, Leaflet GIS, and Lucide icons.
+A full-stack municipal environmental reporting, ecological governance, and climate action portal for Metro Verde. Architected with high-performance Node.js, WebAssembly SQLite relational database persistence, citizen GIS spatial tracking, and dedicated LGU CENRO administrative command infrastructure.
 
-## Features
+> **Status:** The production Node.js + SQLite relational database architecture is permanently maintained.
 
-### 1. Citizen Incident Reporting & Spatial Geotagging
-- File environmental hazard tickets with category classification (Improper waste disposal, Illegal tree cutting, Open burning, Water pollution, Flooding, Extreme heat, Water shortage, Air pollution).
-- Set exact latitude and longitude using the interactive Leaflet GIS map picker.
-- Select severity level (Critical, High, Moderate, Low).
-- Government ID verification (PhilSys, Driver's License, UMID) enforcement for authentic reporting.
-- Earn +10 Eco-Points upon lodging validated incident reports.
+## Core Architecture & Portals
 
-### 2. Interactive Municipal GIS Map
-- High-contrast spatial map of Metro Verde sectors with color-coded incident pins based on severity.
-- Filter by category, severity, status, and barangay.
-- Interactive incident preview drawer with 1-click inspection modal.
+### 1. Citizen Portal (`/` -> `public/index.html`, `public/app.js`)
+- **GIS Incident Reporting & Geotagging:** Interactive Leaflet GIS map picker, category classification (waste, tree cutting, open burning, water pollution, flooding, heat, air pollution), photo evidence, and severity rating.
+- **Incident Lifecycle Stepper:** 5-stage tracking (*Submitted -> Under Review -> Verified -> In Progress -> Resolved*) with official audit trail.
+- **Citizen KYC & ID Verification:** PhilSys, Driver's License, and UMID government ID submission with administrative verification workflow.
+- **Eco-Points & Community Activities:** Earn points for filing reports, participating in community restoration drives, and taking the interactive climate quiz.
+- **Real-Time Climate Advisories:** Heat index gauges, PAGASA weather bulletins, and emergency hotline directory.
 
-### 3. Comprehensive Incident Lifecycle Tracking
-- Full 5-stage progression stepper: *Submitted → Under Review → Verified → In Progress → Resolved*.
-- Real-time audit trail and official CENRO field officer remarks.
+### 2. CENRO Administrative Command Console (`/admin` -> `admin/index.html`, `admin/admin.js`)
+- **Session-Based Multi-Role Governance:** Super Admin and Sub-Admin accounts with role-based access control.
+- **Incident Triage & Officer Dispatch:** Update statuses, assign field response units, and attach official resolution evidence.
+- **Citizen KYC Approvals:** Inspect submitted identity documents and manage citizen standing.
+- **Municipal Weather Alert Broadcaster:** Update municipal heat index, typhoon signals, and broadcast advisories.
+- **CMS & Website Configuration:** Full content management for hotline directories, educational cards, and brand logos.
+- **Relational Database Telemetry:** Live table row monitoring, SQLite database binary export (`.sqlite`), and force synchronization.
 
-### 4. Verified Climate Knowledge & Interactive Quiz
-- Scientific articles covering Urban Heat Islands, Zero-Waste & Composting, Stormwater Resilience, Native Tree Species, Rooftop Solar, and Mangrove Conservation.
-- Interactive Climate Awareness Quiz with question progression, instant feedback, explanations, and reward points.
+### 3. Data Persistence & Permanent Database Engine
+- **Relational Database:** WebAssembly SQLite database engine (`db.cjs` -> `climate_database.sqlite`) with schema tables for admins, users, reports, website config, emergency hotlines, weather advisories, announcements, user guides, activities, participations, sessions, and media uploads.
+- **Permanent Backups:** Redundant persistence via local disk, `/tmp/climate_database.sqlite`, `db_backups/climate_database_permanent_backup.sqlite`, and synchronous JSON fallback stores.
 
-### 5. Community Climate Restoration Activities
-- Citizen volunteer drives (Bayanihan Mangrove Tree Planting, Coastal Beach Cleanups, E-Waste Drop-Off Drives).
-- Registration and proof-of-attendance submission for bonus Eco-Points.
-
-### 6. Citizen Profile & Eco-Points Progression
-- Track accumulated Eco-Points, level progress (*Novice Citizen* to *Master Guardian*), and community merit badges.
-- Government ID KYC submission workflow.
-- Quick demo persona switcher (Citizen, Environmental Officer, CENRO Super Admin).
-
-### 7. LGU CENRO Administrative Command Console
-- Real-time municipal telemetry KPIs and resolution rates.
-- Incident triage & dispatch control to update statuses, assign response officers, and log resolution evidence.
-- Citizen KYC approval console.
-- Municipal weather alert broadcaster (Heat Index advisories and color-coded alert levels).
-
-## Tech Stack
-- **Framework:** React 19 + TypeScript
-- **Bundler:** Vite
-- **Styling:** Tailwind CSS
-- **Mapping:** Leaflet GIS
-- **Icons:** Lucide React
-- **Celebration Effects:** Canvas Confetti
+## Server Commands
+- **Start / Dev:** `npm run dev` (runs `node server.cjs`)
+- **Build / Verification:** `npm run build` (runs database & server integrity checks)
+- **Port:** Default port `3000` (or `APP_PORT` / `PORT`)

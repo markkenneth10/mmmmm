@@ -7,10 +7,10 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "node server.cjs",
+    "dev": "node --no-deprecation server.cjs",
     "build": "tsc && vite build",
     "preview": "vite preview --port 3000",
-    "start": "node server.cjs"
+    "start": "node --no-deprecation server.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",
